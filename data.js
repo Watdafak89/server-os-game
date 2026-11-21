@@ -8,7 +8,9 @@ const CATEGORIES = {
   users: 'ผู้ใช้ กลุ่ม สิทธิ์ & Active Directory',
   cli: 'คำสั่งจัดการระบบ (Linux & Windows CLI)',
   security: 'ความปลอดภัย Firewall, SSH & Logs',
-  backup: 'การสำรองข้อมูล & กู้คืนภัยพิบัติ (DR)'
+  backup: 'การสำรองข้อมูล & กู้คืนภัยพิบัติ (DR)',
+  cloud: 'Docker, Cloud & ระบบอัตโนมัติ',
+  forensics: 'วิเคราะห์ Log, สมรรถนะ & รับมือเหตุการณ์'
 };
 
 const AVATARS = ['👨‍💻', '👩‍💻', '🤖', '🦊', '🛡️', '⚡'];
@@ -19,7 +21,8 @@ const RANKS = [
   { minXp: 600, title: 'Server Operator' },
   { minXp: 1100, title: 'Senior Systems Engineer' },
   { minXp: 1700, title: 'Cloud & Security Specialist' },
-  { minXp: 2400, title: 'Grand Data Center Architect' }
+  { minXp: 2400, title: 'Grand Data Center Architect' },
+  { minXp: 3300, title: 'Legend of Infrastructure' }
 ];
 
 const SHOP_ITEMS = [
@@ -61,10 +64,15 @@ const BADGES = [
   { id: 'zone4_clear', emoji: '⌨️', name: 'จอมยุทธ์ Dual-OS', desc: 'พิชิตบอสโซน 4 (Command Deck)' },
   { id: 'zone5_clear', emoji: '🛡️', name: 'ปราการเหล็กไซเบอร์', desc: 'พิชิตบอสโซน 5 (Defense Bunker)' },
   { id: 'final_boss', emoji: '👑', name: 'ผู้กอบกู้ศูนย์ข้อมูล', desc: 'โค่น Final Boss: Blackout Overlord' },
-  { id: 'cli_hero', emoji: '💻', name: 'แฮกเกอร์สายขาว CLI', desc: 'ผ่านแล็บ CLI อย่างน้อย 7 แล็บ' },
-  { id: 'cli_god', emoji: '🚀', name: 'ปรมาจารย์ CLI ครบสูตร', desc: 'ผ่านแล็บ Linux & Windows ครบทั้ง 14 แล็บ' },
+  { id: 'cli_hero', emoji: '💻', name: 'แฮกเกอร์สายขาว CLI', desc: 'ผ่านแล็บ CLI อย่างน้อย 9 แล็บ' },
+  { id: 'cli_god', emoji: '🚀', name: 'ปรมาจารย์ CLI ครบสูตร', desc: 'ผ่านแล็บ Linux & Windows ครบทั้ง 18 แล็บ' },
   { id: 'port_defender', emoji: '⚡', name: 'แนวป้องกันแพ็กเก็ต', desc: 'ทำคะแนน Packet Defense ถึง 1,500' },
-  { id: 'puzzle_master', emoji: '🧩', name: 'ยอดนักไขปริศนา', desc: 'ผ่านทั้ง CHMOD Vault และ RAID Challenge อย่างน้อย 3 ด่าน' },
+  { id: 'blitz_flash', emoji: '🔥', name: 'สายฟ้าแลบ Server OS', desc: 'ทำคะแนน Lightning Blitz ถึง 1,200' },
+  { id: 'firewall_ace', emoji: '🧱', name: 'สถาปนิก Firewall', desc: 'ผ่านภารกิจ Firewall Rule Master ครบ 6 ด่าน' },
+  { id: 'subnet_guru', emoji: '📡', name: 'เซียนคำนวณ IP & Subnet', desc: 'ผ่านภารกิจ IP & Subnet Medic ครบ 6 ด่าน' },
+  { id: 'zone7_clear', emoji: '🐳', name: 'กัปตัน Docker & Cloud', desc: 'พิชิตบอสโซน 7 (Cloud & Automation)' },
+  { id: 'zone8_clear', emoji: '🔍', name: 'ยอดนักสืบไซเบอร์', desc: 'พิชิตบอสโซน 8 (Enterprise Forensics)' },
+  { id: 'puzzle_master', emoji: '🧩', name: 'ยอดนักไขปริศนา', desc: 'ผ่านทั้ง CHMOD และ RAID อย่างน้อย 4 ด่าน' },
   { id: 'certified', emoji: '🎓', name: 'Certified SysAdmin', desc: 'สอบผ่าน Guild Exam ตั้งแต่ 70% ขึ้นไป' }
 ];
 
@@ -862,6 +870,268 @@ const CAMPAIGN_ZONES = [
         ]
       }
     ]
+  },
+  {
+    id: 'z7',
+    code: 'ZONE 07',
+    name: 'Cloud, Docker & Automation Forge',
+    subtitle: 'Docker Container, Cron Job Automation, Reverse Proxy และ Cloud Computing',
+    themeColor: '#22d3ee',
+    icon: '🐳',
+    stages: [
+      {
+        id: 'z7_s1',
+        title: '7-1: โรงงาน Docker Container',
+        category: 'cloud',
+        isBoss: false,
+        enemy: { name: 'Dependency Hydra', sprite: '🐳', hp: 130 },
+        dialogue: 'NOVA-OS: ทีม Dev บ่นว่า "รันบนเครื่องผมได้ แต่ขึ้น Server พัง!" มาแก้ปัญหาด้วย Docker Container กันเถอะ!',
+        xp: 125,
+        coins: 95,
+        questions: [
+          {
+            context: 'คุณต้องการสร้างและรันเว็บเซิร์ฟเวอร์ Nginx จาก Docker Image โดยแมปพอร์ต 8080 บนเครื่องโฮสต์เข้ากับพอร์ต 80 ใน Container และให้ทำงานเบื้องหลัง',
+            code: 'docker run -d -p 8080:80 --name myweb nginx',
+            q: 'ออปชัน -d และ -p 8080:80 ในคำสั่งข้างต้นหมายถึงอะไร?',
+            options: [
+              '-d = Detached (รันเบื้องหลัง) • -p 8080:80 = แมปพอร์ต 8080 ของโฮสต์เข้าสู่พอร์ต 80 ใน Container',
+              '-d = Delete ลบทิ้งทันที • -p 8080:80 = ตั้งรหัสผ่านเป็น 8080',
+              '-d = Download Windows • -p = ปิดเครื่องอัตโนมัติ',
+              '-d = Format Disk • -p = เปิดพอร์ตทั้งหมด 8080 พอร์ต'
+            ],
+            answer: 0,
+            explain: '-d (Detached mode) ให้ Container ทำงานเบื้องหลัง และ -p HostPort:ContainerPort ใช้เชื่อมพอร์ตภายนอกเข้ากับบริการใน Container'
+          },
+          {
+            context: 'ข้อมูลในฐานข้อมูลที่รันอยู่ใน Docker Container จะหายไปหาก Container ถูกลบและสร้างใหม่',
+            q: 'ฟีเจอร์ใดของ Docker ที่ใช้เก็บข้อมูลให้คงอยู่ถาวร (Persistent Data) แม้ Container จะถูกลบหรืออัปเดต?',
+            options: [
+              'Docker Volume (หรือ Bind Mount)',
+              'RAM Cache ชั่วคราว',
+              'คำสั่ง docker rm -f',
+              'การปิดเครื่องแล้วเปิดใหม่'
+            ],
+            answer: 0,
+            explain: 'Docker Volume เก็บข้อมูลแยกไว้ภายนอก Lifecycle ของ Container ทำให้ข้อมูลฐานข้อมูลและไฟล์อัปโหลดยังคงอยู่ถาวรแม้จะอัปเกรด Container'
+          }
+        ]
+      },
+      {
+        id: 'z7_s2',
+        title: '7-2: ตั้งเวลางานอัตโนมัติ (Cron & Script)',
+        category: 'cloud',
+        isBoss: false,
+        enemy: { name: 'Manual-Task Golem', sprite: '⏰', hp: 135 },
+        dialogue: 'ผอ.เก่ง: แอดมินมืออาชีพไม่ตื่นตี 2 มารันสคริปต์ Backup เองทุกคืน! มาตั้งเวลาทำงานอัตโนมัติด้วย Cron Job กัน!',
+        xp: 130,
+        coins: 100,
+        questions: [
+          {
+            context: 'บน Linux Server คำสั่ง crontab ใช้ตั้งเวลารันงานอัตโนมัติ โดยมีช่องเวลา 5 ช่องเรียงลำดับ: นาที ชั่วโมง วันที่ เดือน วันในสัปดาห์',
+            code: '0 2 * * * /opt/backup.sh',
+            q: 'ตารางเวลา "0 2 * * *" สั่งให้สคริปต์ /opt/backup.sh ทำงานเมื่อใด?',
+            options: [
+              'ทุกวัน เวลา 02:00 น. (ตีสองตรง)',
+              'ทุก ๆ 2 นาทีตลอดทั้งวัน',
+              'เฉพาะวันที่ 2 กุมภาพันธ์ของทุกปี',
+              'ทุกวันอังคาร เวลา 00:00 น.'
+            ],
+            answer: 0,
+            explain: 'ช่องที่ 1 = นาทีที่ 0, ช่องที่ 2 = ชั่วโมงที่ 2 (02:00), อีก 3 ช่องเป็น * (ทุกวัน ทุกเดือน ทุกวันในสัปดาห์) ดังนั้นคือทุกวันเวลา 02:00 น.'
+          },
+          {
+            context: 'องค์กรมี Linux Server 50 เครื่องและต้องการติดตั้งแพ็กเกจ + แก้ไฟล์ตั้งค่าเหมือนกันทั้ง 50 เครื่องอย่างอัตโนมัติโดยเขียนเป็นไฟล์ YAML',
+            q: 'เครื่องมือ Automation / Configuration Management ใดนิยมใช้จัดการเซิร์ฟเวอร์จำนวนมากผ่าน SSH?',
+            options: [
+              'Ansible',
+              'Microsoft Paint',
+              'Notepad',
+              'Calculator'
+            ],
+            answer: 0,
+            explain: 'Ansible เป็นเครื่องมือ IT Automation แบบ Agentless ที่สั่งงานผ่าน SSH เพื่อติดตั้งและตั้งค่าเซิร์ฟเวอร์หลายสิบถึงหลายพันเครื่องพร้อมกันได้อย่างแม่นยำ'
+          }
+        ]
+      },
+      {
+        id: 'z7_boss',
+        title: '7-BOSS: Cloud-Scale Kraken',
+        category: 'cloud',
+        isBoss: true,
+        enemy: { name: 'Cloud-Scale Kraken', sprite: '🦑⚡', hp: 200 },
+        dialogue: '⚠️ BOSS ALERT! Cloud-Scale Kraken ปั่นทราฟฟิกระดับ Cloud! จงแยกแยะโมเดล IaaS/PaaS/SaaS และ Reverse Proxy ให้ขาด!',
+        xp: 180,
+        coins: 145,
+        questions: [
+          {
+            context: 'บริษัทต้องการเช่าเฉพาะเครื่องเสมือน (VM), พื้นที่ดิสก์ และเครือข่ายบน Cloud (เช่น AWS EC2, Google Compute Engine) โดยที่ฝ่ายไอทีเป็นผู้ลง OS และดูแลเองทั้งหมด',
+            q: 'บริการ Cloud ลักษณะนี้จัดอยู่ในรูปแบบใด?',
+            options: [
+              'IaaS (Infrastructure as a Service)',
+              'SaaS (Software as a Service)',
+              'PaaS (Platform as a Service)',
+              'USB as a Service'
+            ],
+            answer: 0,
+            explain: 'IaaS ให้เช่าโครงสร้างพื้นฐาน (VM/Network/Disk) เราคุม OS เอง • PaaS ให้แพลตฟอร์มวางโค้ดได้เลยไม่ต้องคุม OS • SaaS คือแอปสำเร็จรูปพร้อมใช้เช่น Gmail/Office 365'
+          },
+          {
+            context: 'คุณมีแอปเว็บ 3 ตัวรันอยู่หลังเครื่องเดียวบนพอร์ต 3001, 3002, 3003 แต่อยากให้ผู้ใช้เข้าผ่านโดเมน HTTPS พอร์ต 443 เดียวกันอย่างปลอดภัย',
+            q: 'ควรติดตั้ง Nginx ทำหน้าที่ใดไว้ด้านหน้าแอปพลิเคชันทั้ง 3 ตัว?',
+            options: [
+              'Reverse Proxy (รับ HTTPS พอร์ต 443 แล้วส่งต่อให้พอร์ตภายในตามชื่อโดเมน)',
+              'DHCP Client',
+              'Print Spooler',
+              'BIOS Firmware'
+            ],
+            answer: 0,
+            explain: 'Reverse Proxy รับคำขอจากอินเทอร์เน็ตที่พอร์ต 443 จัดการ SSL/TLS ไว้จุดเดียว (SSL Termination) แล้วส่งต่อคำขอไปยัง Backend Services ภายในอย่างปลอดภัย'
+          },
+          {
+            context: 'คำสั่งใดใน Docker ใช้แสดงรายการ Container ที่กำลังรันอยู่ทั้งหมด (และออปชันดูรวมตัวที่หยุดไปแล้วด้วย)?',
+            q: 'เลือกคำสั่งตรวจสอบสถานะ Container ที่ถูกต้อง',
+            options: [
+              'docker ps (และ docker ps -a เพื่อดูทั้งหมด)',
+              'docker ipconfig /all',
+              'chmod 755 docker',
+              'ufw status docker'
+            ],
+            answer: 0,
+            explain: 'docker ps แสดง Container ที่กำลังทำงาน ส่วน docker ps -a แสดงรวม Container ที่หยุดทำงานแล้วด้วย'
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'z8',
+    code: 'ZONE 08',
+    name: 'Enterprise Forensics & Performance',
+    subtitle: 'สืบสวน Log, Event Viewer, จูนสมรรถนะ Server และรับมือเหตุการณ์ไซเบอร์',
+    themeColor: '#fb923c',
+    icon: '🔍',
+    stages: [
+      {
+        id: 'z8_s1',
+        title: '8-1: สืบสวน Log & ล่าผู้บุกรุก',
+        category: 'forensics',
+        isBoss: false,
+        enemy: { name: 'Log-Eraser Ghost', sprite: '🕵️‍♂️', hp: 140 },
+        dialogue: 'NOVA-OS: มีคนแอบพยายามล็อกอินเข้า Server ตอนตี 3! มาตรวจสอบไฟล์ Log บน Linux และ Windows Event Viewer เพื่อแกะรอยกัน!',
+        xp: 135,
+        coins: 105,
+        questions: [
+          {
+            context: 'คุณสงสัยว่ามีแฮกเกอร์สุ่มรหัสผ่าน SSH เข้าเครื่อง Ubuntu Server เมื่อคืนนี้',
+            q: 'ไฟล์ Log ใดบน Ubuntu/Debian ที่บันทึกประวัติการล็อกอิน SSH และการใช้คำสั่ง sudo?',
+            options: [
+              '/var/log/auth.log',
+              '/etc/hostname',
+              '/home/readme.txt',
+              '/boot/grub.cfg'
+            ],
+            answer: 0,
+            explain: 'บน Ubuntu/Debian บันทึกการยืนยันตัวตน SSH และ sudo จะอยู่ที่ /var/log/auth.log (ส่วนตระกูล RHEL/Rocky อยู่ที่ /var/log/secure)'
+          },
+          {
+            context: 'บน Windows Server คุณเปิด Event Viewer → Security Log เพื่อตรวจสอบความพยายามล็อกอินผิดพลาดจำนวนมาก (Brute Force)',
+            q: 'Windows Security Event ID หมายเลขใดหมายถึง "An account failed to log on (ล็อกอินไม่สำเร็จ)"?',
+            options: [
+              'Event ID 4625 (ส่วน 4624 คือล็อกอินสำเร็จ)',
+              'Event ID 404',
+              'Event ID 80',
+              'Event ID 22'
+            ],
+            answer: 0,
+            explain: 'Event ID 4625 = Failed Logon (สำคัญมากในการตรวจจับ Brute-Force Attack บน Windows Server) ส่วน 4624 = Successful Logon'
+          }
+        ]
+      },
+      {
+        id: 'z8_s2',
+        title: '8-2: จูนสมรรถนะ & แก้คอขวด Server',
+        category: 'forensics',
+        isBoss: false,
+        enemy: { name: 'Memory-Leak Slime', sprite: '🧪', hp: 145 },
+        dialogue: 'ผอ.เก่ง: เว็บช้ามากจนค้าง! มาดูกันว่าคอขวดอยู่ที่ CPU, RAM หรือ Disk I/O เพื่อแก้ให้ตรงจุด!',
+        xp: 140,
+        coins: 110,
+        questions: [
+          {
+            context: 'เครื่อง Linux Server มี CPU 4 Core แต่เมื่อรันคำสั่ง uptime พบว่า Load Average อยู่ที่ 12.50, 11.80, 10.90 และ RAM เหลือ 0% จนระบบต้องสลับข้อมูลลง Swap ตลอดเวลา',
+            q: 'อาการที่ RAM เต็มจนระบบเขียน-อ่านลงพื้นที่ Swap บนดิสก์อย่างหนักจนเครื่องอืดมากเรียกว่าอะไร?',
+            options: [
+              'Swap Thrashing (RAM ไม่เพียงพอ ควรหา Process ที่กินแรม/Memory Leak หรือเพิ่ม RAM)',
+              'Load Balancing',
+              'DNS Caching',
+              'Static Routing'
+            ],
+            answer: 0,
+            explain: 'เมื่อ RAM เต็ม OS จะย้ายหน่วยความจำไปไว้บนดิสก์ (Swap) ซึ่งช้ากว่า RAM หลายร้อยเท่า เกิดภาวะ Thrashing ทำให้ Load พุ่งและเครื่องตอบสนองช้ามาก'
+          },
+          {
+            context: 'คุณต้องการเฝ้าดูไฟล์ Log ที่กำลังวิ่งเข้ามาแบบสด ๆ (Real-time) ขณะที่กำลังทดสอบแก้ปัญหา Web Server',
+            q: 'คำสั่งใดบน Linux ใช้ติดตามบรรทัดใหม่ที่เขียนลงไฟล์ /var/log/nginx/error.log แบบเรียลไทม์?',
+            options: [
+              'tail -f /var/log/nginx/error.log',
+              'rm -f /var/log/nginx/error.log',
+              'mkdir -p /var/log/nginx/error.log',
+              'chmod 000 /var/log/nginx/error.log'
+            ],
+            answer: 0,
+            explain: 'tail -f (follow) แสดงบรรทัดท้ายสุดของไฟล์และอัปเดตข้อความใหม่ทันทีที่มีการเขียน Log เหมาะมากกับการไล่แก้ปัญหาหน้างาน'
+          }
+        ]
+      },
+      {
+        id: 'z8_boss',
+        title: '8-BOSS: APT Zero-Day Overlord',
+        category: 'forensics',
+        isBoss: true,
+        enemy: { name: 'APT ZERO-DAY OVERLORD', sprite: '👁️🔥', hp: 260 },
+        dialogue: '🚨 GRAND MASTER BOSS! APT ZERO-DAY OVERLORD แฝงตัวอยู่ในเครือข่ายองค์กร! ใช้กระบวนการ Incident Response ระดับ Enterprise โค่นมัน!',
+        xp: 280,
+        coins: 240,
+        questions: [
+          {
+            context: '[Phase 1 — Containment] พบว่าเครื่อง Web Server เครื่องหนึ่งติดมัลแวร์และกำลังส่งข้อมูลออกไปข้างนอกอย่างต่อเนื่อง',
+            q: 'ขั้นตอน "Containment (ควบคุมและจำกัดวงความเสียหาย)" ที่ถูกต้องที่สุดทันทีที่พบเหตุคือข้อใด?',
+            options: [
+              'ตัดแยกเครื่องออกจากเครือข่าย (Network Isolation) แต่ยังเก็บหลักฐาน Log/Memory ไว้ตรวจสอบ',
+              'รีบฟอร์แมตเครื่องทิ้งทันทีโดยไม่เก็บหลักฐานและไม่บอกใคร',
+              'ปล่อยให้มัลแวร์ทำงานต่อไปจนถึงวันศุกร์ค่อยดู',
+              'แจกรหัสผ่าน Admin ให้ทุกคนช่วยกันดู'
+            ],
+            answer: 0,
+            explain: 'Containment คือหยุดการแพร่กระจายทันที (เช่น ตัด VLAN/บล็อก Firewall) โดยไม่ทำลายหลักฐานทางนิติวิทยา (Forensic Evidence) เพื่อให้รู้ต้นตอช่องโหว่'
+          },
+          {
+            context: '[Phase 2 — SIEM] องค์กรมีเซิร์ฟเวอร์ 40 เครื่อง ต้องการรวม Log ทั้งหมดมาวิเคราะห์และแจ้งเตือนอัตโนมัติเมื่อเกิดพฤติกรรมน่าสงสัย',
+            q: 'ระบบศูนย์รวมวิเคราะห์ Log และแจ้งเตือนภัยคุกคามทางไซเบอร์เรียกว่าอะไร?',
+            options: [
+              'SIEM (Security Information and Event Management) เช่น Wazuh, Splunk, ELK',
+              'RAID Controller',
+              'DHCP Scope',
+              'BIOS Setup'
+            ],
+            answer: 0,
+            explain: 'SIEM รวมศูนย์ Log จากทุก Server/Firewall มาเชื่อมโยงเหตุการณ์ (Correlation) และแจ้งเตือนผู้ดูแลระบบทันทีที่พบสัญญาณการโจมตี'
+          },
+          {
+            context: '[Phase 3 — Final Blow] หลังกำจัดมัลแวร์ อุดช่องโหว่ และกู้ระบบจาก Clean Backup กลับมาออนไลน์สำเร็จแล้ว',
+            q: 'ขั้นตอนสุดท้ายของ Incident Response (Lessons Learned) มีเป้าหมายเพื่ออะไร?',
+            options: [
+              'สรุปบทเรียน หาสาเหตุรากเหง้า (Root Cause) และปรับปรุงระบบป้องกันไม่ให้เกิดซ้ำอีก',
+              'ลบ Backup ทั้งหมดทิ้งเพื่อประหยัดพื้นที่',
+              'ปิด Firewall ถาวรเพราะเหตุการณ์จบแล้ว',
+              'เปลี่ยนรหัสผ่านทุกเครื่องกลับเป็น 123456'
+            ],
+            answer: 0,
+            explain: 'Lessons Learned / Post-Incident Review ช่วยให้ทีมไอทีอุดจุดอ่อน ปรับปรุงคู่มือรับมือ และเสริมความแข็งแกร่งให้โครงสร้างพื้นฐานระยะยาว'
+          }
+        ]
+      }
+    ]
   }
 ];
 
@@ -1034,6 +1304,54 @@ const CLI_LABS = [
     hint: 'พิมพ์: Test-NetConnection 192.168.10.10 -Port 443',
     quickCmds: ['Test-NetConnection 192.168.10.10 -Port 443', 'netstat -ano'],
     check: (cmd) => /^(test-netconnection|tnc)\s+\S+\s+-port\s+443$/i.test(cmd.trim())
+  },
+  {
+    id: 'lab15',
+    os: 'linux',
+    title: 'L11: ตรวจสอบ Docker Containers',
+    category: 'cloud',
+    xp: 85,
+    coins: 65,
+    goal: 'ตรวจสอบรายการ Docker Containers ที่กำลังทำงานอยู่บนเครื่องแม่ข่ายด้วย `docker ps` (หรือ `docker ps -a`)',
+    hint: 'พิมพ์: docker ps',
+    quickCmds: ['docker ps', 'docker ps -a', 'docker images'],
+    check: (cmd) => /^docker\s+ps(\s+-a)?$/.test(cmd.trim())
+  },
+  {
+    id: 'lab16',
+    os: 'linux',
+    title: 'L12: หาโฟลเดอร์กินพื้นที่ด้วย du -sh',
+    category: 'storage',
+    xp: 85,
+    coins: 65,
+    goal: 'ตรวจสอบขนาดของโฟลเดอร์ย่อยภายใน `/var/*` เพื่อหาว่าโฟลเดอร์ใดกินพื้นที่ดิสก์มากที่สุดด้วย `du -sh /var/*`',
+    hint: 'พิมพ์: du -sh /var/*',
+    quickCmds: ['du -sh /var/*', 'df -h'],
+    check: (cmd) => /^du\s+-sh\s+\/var(\/\*)?$/.test(cmd.trim())
+  },
+  {
+    id: 'lab17',
+    os: 'linux',
+    title: 'L13: อัปเดตแพ็กเกจและตรวจ Cron Job',
+    category: 'cloud',
+    xp: 85,
+    coins: 65,
+    goal: 'ดึงรายการอัปเดตแพ็กเกจความปลอดภัยล่าสุดด้วย `apt update` หรือตรวจตารางงานอัตโนมัติด้วย `crontab -l`',
+    hint: 'พิมพ์: apt update หรือ crontab -l',
+    quickCmds: ['apt update', 'crontab -l', 'tail -f /var/log/nginx/error.log'],
+    check: (cmd) => /^(apt\s+update|crontab\s+-l|tail\s+-f\s+\S+)$/.test(cmd.trim())
+  },
+  {
+    id: 'lab18',
+    os: 'windows',
+    title: 'W5: ดึงรายชื่อผู้ใช้ Active Directory',
+    category: 'users',
+    xp: 90,
+    coins: 70,
+    goal: '[Windows PowerShell] ตรวจสอบรายชื่อบัญชีผู้ใช้ทั้งหมดใน Active Directory ด้วย `Get-ADUser -Filter *`',
+    hint: 'พิมพ์: Get-ADUser -Filter *',
+    quickCmds: ['Get-ADUser -Filter *', 'Get-Service NTDS'],
+    check: (cmd) => /^get-aduser\s+-filter\s+\*$/i.test(cmd.trim())
   }
 ];
 
@@ -1269,7 +1587,247 @@ const CODEX_CHAPTERS = [
       '<strong>RTO vs RPO:</strong> RTO = เวลากู้ระบบสูงสุดที่ยอมรับได้ • RPO = ช่วงข้อมูลย้อนหลังสูงสุดที่ยอมให้สูญหายได้',
       '<strong>High Availability (HA):</strong> ใช้ Load Balancer + Redundant Servers ลด Single Point of Failure'
     ]
+  },
+  {
+    title: 'บทที่ 9: Docker, Cloud Computing & Automation',
+    points: [
+      '<strong>Docker Container:</strong> แชร์ Host Kernel เบาและบูตเร็ว • คำสั่งหลัก: <code>docker run -d -p 8080:80</code>, <code>docker ps -a</code>, <code>docker images</code> และใช้ <strong>Volume</strong> เก็บข้อมูลถาวร',
+      '<strong>Cron Job (Linux):</strong> ตั้งเวลางานอัตโนมัติ 5 ช่อง <code>นาที ชั่วโมง วันที่ เดือน วันในสัปดาห์</code> เช่น <code>0 2 * * *</code> (ตี 2 ทุกวัน)',
+      '<strong>Cloud Models:</strong> <strong>IaaS</strong> (เช่า VM/เน็ต คุม OS เอง), <strong>PaaS</strong> (วางโค้ดได้เลย), <strong>SaaS</strong> (ซอฟต์แวร์พร้อมใช้)',
+      '<strong>Reverse Proxy & Automation:</strong> ใช้ Nginx Reverse Proxy รับ HTTPS พอร์ต 443 และใช้ <strong>Ansible</strong> จัดการเซิร์ฟเวอร์จำนวนมากผ่าน SSH'
+    ]
+  },
+  {
+    title: 'บทที่ 10: Log Forensics, Performance & Incident Response',
+    points: [
+      '<strong>การตรวจ Log:</strong> Ubuntu เก็บประวัติ SSH/sudo ที่ <code>/var/log/auth.log</code> • ดูสดด้วย <code>tail -f</code> • Windows Event Viewer ID <strong>4625</strong> (ล็อกอินพลาด) / <strong>4624</strong> (ล็อกอินสำเร็จ)',
+      '<strong>SIEM:</strong> ระบบรวมศูนย์วิเคราะห์ Log และแจ้งเตือนภัยคุกคาม เช่น Wazuh, Splunk, ELK Stack',
+      '<strong>คอขวดสมรรถนะ:</strong> <code>uptime</code> ดู Load Average • <code>free -h</code> ตรวจ <strong>Swap Thrashing</strong> (RAM เต็มจนต้องสลับลงดิสก์)',
+      '<strong>Incident Response:</strong> Preparation → Identification → <strong>Containment</strong> (ตัดแยกเครือข่ายแต่เก็บหลักฐาน) → Eradication → Recovery → Lessons Learned'
+    ]
   }
+];
+
+/* ==================== 6 FIREWALL RULE MASTER PUZZLES ==================== */
+const FIREWALL_PUZZLES = [
+  {
+    id: 'fw1',
+    serverName: 'SRV-WEB-DMZ (Public Web Server)',
+    brief: 'เครื่อง Web Server สาธารณะบน Linux ต้องเปิดให้บริการเว็บทั้ง HTTP/HTTPS และให้แอดมินเข้าจัดการผ่าน SSH เท่านั้น ห้ามเปิด Telnet, SMB และ MySQL ออกสู่ภายนอก!',
+    ports: [
+      { port: '22', label: 'SSH (Linux Remote)', shouldAllow: true },
+      { port: '23', label: 'Telnet (ไม่เข้ารหัส)', shouldAllow: false },
+      { port: '80', label: 'HTTP (Web)', shouldAllow: true },
+      { port: '443', label: 'HTTPS (Secure Web)', shouldAllow: true },
+      { port: '445', label: 'SMB (Windows Share)', shouldAllow: false },
+      { port: '3306', label: 'MySQL Database', shouldAllow: false }
+    ],
+    rewardXp: 60,
+    rewardCoins: 50,
+    explain: 'Public Web Server เปิดเฉพาะ 22 (SSH), 80 (HTTP), 443 (HTTPS) ส่วนพอร์ตฐานข้อมูล 3306, SMB 445 และ Telnet 23 ต้อง DENY เสมอ!'
+  },
+  {
+    id: 'fw2',
+    serverName: 'SRV-DB-INT (Internal Database Server)',
+    brief: 'เครื่องฐานข้อมูล MySQL ภายในห้องแล็บ ต้องอนุญาตเฉพาะ SSH สำหรับดูแลระบบ และพอร์ตฐานข้อมูล MySQL เท่านั้น ปิดพอร์ตเว็บและแชร์ไฟล์ทั้งหมด',
+    ports: [
+      { port: '22', label: 'SSH (Admin)', shouldAllow: true },
+      { port: '21', label: 'FTP (File Transfer)', shouldAllow: false },
+      { port: '80', label: 'HTTP (Web)', shouldAllow: false },
+      { port: '443', label: 'HTTPS (Web)', shouldAllow: false },
+      { port: '3306', label: 'MySQL / MariaDB', shouldAllow: true },
+      { port: '3389', label: 'RDP (Windows GUI)', shouldAllow: false }
+    ],
+    rewardXp: 65,
+    rewardCoins: 55,
+    explain: 'Database Server ไม่จำเป็นต้องเปิดเว็บ (80/443) หรือ FTP/RDP ควรจำกัดเฉพาะ 22 (SSH) และ 3306 (MySQL) เฉพาะเครือข่ายภายใน'
+  },
+  {
+    id: 'fw3',
+    serverName: 'SRV-DC-01 (Windows Domain Controller)',
+    brief: 'เครื่อง Windows Server Active Directory ต้องให้บริการแปลงชื่อ DNS, ค้นหาผู้ใช้ LDAP, แชร์นโยบายผ่าน SMB และรีโมท RDP ส่วน Telnet และ FTP ต้องบล็อกทั้งหมด!',
+    ports: [
+      { port: '53', label: 'DNS (Name Resolution)', shouldAllow: true },
+      { port: '389', label: 'LDAP (Active Directory)', shouldAllow: true },
+      { port: '445', label: 'SMB (SYSVOL / Share)', shouldAllow: true },
+      { port: '3389', label: 'RDP (Windows Remote)', shouldAllow: true },
+      { port: '23', label: 'Telnet (Insecure)', shouldAllow: false },
+      { port: '21', label: 'FTP (Insecure)', shouldAllow: false }
+    ],
+    rewardXp: 70,
+    rewardCoins: 60,
+    explain: 'Windows Domain Controller ใช้พอร์ตหลักคือ 53 (DNS), 389 (LDAP), 445 (SMB) และ 3389 (RDP) โดยปิดบริการเก่าไม่ปลอดภัยอย่าง Telnet/FTP'
+  },
+  {
+    id: 'fw4',
+    serverName: 'SRV-MAIL-01 (Enterprise Mail Server)',
+    brief: 'เครื่อง Mail Server บน Linux ต้องรับ-ส่งเมลผ่าน SMTP และให้ผู้ใช้ซิงค์เมลด้วย IMAP พร้อม SSH สำหรับผู้ดูแลระบบ ปิดพอร์ตฐานข้อมูลและ Windows Share',
+    ports: [
+      { port: '22', label: 'SSH (Admin)', shouldAllow: true },
+      { port: '25', label: 'SMTP (Mail Send/Relay)', shouldAllow: true },
+      { port: '143', label: 'IMAP (Mail Sync)', shouldAllow: true },
+      { port: '23', label: 'Telnet', shouldAllow: false },
+      { port: '445', label: 'SMB', shouldAllow: false },
+      { port: '5432', label: 'PostgreSQL DB', shouldAllow: false }
+    ],
+    rewardXp: 70,
+    rewardCoins: 60,
+    explain: 'Mail Server ต้องการ 25 (SMTP) สำหรับรับส่งเมล, 143 (IMAP) สำหรับซิงค์เมล และ 22 (SSH) สำหรับแอดมิน'
+  },
+  {
+    id: 'fw5',
+    serverName: 'SRV-MON-01 (Monitoring & SIEM Log Server)',
+    brief: 'เซิร์ฟเวอร์เฝ้าระวังระบบและรวมศูนย์ Log ต้องเปิดรับ SNMP, Syslog และเว็บแดชบอร์ด HTTPS พร้อม SSH ส่วนพอร์ตอันตรายอื่นปิดหมด!',
+    ports: [
+      { port: '22', label: 'SSH (Admin)', shouldAllow: true },
+      { port: '161', label: 'SNMP (Monitoring)', shouldAllow: true },
+      { port: '514', label: 'Syslog (Central Log)', shouldAllow: true },
+      { port: '443', label: 'HTTPS (Dashboard)', shouldAllow: true },
+      { port: '23', label: 'Telnet', shouldAllow: false },
+      { port: '3389', label: 'RDP', shouldAllow: false }
+    ],
+    rewardXp: 75,
+    rewardCoins: 65,
+    explain: 'Monitoring & SIEM Server ใช้ 161 (SNMP), 514 (Syslog), 443 (HTTPS Dashboard) และ 22 (SSH)'
+  },
+  {
+    id: 'fw6',
+    serverName: 'SRV-BASTION-01 (Hardened Jump Host)',
+    brief: 'เครื่อง Bastion / Jump Host สำหรับเป็นประตูด่านเดียวให้แอดมินผ่านเข้าไปจัดการระบบภายใน ต้องเปิดเฉพาะ SSH (22) พอร์ตเดียวเท่านั้น ปิดทุกพอร์ตที่เหลือทั้งหมด!',
+    ports: [
+      { port: '22', label: 'SSH (Only Allowed Entry)', shouldAllow: true },
+      { port: '21', label: 'FTP', shouldAllow: false },
+      { port: '80', label: 'HTTP', shouldAllow: false },
+      { port: '443', label: 'HTTPS', shouldAllow: false },
+      { port: '3306', label: 'MySQL', shouldAllow: false },
+      { port: '3389', label: 'RDP', shouldAllow: false }
+    ],
+    rewardXp: 80,
+    rewardCoins: 70,
+    explain: 'Bastion / Jump Host ยึดหลัก Attack Surface น้อยที่สุด จึงเปิดเฉพาะพอร์ต 22 (SSH + Key Auth) เพียงพอร์ตเดียวเท่านั้น!'
+  }
+];
+
+/* ==================== 6 IP & SUBNET MEDIC PUZZLES ==================== */
+const SUBNET_PUZZLES = [
+  {
+    id: 'sn1',
+    title: 'เคส 1: หาจำนวน IP ใช้งานได้จริงของ Subnet /24',
+    brief: 'ห้องแล็บได้รับวงเครือข่าย 192.168.50.0/24 (Subnet Mask 255.255.255.0) — ช่วง IP ที่กำหนดให้เครื่องใช้งานได้จริง (Usable Hosts) คือข้อใด?',
+    options: [
+      '192.168.50.1 ถึง 192.168.50.254 (254 เครื่อง)',
+      '192.168.50.0 ถึง 192.168.50.255 (256 เครื่อง)',
+      '192.168.50.1 ถึง 192.168.50.126 (126 เครื่อง)',
+      '192.168.50.1 ถึง 192.168.50.62 (62 เครื่อง)'
+    ],
+    answer: 0,
+    rewardXp: 55,
+    rewardCoins: 45,
+    explain: 'สูตร Usable Hosts = 2^(32-24) - 2 = 2^8 - 2 = 254 เครื่อง (หัก .0 Network ID และ .255 Broadcast Address)'
+  },
+  {
+    id: 'sn2',
+    title: 'เคส 2: แบ่งครึ่งวงเครือข่ายด้วย Subnet /25',
+    brief: 'ฝ่ายไอทีแบ่งวง 192.168.10.0/24 ออกเป็น 2 วงย่อยด้วย /25 (Mask 255.255.255.128) วงแรกคือ 192.168.10.0/25 — Broadcast Address ของวงแรกคือ IP ใด?',
+    options: [
+      '192.168.10.127',
+      '192.168.10.128',
+      '192.168.10.255',
+      '192.168.10.63'
+    ],
+    answer: 0,
+    rewardXp: 65,
+    rewardCoins: 55,
+    explain: 'วง /25 มีขนาดบล็อกละ 128 IP: วงแรกคือ .0–.127 (Network=.0, Usable=.1–.126, Broadcast=.127) ส่วนวงที่สองเริ่มที่ .128–.255'
+  },
+  {
+    id: 'sn3',
+    title: 'เคส 3: ทำไมสองเครื่องนี้ Ping กันไม่เจอ?',
+    brief: 'เครื่อง SRV-A ใช้ IP 192.168.10.50/25 และเครื่อง SRV-B ใช้ IP 192.168.10.150/25 ต่ออยู่ Switch เดียวกันโดยไม่มี Router — เหตุใดทั้งสองเครื่องจึงติดต่อกันโดยตรงไม่ได้?',
+    options: [
+      'อยู่คนละ Subnet กัน (SRV-A อยู่วง .0–.127 ส่วน SRV-B อยู่วง .128–.255)',
+      'สายแลนสีไม่เหมือนกัน',
+      'เพราะ 192.168.10.150 เป็น Public IP',
+      'เพราะ IP ขึ้นต้นด้วย 192 ติดต่อกันไม่ได้'
+    ],
+    answer: 0,
+    rewardXp: 70,
+    rewardCoins: 60,
+    explain: 'ภายใต้ /25 ขอบเขตวงแรกสิ้นสุดที่ .127 ดังนั้น .50 และ .150 อยู่คนละ Network ต้องมี Router / Layer-3 Switch ช่วยส่งต่อข้ามวง'
+  },
+  {
+    id: 'sn4',
+    title: 'เคส 4: คัดแยก Private IP (RFC 1918)',
+    brief: 'ข้อใดต่อไปนี้เป็น "Private IP Address" ที่ใช้ภายในองค์กรได้ฟรีทั้งหมด (ไม่ชนกับ Public IP บนอินเทอร์เน็ต)?',
+    options: [
+      '10.0.0.5, 172.16.20.10, 192.168.1.100',
+      '8.8.8.8, 1.1.1.1, 203.150.10.25',
+      '169.254.12.5, 127.0.0.1, 224.0.0.1',
+      '172.64.10.1, 192.169.1.1, 11.0.0.1'
+    ],
+    answer: 0,
+    rewardXp: 60,
+    rewardCoins: 50,
+    explain: 'ช่วง Private IP (RFC 1918) คือ: Class A (10.0.0.0/8), Class B (172.16.0.0 – 172.31.255.255), และ Class C (192.168.0.0/16)'
+  },
+  {
+    id: 'sn5',
+    title: 'เคส 5: วินิจฉัย IP พิเศษ (127.0.0.1 & 169.254.x.x)',
+    brief: 'เครื่องลูกข่ายแสดง IP 169.254.88.14 ขณะที่แอดมินลอง ping 127.0.0.1 บนเครื่องแม่ข่าย — IP ทั้งสองชุดนี้หมายถึงอะไรตามลำดับ?',
+    options: [
+      'APIPA (ขอรับ IP จาก DHCP ไม่สำเร็จ) และ Loopback (ทดสอบการ์ดแลน/TCP-IP ของเครื่องตัวเอง)',
+      'Public IP ของ Google และ IP ของ Gateway',
+      'Broadcast IP และ DNS Server',
+      'IPv6 และ MAC Address'
+    ],
+    answer: 0,
+    rewardXp: 65,
+    rewardCoins: 55,
+    explain: '169.254.0.0/16 คือ APIPA ที่ OS กำหนดเองเมื่อติดต่อ DHCP Server ไม่ได้ ส่วน 127.0.0.1 (localhost) คือ Loopback สำหรับทดสอบระบบเครือข่ายภายในเครื่องเอง'
+  },
+  {
+    id: 'sn6',
+    title: 'เคส 6: ลิงก์ Point-to-Point ด้วย Subnet /30',
+    brief: 'การเชื่อมต่อระหว่าง Router 2 ตัวแบบ Point-to-Point นิยมใช้ Subnet /30 (Mask 255.255.255.252) เพื่อประหยัด IP — วง /30 มี Usable Host IP กี่หมายเลข?',
+    options: [
+      '2 หมายเลข (พอดีสำหรับปลายทาง 2 ฝั่ง)',
+      '4 หมายเลข',
+      '6 หมายเลข',
+      '30 หมายเลข'
+    ],
+    answer: 0,
+    rewardXp: 70,
+    rewardCoins: 60,
+    explain: 'สูตร Usable Hosts ของ /30 = 2^(32-30) - 2 = 2^2 - 2 = 2 หมายเลขพอดีสำหรับ Router ฝั่งซ้ายและฝั่งขวา ไม่เปลือง IP!'
+  }
+];
+
+/* ==================== 24 LIGHTNING BLITZ QUESTIONS (TRUE / FALSE SPEED RUN) ==================== */
+const BLITZ_QUESTIONS = [
+  { stmt: 'RAID 0 สามารถทนฮาร์ดดิสก์เสียได้ 1 ลูกโดยข้อมูลไม่สูญหาย', isTrue: false, fact: 'RAID 0 ทำ Striping ล้วน Fault Tolerance = 0 เสีย 1 ลูกข้อมูลหายทั้งหมด!' },
+  { stmt: 'เครื่องแม่ข่าย (Server) ควรกำหนดหมายเลข IP แบบ Static IP เสมอ', isTrue: true, fact: 'ถูกต้อง! Static IP ทำให้ IP คงที่ Client และ DNS เชื่อมต่อได้ตลอดเวลา' },
+  { stmt: 'โปรโตคอล SSH ใช้พอร์ตมาตรฐานหมายเลข 22 และมีการเข้ารหัสข้อมูล', isTrue: true, fact: 'ถูกต้อง! SSH (Port 22) เข้ารหัสข้อมูลทั้งหมด ปลอดภัยกว่า Telnet (23)' },
+  { stmt: 'Telnet (พอร์ต 23) ส่งรหัสผ่านแบบเข้ารหัส AES-256 ที่ปลอดภัยสูงมาก', isTrue: false, fact: 'ผิด! Telnet ส่งข้อมูลและรหัสผ่านเป็นข้อความธรรมดา (Plaintext) ห้ามใช้บน Server จริง' },
+  { stmt: 'บน Linux สิทธิ์ไฟล์ chmod 600 หมายถึงเฉพาะเจ้าของ (Owner) อ่านและเขียนได้เท่านั้น', isTrue: true, fact: 'ถูกต้อง! 600 = -rw------- เหมาะสำหรับ SSH Private Key และไฟล์รหัสผ่าน' },
+  { stmt: 'RAID 5 หรือ RAID 10 สามารถใช้แทนการทำ Off-site Backup ได้ 100%', isTrue: false, fact: 'ผิด! RAID ไม่ใช่ Backup เพราะหากเผลอลบไฟล์หรือโดน Ransomware ข้อมูลพังทุกดิสก์ทันที' },
+  { stmt: 'DNS (Domain Name System) ทำงานบนพอร์ตมาตรฐานหมายเลข 53', isTrue: true, fact: 'ถูกต้อง! DNS ใช้พอร์ต 53 (UDP/TCP) แปลงชื่อโดเมนเป็น IP Address' },
+  { stmt: 'DHCP ใช้กระบวนการ DORA: Discover → Offer → Request → Acknowledge', isTrue: true, fact: 'ถูกต้อง! เป็น 4 ขั้นตอนมาตรฐานในการแจก IP อัตโนมัติบนพอร์ต 67/68' },
+  { stmt: 'ไฟล์ /etc/shadow บน Linux เก็บรหัสผ่านแบบแฮชและจำกัดให้เฉพาะ root อ่านได้', isTrue: true, fact: 'ถูกต้อง! แยกจาก /etc/passwd เพื่อให้ผู้ใช้ทั่วไปไม่สามารถแอบอ่านแฮชรหัสผ่านได้' },
+  { stmt: 'คำสั่ง df -h บน Linux ใช้สำหรับลบไฟล์ขยะทั้งหมดในฮาร์ดดิสก์', isTrue: false, fact: 'ผิด! df -h (Disk Free) ใช้ตรวจสอบพื้นที่ว่างของแต่ละพาร์ติชันแบบอ่านง่าย' },
+  { stmt: 'Windows Server ใช้พอร์ต 3389 สำหรับ Remote Desktop Protocol (RDP)', isTrue: true, fact: 'ถูกต้อง! RDP ใช้พอร์ต 3389 สำหรับรีโมทหน้าจอ GUI ของ Windows' },
+  { stmt: 'บน Windows Server เมื่อ Share Permission กับ NTFS Permission รวมกัน จะยึดสิทธิ์ที่กว้างกว่าเสมอ', isTrue: false, fact: 'ผิด! Windows จะยึดสิทธิ์ที่ "เข้มงวดที่สุด (Most Restrictive)" เสมอ' },
+  { stmt: 'ECC RAM ในเครื่องแม่ข่ายช่วยตรวจจับและแก้ไขข้อผิดพลาดของบิตในหน่วยความจำอัตโนมัติ', isTrue: true, fact: 'ถูกต้อง! ลดอาการข้อมูลเพี้ยนและระบบแครชเมื่อรัน 24/7' },
+  { stmt: 'กฎ 3-2-1 Backup Rule กำหนดให้เก็บสำเนาอย่างน้อย 1 ชุดไว้นอกสถานที่ (Off-site)', isTrue: true, fact: 'ถูกต้อง! 3 ชุด • 2 ชนิดสื่อ • 1 ชุด Off-site' },
+  { stmt: 'RAID 6 สามารถทนฮาร์ดดิสก์เสียพร้อมกันได้ถึง 2 ลูก (Dual Parity)', isTrue: true, fact: 'ถูกต้อง! ใช้ดิสก์อย่างน้อย 4 ลูก ความจุใช้งานคือ (N-2)' },
+  { stmt: 'Docker Container ต้องบูตระบบปฏิบัติการ Guest OS แยกเต็มรูปแบบเหมือน VM ทุกตัว', isTrue: false, fact: 'ผิด! Container แชร์ Kernel ของ Host OS จึงเบาและเริ่มทำงานเร็วกว่า VM มาก' },
+  { stmt: 'คำสั่ง gpupdate /force บน Windows ใช้บังคับอัปเดตนโยบาย Group Policy ทันที', isTrue: true, fact: 'ถูกต้อง! ไม่ต้องรอรอบอัปเดตปกติ 90 นาที' },
+  { stmt: 'Subnet 192.168.1.0/24 มีหมายเลข IP ที่กำหนดให้เครื่องใช้งานจริงได้ 256 หมายเลข', isTrue: false, fact: 'ผิด! ใช้งานได้จริง 254 หมายเลข เพราะต้องหัก Network ID (.0) และ Broadcast (.255)' },
+  { stmt: 'โปรโตคอล NTP (พอร์ต 123) ใช้สำหรับเทียบเวลาของเครื่อง Server ทุกเครื่องให้ตรงกัน', isTrue: true, fact: 'ถูกต้อง! สำคัญมากต่อ Kerberos (AD), SSL และ Log Audit' },
+  { stmt: 'คำสั่ง chown บน Linux ใช้เปลี่ยนสิทธิ์ rwx ของไฟล์ ส่วน chmod ใช้เปลี่ยนเจ้าของไฟล์', isTrue: false, fact: 'สลับกัน! chmod เปลี่ยนสิทธิ์ rwx ส่วน chown (Change Owner) เปลี่ยนเจ้าของไฟล์' },
+  { stmt: 'DMZ คือโซนเครือข่ายกันชนสำหรับวาง Web Server สาธารณะแยกออกจากฐานข้อมูลภายใน', isTrue: true, fact: 'ถูกต้อง! ลดความเสียหายหากเครื่องสาธารณะถูกโจมตี' },
+  { stmt: 'Windows Event ID 4625 บันทึกเหตุการณ์เมื่อมีการล็อกอินไม่สำเร็จ (Failed Logon)', isTrue: true, fact: 'ถูกต้อง! ใช้ตรวจจับ Brute-Force Attack บน Windows Server ได้ดีมาก' },
+  { stmt: 'ตารางเวลา Cron "0 2 * * *" หมายถึงรันงานทุกวันเวลา 02:00 น.', isTrue: true, fact: 'ถูกต้อง! นาทีที่ 0 ชั่วโมงที่ 2 ทุกวัน ทุกเดือน ทุกวันในสัปดาห์' },
+  { stmt: 'RTO คือช่วงเวลาข้อมูลย้อนหลังสูงสุดที่ยอมให้สูญหายได้ ส่วน RPO คือเวลากู้ระบบ', isTrue: false, fact: 'สลับกัน! RTO (Time) = เวลากู้ระบบสูงสุดที่ยอมได้ • RPO (Point) = จุดข้อมูลย้อนหลังที่ยอมสูญหายได้' }
 ];
 
 /* ==================== 30 CERTIFICATION EXAM QUESTIONS (RANDOM 15) ==================== */
@@ -1303,5 +1861,15 @@ const EXAM_BANK = [
   { category: 'security', q: 'เหตุใด SSH (พอร์ต 22) จึงปลอดภัยกว่า Telnet (พอร์ต 23)?', options: ['SSH เข้ารหัสข้อมูลและรหัสผ่านทั้งหมดระหว่างรับส่ง ส่วน Telnet ส่งเป็นข้อความธรรมดา', 'Telnet ใช้ไม่ได้กับ Linux', 'SSH ไม่ต้องใช้เครือข่าย', 'Telnet ไม่มีพอร์ตมาตรฐาน'], answer: 0, explain: 'Telnet ส่งข้อมูลแบบ Plaintext เสี่ยงถูกดักจับ (Sniffing) จึงต้องใช้ SSH แทนเสมอ' },
   { category: 'security', q: 'หลักการ CIA Triad ประกอบด้วย 3 เสาหลักใดบ้าง?', options: ['Confidentiality, Integrity, Availability', 'CPU, IP, Admin', 'Cloud, Internet, App', 'Create, Insert, Alter'], answer: 0, explain: 'CIA Triad = ความลับ (Confidentiality), ความถูกต้องสมบูรณ์ (Integrity), ความพร้อมใช้งาน (Availability)' },
   { category: 'backup', q: 'ความหมายของ RTO และ RPO ในแผนกู้คืนภัยพิบัติ (Disaster Recovery) คือข้อใด?', options: ['RTO = เวลากู้ระบบสูงสุดที่ยอมได้ • RPO = ช่วงข้อมูลย้อนหลังสูงสุดที่ยอมให้หายได้', 'RTO = ขนาดดิสก์ • RPO = ความเร็วเน็ต', 'RTO = ชื่อผู้ใช้ • RPO = รหัสผ่าน', 'ทั้งสองคำหมายถึงจำนวนดิสก์ใน RAID'], answer: 0, explain: 'RTO (Recovery Time Objective) คือระยะเวลา Downtime ที่รับได้ ส่วน RPO (Recovery Point Objective) คือจุดข้อมูลที่ยอมสูญเสียได้' },
-  { category: 'backup', q: 'หากมี Full Backup วันอาทิตย์ และ Differential Backup ทุกวัน (จันทร์–พุธ) เมื่อเกิดเหตุวันพฤหัสฯ ต้องใช้กี่ชุดในการ Restore?', options: ['2 ชุด (Full วันอาทิตย์ + Differential วันพุธล่าสุด)', '4 ชุดครบทุกวัน', '1 ชุดคือ Differential วันพุธอย่างเดียว', 'กู้คืนไม่ได้เพราะไม่มี Incremental'], answer: 0, explain: 'Differential Backup เก็บข้อมูลที่เปลี่ยนทั้งหมดนับจาก Full ล่าสุด จึงใช้แค่ Full + Differential ล่าสุดเพียง 2 ชุดในการกู้คืน' }
+  { category: 'backup', q: 'หากมี Full Backup วันอาทิตย์ และ Differential Backup ทุกวัน (จันทร์–พุธ) เมื่อเกิดเหตุวันพฤหัสฯ ต้องใช้กี่ชุดในการ Restore?', options: ['2 ชุด (Full วันอาทิตย์ + Differential วันพุธล่าสุด)', '4 ชุดครบทุกวัน', '1 ชุดคือ Differential วันพุธอย่างเดียว', 'กู้คืนไม่ได้เพราะไม่มี Incremental'], answer: 0, explain: 'Differential Backup เก็บข้อมูลที่เปลี่ยนทั้งหมดนับจาก Full ล่าสุด จึงใช้แค่ Full + Differential ล่าสุดเพียง 2 ชุดในการกู้คืน' },
+  { category: 'cloud', q: 'คำสั่ง "docker run -d -p 8080:80 nginx" ออปชัน -p 8080:80 มีความหมายว่าอย่างไร?', options: ['เชื่อมโยงพอร์ต 8080 ของเครื่อง Host เข้าสู่พอร์ต 80 ภายใน Container', 'เปิดพอร์ตตั้งแต่ 80 ถึง 8080 ทั้งหมด', 'ตั้งรหัสผ่านเข้า Nginx เป็น 8080', 'จำกัดความเร็วเน็ตที่ 80 Mbps'], answer: 0, explain: 'รูปแบบ -p HostPort:ContainerPort ใช้รับทราฟฟิกจากภายนอกที่พอร์ต 8080 ส่งเข้าพอร์ต 80 ใน Container' },
+  { category: 'cloud', q: 'หากต้องการเก็บข้อมูลฐานข้อมูลใน Docker Container ให้คงอยู่ถาวรแม้จะลบและสร้าง Container ใหม่ ควรใช้อะไร?', options: ['Docker Volume (หรือ Bind Mount)', 'RAM ชั่วคราว', 'คำสั่ง docker kill', 'ไฟล์ /tmp ใน Container'], answer: 0, explain: 'Docker Volume แยกที่เก็บข้อมูลออกจาก Container ทำให้ข้อมูลไม่สูญหายเมื่ออัปเดตหรือลบ Container' },
+  { category: 'cloud', q: 'ตารางเวลา Cron Job "0 3 * * 0" บน Linux Server สั่งให้สคริปต์ทำงานเมื่อใด?', options: ['ทุกวันอาทิตย์ เวลา 03:00 น.', 'ทุกวัน เวลา 00:03 น.', 'ทุก 3 ชั่วโมงตลอดปี', 'เฉพาะวันที่ 3 ของทุกเดือน'], answer: 0, explain: 'นาที=0, ชั่วโมง=3, วันที่=*, เดือน=*, วันในสัปดาห์=0 (วันอาทิตย์) คือทุกวันอาทิตย์เวลา 03:00 น.' },
+  { category: 'cloud', q: 'บริการ Cloud ที่ให้เช่าเครื่องเสมือน (VM), ดิสก์ และเครือข่าย โดยผู้ใช้เป็นผู้ติดตั้งและดูแล OS เองจัดเป็นโมเดลใด?', options: ['IaaS (Infrastructure as a Service)', 'SaaS (Software as a Service)', 'PaaS (Platform as a Service)', 'LAN Only'], answer: 0, explain: 'IaaS (เช่น AWS EC2, Google Compute Engine) ให้โครงสร้างพื้นฐานโดยผู้ดูแลระบบควบคุม OS และซอฟต์แวร์เอง' },
+  { category: 'cloud', q: 'บทบาทใดของ Nginx ที่ใช้รับ HTTPS พอร์ต 443 จากภายนอกแล้วส่งต่อคำขอไปยังแอปภายในพอร์ต 3000/8000?', options: ['Reverse Proxy', 'DHCP Relay', 'Print Server', 'NTP Client'], answer: 0, explain: 'Reverse Proxy ช่วยรวมศูนย์ SSL/TLS, ซ่อนพอร์ตแอปภายใน และช่วยกระจายโหลดได้' },
+  { category: 'network', q: 'วงเครือข่าย 192.168.10.0/25 (Mask 255.255.255.128) มี Broadcast Address อยู่ที่หมายเลขใด?', options: ['192.168.10.127', '192.168.10.128', '192.168.10.255', '192.168.10.63'], answer: 0, explain: 'วง /25 แบ่งบล็อกละ 128 IP: วงแรกคือ .0 ถึง .127 โดย .127 คือ Broadcast Address' },
+  { category: 'forensics', q: 'ไฟล์ Log ใดบน Ubuntu Server ที่บันทึกประวัติการล็อกอิน SSH และการใช้คำสั่ง sudo?', options: ['/var/log/auth.log', '/etc/hosts', '/bin/bash', '/boot/vmlinuz'], answer: 0, explain: '/var/log/auth.log บน Ubuntu/Debian เก็บเหตุการณ์ยืนยันตัวตน SSH และ sudo (ส่วน RHEL/Rocky คือ /var/log/secure)' },
+  { category: 'forensics', q: 'บน Windows Server Event Viewer หมายเลข Event ID ใดใช้ตรวจจับการล็อกอินผิดพลาด (Failed Logon)?', options: ['Event ID 4625', 'Event ID 404', 'Event ID 80', 'Event ID 22'], answer: 0, explain: 'Event ID 4625 คือ Failed Logon (พบจำนวนมากแสดงว่าอาจโดน Brute-Force) ส่วน 4624 คือล็อกอินสำเร็จ' },
+  { category: 'forensics', q: 'คำสั่งใดบน Linux ใช้ติดตามบรรทัดใหม่ของไฟล์ Error Log แบบเรียลไทม์ (Real-time)?', options: ['tail -f /var/log/nginx/error.log', 'rm -rf /var/log/nginx', 'mkdir /var/log/nginx', 'chmod 000 /var/log/nginx'], answer: 0, explain: 'tail -f แสดงท้ายไฟล์และอัปเดตข้อความใหม่ทันทีที่ระบบเขียนลงไฟล์ Log' },
+  { category: 'forensics', q: 'ในกระบวนการรับมือเหตุการณ์ไซเบอร์ (Incident Response) ขั้นตอน "Containment" ที่ถูกต้องทันทีที่พบ Server ติดมัลแวร์คือข้อใด?', options: ['ตัดแยกเครื่องออกจากเครือข่ายเพื่อหยุดการแพร่กระจายโดยยังคงเก็บหลักฐาน Log ไว้ตรวจสอบ', 'รีบฟอร์แมตดิสก์ทิ้งทันทีโดยไม่เก็บ Log', 'ปล่อยไว้จนกว่าจะหมดสัปดาห์', 'ปิด Firewall ทุกเครื่องเพื่อเช็กสัญญาณ'], answer: 0, explain: 'Containment คือจำกัดวงความเสียหายทันทีโดยรักษาหลักฐานทางนิติวิทยา (Forensics) ไว้หาต้นตอช่องโหว่' }
 ];

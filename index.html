@@ -15,7 +15,7 @@
   <!-- ==================== GAME TITLE / AUTH GATE SCREEN ==================== -->
   <section id="titleScreen" class="title-screen no-print">
     <div class="title-card">
-      <div class="title-badge">SERVER OS RPG • EDITION 2.1 • LOGIN &amp; CLASSROOM SYSTEM</div>
+      <div class="title-badge">SERVER OS RPG • EDITION 3.0 • 24 STAGES • 18 CLI LABS • 6 MODES</div>
       <h1 class="game-logo">
         <span class="logo-main">SERVEROPS</span>
         <span class="logo-sub">DATA CENTER DEFENDER</span>
@@ -213,9 +213,9 @@
       <section id="screen-map" class="screen active">
         <div class="map-banner">
           <div>
-            <div class="sector-kicker">CAMPAIGN OVERWORLD • 6 SECTORS • 18 STAGES</div>
+            <div class="sector-kicker">CAMPAIGN OVERWORLD • 8 SECTORS • 24 STAGES • 72 STARS</div>
             <h2>🗺️ แผนที่ภารกิจศูนย์ข้อมูล (Data Center World Map)</h2>
-            <p class="muted-text">ผ่านด่านแต่ละโซนเพื่อเก็บดาว ⭐⭐⭐ สะสมเหรียญซื้อไอเทมช่วยสู้ และโค่นบอสใหญ่ <strong>Blackout Overlord</strong></p>
+            <p class="muted-text">พิชิตครบ 8 โซน (24 ด่าน + 8 บอสใหญ่) เก็บดาว ⭐⭐⭐ สะสมเหรียญซื้อไอเทม และทำภารกิจประจำวัน!</p>
           </div>
           <div class="map-controls">
             <label class="toggle-chip">
@@ -223,6 +223,15 @@
               <span>🔓 ปลดล็อกทุกด่าน (Free Play)</span>
             </label>
           </div>
+        </div>
+
+        <!-- Daily Quests Strip -->
+        <div class="daily-quests-panel">
+          <div class="daily-head">
+            <span>🎯 <strong>ภารกิจประจำวัน (Daily Quests)</strong> — ทำครบรับโบนัส XP &amp; เหรียญฟรีทุกวัน!</span>
+            <span class="stage-chip" id="dailyDateChip">วันนี้</span>
+          </div>
+          <div id="dailyQuestsGrid" class="daily-quests-grid"></div>
         </div>
 
         <div id="worldMapContainer" class="world-map-grid"></div>
@@ -321,12 +330,12 @@
         <div class="screen-header">
           <div>
             <h2>💻 CLI Hacker Arena (Linux Bash &amp; Windows PowerShell)</h2>
-            <p class="muted-text">ฝึกพิมพ์คำสั่งจริงทั้ง 2 ระบบปฏิบัติการ 14 ภารกิจ เพื่อรับ XP และเหรียญสะสม</p>
+            <p class="muted-text">ฝึกพิมพ์คำสั่งจริงทั้ง 2 ระบบปฏิบัติการ 18 ภารกิจ (รวม Docker, Cron, Log, AD) รับ XP และเหรียญสะสม</p>
           </div>
           <div class="os-switch-group">
-            <button class="btn btn-neon btn-sm os-tab active" data-os="all">ทั้งหมด (14)</button>
-            <button class="btn btn-ghost btn-sm os-tab" data-os="linux">🐧 Linux (10)</button>
-            <button class="btn btn-ghost btn-sm os-tab" data-os="windows">🪟 Windows (4)</button>
+            <button class="btn btn-neon btn-sm os-tab active" data-os="all">ทั้งหมด (18)</button>
+            <button class="btn btn-ghost btn-sm os-tab" data-os="linux">🐧 Linux (13)</button>
+            <button class="btn btn-ghost btn-sm os-tab" data-os="windows">🪟 Windows (5)</button>
           </div>
         </div>
 
@@ -375,73 +384,127 @@
         </div>
       </section>
 
-      <!-- ==================== SCREEN 4: PACKET DEFENSE ARCADE ==================== -->
+      <!-- ==================== SCREEN 4: ARCADE HUB (PACKET DEFENSE + LIGHTNING BLITZ) ==================== -->
       <section id="screen-defense" class="screen">
         <div class="screen-header">
           <div>
-            <h2>🛡️ Packet Defense Arcade (18 พอร์ตมาตรฐาน)</h2>
-            <p class="muted-text">ป้องกันเกตเวย์จากคลื่นแพ็กเก็ตเครือข่าย เลือกพอร์ตให้ทันก่อนเวลาหมด! ระวัง Boss Packet ให้คะแนน x2!</p>
+            <h2>⚡ Arcade Hub — ป้องกันพอร์ต &amp; ตอบไวสายฟ้าแลบ</h2>
+            <p class="muted-text">เลือกเล่น 2 เกมอาร์เคดสุดมันส์เพื่อเก็บ Combo, ทำลายสถิติ High Score และรับเหรียญสะสม!</p>
           </div>
           <div class="os-switch-group">
-            <button class="btn btn-neon btn-sm" id="defStartWaveBtn">⚔️ โหมดป้องกันเวฟ (Wave)</button>
-            <button class="btn btn-secondary btn-sm" id="defStartEndlessBtn">🧘 โหมดฝึกซ้อมไม่จำกัดเวลา</button>
+            <button class="btn btn-neon btn-sm arcade-tab active" data-arcade="packet">🛡️ Packet Defense (18 พอร์ต)</button>
+            <button class="btn btn-ghost btn-sm arcade-tab" data-arcade="blitz">⚡ Lightning Blitz 45s (จริง/เท็จ)</button>
           </div>
         </div>
 
-        <div class="panel defense-arena">
-          <div class="defense-hud">
-            <div class="hud-box"><span>Wave</span><strong id="defWave">1</strong></div>
-            <div class="hud-box"><span>Firewall HP</span><strong id="defHearts">💚💚💚</strong></div>
-            <div class="hud-box"><span>Score</span><strong id="defScore">0</strong></div>
-            <div class="hud-box"><span>Combo</span><strong id="defCombo">x1</strong></div>
-            <div class="hud-box"><span>High Score</span><strong id="defHigh">0</strong></div>
+        <!-- ARCADE 1: PACKET DEFENSE -->
+        <div id="arcade-packet">
+          <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-bottom:0.85rem;flex-wrap:wrap;">
+            <button class="btn btn-neon btn-sm" id="defStartWaveBtn">⚔️ โหมดป้องกันเวฟ (Wave)</button>
+            <button class="btn btn-secondary btn-sm" id="defStartEndlessBtn">🧘 โหมดฝึกซ้อมไม่จำกัดเวลา</button>
           </div>
 
-          <div id="defIntro" class="center-splash">
-            <div class="splash-emoji">🛡️🌐</div>
-            <h3>เกตเวย์ศูนย์ข้อมูลพร้อมรับมือแล้ว!</h3>
-            <p class="muted-text">คัดแยกแพ็กเก็ต 18 พอร์ตมาตรฐาน (SSH, DNS, DHCP, HTTPS, RDP, SMB, LDAP, SNMP, Syslog ฯลฯ) ยิ่งเวฟสูงแพ็กเก็ตยิ่งวิ่งเร็ว!</p>
-            <div class="splash-btns">
-              <button class="btn btn-neon btn-lg" id="defBigWaveBtn">▶ เริ่มโหมด Wave Defense</button>
-              <button class="btn btn-secondary btn-lg" id="defBigPracticeBtn">🧘 โหมดฝึกซ้อม</button>
+          <div class="panel defense-arena">
+            <div class="defense-hud">
+              <div class="hud-box"><span>Wave</span><strong id="defWave">1</strong></div>
+              <div class="hud-box"><span>Firewall HP</span><strong id="defHearts">💚💚💚</strong></div>
+              <div class="hud-box"><span>Score</span><strong id="defScore">0</strong></div>
+              <div class="hud-box"><span>Combo</span><strong id="defCombo">x1</strong></div>
+              <div class="hud-box"><span>High Score</span><strong id="defHigh">0</strong></div>
             </div>
-          </div>
 
-          <div id="defPlay" class="hidden">
-            <div class="packet-timer-track">
-              <div class="packet-timer-fill" id="defTimerBar" style="width:100%"></div>
-            </div>
-            <div class="packet-card" id="defPacketCard">
-              <div class="packet-top">
-                <span id="defPacketTag">INCOMING PACKET</span>
-                <span class="stage-chip" id="defPacketLayer">Layer</span>
+            <div id="defIntro" class="center-splash">
+              <div class="splash-emoji">🛡️🌐</div>
+              <h3>เกตเวย์ศูนย์ข้อมูลพร้อมรับมือแล้ว!</h3>
+              <p class="muted-text">คัดแยกแพ็กเก็ต 18 พอร์ตมาตรฐาน (SSH, DNS, DHCP, HTTPS, RDP, SMB, LDAP, SNMP, Syslog ฯลฯ) ยิ่งเวฟสูงแพ็กเก็ตยิ่งวิ่งเร็ว!</p>
+              <div class="splash-btns">
+                <button class="btn btn-neon btn-lg" id="defBigWaveBtn">▶ เริ่มโหมด Wave Defense</button>
+                <button class="btn btn-secondary btn-lg" id="defBigPracticeBtn">🧘 โหมดฝึกซ้อม</button>
               </div>
-              <div class="packet-prompt" id="defPacketPrompt">...</div>
-              <div class="packet-sub" id="defPacketSub"></div>
             </div>
-            <div id="defChoices" class="port-choices-grid"></div>
-            <div id="defFeedback" class="def-feedback"></div>
-          </div>
 
-          <div id="defOver" class="center-splash hidden">
-            <div class="splash-emoji">🏆</div>
-            <h3 id="defOverTitle">จบการป้องกันเกตเวย์!</h3>
-            <div class="outcome-rewards" id="defOverStats"></div>
-            <button class="btn btn-neon" id="defReplayBtn">🔄 ป้องกันอีกครั้ง</button>
+            <div id="defPlay" class="hidden">
+              <div class="packet-timer-track">
+                <div class="packet-timer-fill" id="defTimerBar" style="width:100%"></div>
+              </div>
+              <div class="packet-card" id="defPacketCard">
+                <div class="packet-top">
+                  <span id="defPacketTag">INCOMING PACKET</span>
+                  <span class="stage-chip" id="defPacketLayer">Layer</span>
+                </div>
+                <div class="packet-prompt" id="defPacketPrompt">...</div>
+                <div class="packet-sub" id="defPacketSub"></div>
+              </div>
+              <div id="defChoices" class="port-choices-grid"></div>
+              <div id="defFeedback" class="def-feedback"></div>
+            </div>
+
+            <div id="defOver" class="center-splash hidden">
+              <div class="splash-emoji">🏆</div>
+              <h3 id="defOverTitle">จบการป้องกันเกตเวย์!</h3>
+              <div class="outcome-rewards" id="defOverStats"></div>
+              <button class="btn btn-neon" id="defReplayBtn">🔄 ป้องกันอีกครั้ง</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ARCADE 2: LIGHTNING BLITZ 45s -->
+        <div id="arcade-blitz" class="hidden">
+          <div class="panel defense-arena">
+            <div class="defense-hud">
+              <div class="hud-box"><span>เวลาคงเหลือ</span><strong id="blitzTimer">45s</strong></div>
+              <div class="hud-box"><span>คะแนน</span><strong id="blitzScore">0</strong></div>
+              <div class="hud-box"><span>Combo</span><strong id="blitzCombo">x1</strong></div>
+              <div class="hud-box"><span>ตอบถูก</span><strong id="blitzCorrect">0</strong></div>
+              <div class="hud-box"><span>High Score</span><strong id="blitzHigh">0</strong></div>
+            </div>
+
+            <div id="blitzIntro" class="center-splash">
+              <div class="splash-emoji">⚡🔥</div>
+              <h3>Server OS Lightning Blitz (45 วินาที!)</h3>
+              <p class="muted-text">อ่านข้อความความรู้ Server OS แล้วตัดสินให้ไวว่า <strong>✅ จริง (TRUE)</strong> หรือ <strong>❌ เท็จ (FALSE)</strong><br />ตอบถูกได้เวลาเพิ่ม <strong>+2 วิ</strong> พร้อม Combo • ตอบผิดโดนหัก <strong>-3 วิ</strong>!</p>
+              <div class="splash-btns">
+                <button class="btn btn-neon btn-lg" id="blitzStartBtn">⚡ เริ่มโหมดสายฟ้าแลบ (45 วินาที)</button>
+              </div>
+            </div>
+
+            <div id="blitzPlay" class="hidden">
+              <div class="packet-card">
+                <div class="packet-top">
+                  <span>⚡ RAPID-FIRE STATEMENT</span>
+                  <span class="stage-chip" id="blitzCountBadge">ข้อที่ 1</span>
+                </div>
+                <div class="packet-prompt" id="blitzStatement">...</div>
+              </div>
+              <div class="blitz-btn-row">
+                <button class="blitz-choice true-btn" id="blitzTrueBtn">✅ จริง (TRUE)</button>
+                <button class="blitz-choice false-btn" id="blitzFalseBtn">❌ เท็จ (FALSE)</button>
+              </div>
+              <div id="blitzFeedback" class="def-feedback"></div>
+            </div>
+
+            <div id="blitzOver" class="center-splash hidden">
+              <div class="splash-emoji">🔥🏆</div>
+              <h3>หมดเวลา Lightning Blitz!</h3>
+              <div class="outcome-rewards" id="blitzOverStats"></div>
+              <button class="btn btn-neon" id="blitzReplayBtn">⚡ เล่นสายฟ้าแลบอีกครั้ง</button>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- ==================== SCREEN 5: PUZZLE VAULT (CHMOD + RAID GAMES) ==================== -->
+      <!-- ==================== SCREEN 5: PUZZLE VAULT (4 MINI-GAMES) ==================== -->
       <section id="screen-puzzles" class="screen">
         <div class="screen-header">
           <div>
-            <h2>🧩 Puzzle Vault — มินิเกมไขรหัสสิทธิ์ &amp; สถาปนิก RAID</h2>
-            <p class="muted-text">ฝึกคำนวณ CHMOD แบบจับมือทำและออกแบบโครงสร้าง RAID พร้อมจำลองสถานการณ์ดิสก์เสียจริง!</p>
+            <h2>🧩 Puzzle Vault — 4 มินิเกมปฏิบัติการผู้ดูแลระบบ</h2>
+            <p class="muted-text">ฝึกทักษะจริงทั้ง CHMOD, RAID, Firewall Rules และคำนวณ IP &amp; Subnet เพื่อเก็บ XP และเหรียญ!</p>
           </div>
           <div class="os-switch-group">
-            <button class="btn btn-neon btn-sm puzzle-tab active" data-ptab="chmod">🔐 CHMOD Vault Cracker</button>
-            <button class="btn btn-ghost btn-sm puzzle-tab" data-ptab="raid">💾 RAID Architect Lab</button>
+            <button class="btn btn-neon btn-sm puzzle-tab active" data-ptab="chmod">🔐 CHMOD (8)</button>
+            <button class="btn btn-ghost btn-sm puzzle-tab" data-ptab="raid">💾 RAID (6)</button>
+            <button class="btn btn-ghost btn-sm puzzle-tab" data-ptab="firewall">🧱 Firewall (6)</button>
+            <button class="btn btn-ghost btn-sm puzzle-tab" data-ptab="subnet">📡 Subnet (6)</button>
           </div>
         </div>
 
@@ -563,6 +626,55 @@
             </div>
           </div>
         </div>
+
+        <!-- Puzzle 3: Firewall Rule Master -->
+        <div id="ptab-firewall" class="puzzle-panel hidden">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>🧱 ภารกิจตั้งกฎ Firewall (Firewall Rule Master)</h3>
+              <span class="stage-chip" id="fwSolvedChip">ผ่านแล้ว 0 / 6</span>
+            </div>
+            <div class="vault-mission-box">
+              <div class="sector-kicker">TARGET SERVER: <span id="fwServerName">...</span></div>
+              <p id="fwBrief" class="vault-brief">...</p>
+              <div class="vault-nav-row">
+                <button class="btn btn-ghost btn-xs" id="fwPrevBtn">◀ ด่านก่อนหน้า</button>
+                <span class="muted-text" id="fwIndexText">ด่าน 1 / 6</span>
+                <button class="btn btn-ghost btn-xs" id="fwNextBtn">ด่านถัดไป ▶</button>
+              </div>
+            </div>
+
+            <p class="muted-text" style="margin-bottom:0.7rem;">คลิกสลับปุ่ม <strong>ALLOW (เปิดพอร์ต)</strong> หรือ <strong>DENY (บล็อกพอร์ต)</strong> ให้เหมาะกับบทบาทของ Server เครื่องนี้:</p>
+            <div id="fwRulesGrid" class="fw-rules-grid"></div>
+
+            <div style="margin-top:1rem;">
+              <button class="btn btn-neon btn-lg" id="fwTestBtn" style="width:100%;">⚡ ทดสอบทราฟฟิก &amp; ตรวจกฎ Firewall (APPLY RULES)</button>
+            </div>
+            <div id="fwFeedback" class="debrief-box hidden"></div>
+          </div>
+        </div>
+
+        <!-- Puzzle 4: IP & Subnet Medic -->
+        <div id="ptab-subnet" class="puzzle-panel hidden">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>📡 ภารกิจคำนวณ IP &amp; Subnet (Subnet Medic)</h3>
+              <span class="stage-chip" id="snSolvedChip">ผ่านแล้ว 0 / 6</span>
+            </div>
+            <div class="vault-mission-box">
+              <div class="sector-kicker" id="snTitle">เคส 1</div>
+              <p id="snBrief" class="vault-brief">...</p>
+              <div class="vault-nav-row">
+                <button class="btn btn-ghost btn-xs" id="snPrevBtn">◀ เคสก่อนหน้า</button>
+                <span class="muted-text" id="snIndexText">เคส 1 / 6</span>
+                <button class="btn btn-ghost btn-xs" id="snNextBtn">เคสถัดไป ▶</button>
+              </div>
+            </div>
+
+            <div id="snOptions" class="options-grid"></div>
+            <div id="snFeedback" class="debrief-box hidden"></div>
+          </div>
+        </div>
       </section>
 
       <!-- ==================== SCREEN 6: SYSADMIN TOOLKIT SHOP ==================== -->
@@ -584,8 +696,8 @@
       <section id="screen-codex" class="screen">
         <div class="screen-header">
           <div>
-            <h2>📖 คัมภีร์ความรู้ (8 บทเรียน) &amp; สถิติผู้เล่น</h2>
-            <p class="muted-text">ทบทวนเนื้อหาครบทุกหัวข้อของรายวิชาระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น พร้อมดูความเชี่ยวชาญรายหมวด</p>
+            <h2>📖 คัมภีร์ความรู้ (10 บทเรียน) &amp; สถิติผู้เล่น</h2>
+            <p class="muted-text">ทบทวนเนื้อหาครบทุกหัวข้อของรายวิชาระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น พร้อมดูความเชี่ยวชาญ 10 หมวด</p>
           </div>
           <button class="btn btn-ghost btn-sm" id="resetSaveBtn">🗑️ ล้างเซฟเริ่มใหม่</button>
         </div>
@@ -593,7 +705,7 @@
         <div class="two-col-grid">
           <div class="panel">
             <div class="panel-header">
-              <h3>📊 ความเชี่ยวชาญ 8 หมวดวิชา (Skill Mastery)</h3>
+              <h3>📊 ความเชี่ยวชาญ 10 หมวดวิชา (Skill Mastery)</h3>
             </div>
             <div id="analyticsContainer" class="analytics-list"></div>
           </div>
@@ -601,13 +713,13 @@
           <div class="panel">
             <div class="panel-header">
               <h3>🏆 เหรียญตราความสำเร็จ (Achievements)</h3>
-              <span class="stage-chip" id="badgeCountChip">0 / 12</span>
+              <span class="stage-chip" id="badgeCountChip">0 / 16</span>
             </div>
             <div id="badgesContainer" class="badges-grid"></div>
           </div>
         </div>
 
-        <h3 class="section-heading">📚 สรุปตำรา SysAdmin ครบ 8 บทเรียน</h3>
+        <h3 class="section-heading">📚 สรุปตำรา SysAdmin ครบ 10 บทเรียน</h3>
         <div id="codexChapters" class="codex-grid"></div>
       </section>
 
@@ -616,7 +728,7 @@
         <div class="screen-header no-print">
           <div>
             <h2>🎓 Guild Certification Exam (สอบรับใบรับรอง SysAdmin)</h2>
-            <p class="muted-text">สุ่มข้อสอบ 15 ข้อจากคลัง 30 ข้อ ครอบคลุมทั้ง 8 บทเรียน สอบผ่าน 70% ขึ้นไปรับเกียรติบัตรพิมพ์ PDF ได้ทันที!</p>
+            <p class="muted-text">สุ่มข้อสอบ 15 ข้อจากคลัง 40 ข้อ ครอบคลุมทั้ง 10 บทเรียน สอบผ่าน 70% ขึ้นไปรับเกียรติบัตรพิมพ์ PDF ได้ทันที!</p>
           </div>
         </div>
 
@@ -797,8 +909,8 @@
                   <th>ชื่อ-นามสกุล</th>
                   <th>ห้องเรียน</th>
                   <th>XP</th>
-                  <th>ดาว (/54)</th>
-                  <th>CLI (/14)</th>
+                  <th>ดาว (/72)</th>
+                  <th>CLI (/18)</th>
                   <th>Defense</th>
                   <th>สอบ (/15)</th>
                   <th>เกียรติบัตร</th>
@@ -871,7 +983,7 @@
         <span class="dock-icon">💻</span><span class="dock-label">CLI Arena</span>
       </button>
       <button class="dock-btn" data-screen="defense">
-        <span class="dock-icon">🛡️</span><span class="dock-label">ป้องกันพอร์ต</span>
+        <span class="dock-icon">⚡</span><span class="dock-label">อาร์เคด</span>
       </button>
       <button class="dock-btn" data-screen="puzzles">
         <span class="dock-icon">🧩</span><span class="dock-label">พัซเซิล</span>

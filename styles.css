@@ -1944,12 +1944,153 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   flex-wrap: wrap;
 }
 
+/* ==================== EDITION 3.0: DAILY QUESTS, BLITZ & FIREWALL ==================== */
+.daily-quests-panel {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(52, 211, 153, 0.08));
+  border: 1px solid var(--border-neon);
+  border-radius: var(--radius);
+  padding: 1rem 1.15rem;
+  margin-bottom: 1.25rem;
+}
+
+.daily-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+.daily-quests-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.daily-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.daily-card.ready {
+  border-color: var(--gold);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.25);
+}
+
+.daily-card.claimed {
+  opacity: 0.6;
+  border-color: rgba(52, 211, 153, 0.45);
+}
+
+.daily-title { font-size: 0.83rem; font-weight: 600; }
+.daily-sub { font-size: 0.73rem; color: var(--text-muted); }
+
+/* Lightning Blitz Buttons */
+.blitz-btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.blitz-choice {
+  padding: 1.35rem 1rem;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  font-family: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: #ffffff;
+  transition: transform 0.15s, filter 0.15s;
+}
+
+.blitz-choice:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.blitz-choice.true-btn {
+  background: linear-gradient(135deg, #059669, #10b981);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+}
+
+.blitz-choice.false-btn {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+}
+
+/* Firewall Rule Master */
+.fw-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.fw-rule-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  transition: border-color 0.2s;
+}
+
+.fw-rule-card.is-allow {
+  border-color: rgba(52, 211, 153, 0.55);
+  background: rgba(52, 211, 153, 0.08);
+}
+
+.fw-rule-card.is-deny {
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.06);
+}
+
+.fw-port-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--primary);
+}
+
+.fw-port-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.fw-toggle-btn {
+  min-width: 92px;
+  padding: 0.42rem 0.75rem;
+  border-radius: 9px;
+  border: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+.fw-toggle-btn.allow { background: #059669; }
+.fw-toggle-btn.deny { background: #dc2626; }
+
 /* Responsive */
 @media (max-width: 980px) {
   .world-map-grid,
   .two-col-grid,
   .cli-layout,
-  .teacher-kpi-grid {
+  .teacher-kpi-grid,
+  .daily-quests-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -1961,7 +2102,9 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   .defense-hud,
   .badges-grid,
   .podium-grid,
-  .form-grid-2 {
+  .form-grid-2,
+  .fw-rules-grid,
+  .blitz-btn-row {
     grid-template-columns: 1fr;
   }
 

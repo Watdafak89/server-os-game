@@ -12,6 +12,7 @@
   let selectedRegAvatar = '👨‍💻';
   let lbSortBy = 'xp';
   let defIntervalId = null;
+  let blitzIntervalId = null;
 
   function loadPrefs() {
     try {
@@ -43,9 +44,31 @@
       ...saved,
       playerName: currentAccount.fullName,
       inventory: { ...base.inventory, ...(saved.inventory || {}) },
-      analytics: { ...base.analytics, ...(saved.analytics || {}) }
+      analytics: { ...base.analytics, ...(saved.analytics || {}) },
+      solvedFirewall: saved.solvedFirewall || [],
+      solvedSubnet: saved.solvedSubnet || [],
+      blitzHighScore: saved.blitzHighScore || 0,
+      dailyQuests: { ...base.dailyQuests, ...(saved.dailyQuests || {}) }
     };
+    ensureTodayQuests();
     return true;
+  }
+
+  function getTodayKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function ensureTodayQuests() {
+    const today = getTodayKey();
+    if (!state.dailyQuests || state.dailyQuests.date !== today) {
+      state.dailyQuests = { date: today, battlesWon: 0, labsOrPuzzles: 0, arcadePlayed: 0, claimed: [] };
+    }
+  }
+
+  function bumpDailyQuest(field) {
+    ensureTodayQuests();
+    state.dailyQuests[field] = (state.dailyQuests[field] || 0) + 1;
+    saveState();
   }
 
   function saveState() {
@@ -131,10 +154,15 @@
     if (state.stageStars['z4_boss']) unlock('zone4_clear');
     if (state.stageStars['z5_boss']) unlock('zone5_clear');
     if (state.stageStars['z6_boss']) unlock('final_boss');
-    if (state.completedLabs.length >= 7) unlock('cli_hero');
+    if (state.stageStars['z7_boss']) unlock('zone7_clear');
+    if (state.stageStars['z8_boss']) unlock('zone8_clear');
+    if (state.completedLabs.length >= 9) unlock('cli_hero');
     if (state.completedLabs.length >= CLI_LABS.length) unlock('cli_god');
     if (state.defenseHighScore >= 1500) unlock('port_defender');
-    if (state.solvedChmod.length >= 3 && state.solvedRaid.length >= 3) unlock('puzzle_master');
+    if (state.blitzHighScore >= 1200) unlock('blitz_flash');
+    if ((state.solvedFirewall || []).length >= FIREWALL_PUZZLES.length) unlock('firewall_ace');
+    if ((state.solvedSubnet || []).length >= SUBNET_PUZZLES.length) unlock('subnet_guru');
+    if (state.solvedChmod.length >= 4 && state.solvedRaid.length >= 4) unlock('puzzle_master');
     if (state.examPassed) unlock('certified');
   }
 
@@ -323,6 +351,7 @@
   function returnToTitle() {
     SoundFX.click();
     stopDefenseTimer();
+    stopBlitzTimer();
     $('gameShell').classList.add('hidden');
     $('titleScreen').classList.remove('hidden');
     renderTitleScreen();
@@ -331,6 +360,7 @@
   function handleLogout() {
     SoundFX.click();
     stopDefenseTimer();
+    stopBlitzTimer();
     AuthSystem.logout();
     currentAccount = null;
     $('studentNameInput').value = '';
@@ -343,7 +373,10 @@
 
   function switchScreen(screenName) {
     SoundFX.click();
-    if (screenName !== 'defense') stopDefenseTimer();
+    if (screenName !== 'defense') {
+      stopDefenseTimer();
+      stopBlitzTimer();
+    }
     if (screenName === 'teacher' && currentAccount?.role !== 'teacher') {
       showToast('⚠️ หน้านี้สงวนสิทธิ์เฉพาะบัญชีครูผู้สอนเท่านั้น');
       return;
@@ -368,9 +401,12 @@
     if (screenName === 'puzzles') {
       renderChmodVault();
       renderRaidChallenge();
+      renderFirewallPuzzle();
+      renderSubnetPuzzle();
     }
     if (screenName === 'defense') {
       $('defHigh').textContent = state.defenseHighScore.toLocaleString();
+      $('blitzHigh').textContent = (state.blitzHighScore || 0).toLocaleString();
     }
     if (screenName === 'leaderboard') {
       renderLeaderboard();
@@ -387,7 +423,52 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /* ==================== SCREEN 1: CAMPAIGN WORLD MAP ==================== */
+  /* ==================== DAILY QUESTS & SCREEN 1: CAMPAIGN WORLD MAP ==================== */
+  const DAILY_DEFS = [
+    { id: 'dq_battle', field: 'battlesWon', target: 1, title: '⚔️ ชนะด่านแคมเปญ 1 ด่าน', xp: 60, coins: 50 },
+    { id: 'dq_lab', field: 'labsOrPuzzles', target: 1, title: '🧩 ผ่าน CLI หรือพัซเซิล 1 ข้อ', xp: 55, coins: 45 },
+    { id: 'dq_arcade', field: 'arcadePlayed', target: 1, title: '⚡ เล่นโหมดอาร์เคด 1 รอบ', xp: 50, coins: 45 }
+  ];
+
+  function renderDailyQuests() {
+    ensureTodayQuests();
+    $('dailyDateChip').textContent = new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+    const grid = $('dailyQuestsGrid');
+    grid.innerHTML = '';
+
+    DAILY_DEFS.forEach((dq) => {
+      const cur = Math.min(dq.target, state.dailyQuests[dq.field] || 0);
+      const claimed = (state.dailyQuests.claimed || []).includes(dq.id);
+      const ready = cur >= dq.target && !claimed;
+
+      const card = document.createElement('div');
+      card.className = `daily-card ${ready ? 'ready' : ''} ${claimed ? 'claimed' : ''}`;
+      card.innerHTML = `
+        <div>
+          <div class="daily-title">${dq.title}</div>
+          <div class="daily-sub">ความคืบหน้า: ${cur}/${dq.target} • +${dq.xp}XP 💰${dq.coins}</div>
+        </div>
+        ${claimed
+          ? '<span class="stage-chip">✓ รับแล้ว</span>'
+          : (ready
+            ? `<button class="btn btn-neon btn-xs dq-claim" data-id="${dq.id}">🎁 รับรางวัล</button>`
+            : '<span class="muted-text" style="font-size:0.74rem;">ยังไม่ครบ</span>')}
+      `;
+
+      const claimBtn = card.querySelector('.dq-claim');
+      if (claimBtn) {
+        claimBtn.addEventListener('click', () => {
+          state.dailyQuests.claimed.push(dq.id);
+          grantRewards(dq.xp, dq.coins);
+          SoundFX.coin();
+          showToast(`🎁 รับรางวัลภารกิจประจำวัน +${dq.xp} XP และ +💰${dq.coins}!`);
+          renderDailyQuests();
+        });
+      }
+      grid.appendChild(card);
+    });
+  }
+
   function isStageUnlocked(flatIdx) {
     if (state.freePlay || flatIdx === 0) return true;
     const prevStage = ALL_STAGES_FLAT[flatIdx - 1];
@@ -395,6 +476,7 @@
   }
 
   function renderWorldMap() {
+    renderDailyQuests();
     $('mapFreePlayToggle').checked = state.freePlay;
     const container = $('worldMapContainer');
     container.innerHTML = '';
@@ -641,6 +723,7 @@
       const earnedCoins = baseCoins * mult;
       if (state.xpBoostActive) state.xpBoostActive = false;
 
+      bumpDailyQuest('battlesWon');
       grantRewards(earnedXp, earnedCoins);
 
       $('outcomeEmoji').textContent = battle.stage.isBoss ? '👑🏆' : '🏆';
@@ -1031,6 +1114,34 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
       else appendTerm(`id: '${u}': no such user`, 'term-line-err');
     } else if (bin === 'cat' && parts[1] === '/etc/passwd') {
       appendTerm(simEnv.users.map((u, i) => `${u}:x:${i === 0 ? 0 : 1000 + i}:1000::/home/${u}:/bin/bash`).join('\n'));
+    } else if (bin === 'docker') {
+      if (parts[1] === 'ps') {
+        appendTerm(
+`CONTAINER ID   IMAGE          COMMAND                  STATUS          PORTS                  NAMES
+a8f2c91b40e1   nginx:alpine   "/docker-entrypoint.…"   Up 4 days       0.0.0.0:8080->80/tcp   web-frontend
+3d19e7c2b0a4   mysql:8.0      "docker-entrypoint.s…"   Up 4 days       3306/tcp               db-core`, 'term-line-ok');
+      } else if (parts[1] === 'images') {
+        appendTerm(`REPOSITORY   TAG      IMAGE ID       SIZE\nnginx        alpine   4f380adfc10f   41.2MB\nmysql        8.0      91c95931e552   578MB`);
+      } else {
+        appendTerm('รองรับคำสั่ง: docker ps, docker ps -a, docker images', 'term-line-muted');
+      }
+    } else if (bin === 'apt') {
+      if (parts[1] === 'update') {
+        appendTerm(`Hit:1 http://archive.ubuntu.com/ubuntu noble InRelease\nGet:2 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]\nReading package lists... Done\nAll security repositories are up to date.`, 'term-line-ok');
+      } else if (parts[1] === 'upgrade') {
+        appendTerm('0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.', 'term-line-ok');
+      } else {
+        appendTerm('รองรับคำสั่ง: apt update, apt upgrade', 'term-line-muted');
+      }
+    } else if (bin === 'crontab') {
+      appendTerm('# m h  dom mon dow   command\n0 2 * * * /opt/backup.sh\n*/15 * * * * /usr/local/bin/healthcheck.sh', 'term-line-ok');
+    } else if (bin === 'tail') {
+      appendTerm(
+`2026/11/21 16:05:11 [notice] nginx worker process 1422 started
+2026/11/21 16:06:04 [info] GET /index.html HTTP/2.0 200 OK
+2026/11/21 16:07:30 [warn] rate limit triggered for 45.12.88.9`, 'term-line-ok');
+    } else if (bin === 'uptime') {
+      appendTerm(' 16:08:12 up 42 days,  5:19,  1 user,  load average: 0.34, 0.41, 0.38');
     } else {
       appendTerm(`ไม่พบคำสั่ง '${parts[0]}' — พิมพ์ 'help' เพื่อดูคำสั่งที่รองรับ`, 'term-line-err');
     }
@@ -1041,6 +1152,7 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
       if (!state.completedLabs.includes(item.id) && item.check(cmd, simEnv)) {
         state.completedLabs.push(item.id);
         recordAnalytics(item.category, true);
+        bumpDailyQuest('labsOrPuzzles');
         grantRewards(item.xp, item.coins);
         SoundFX.coin();
         appendTerm(`\n✅ [MISSION COMPLETE] ผ่าน "${item.title}" (+${item.xp} XP, +💰${item.coins})\n`, 'term-line-ok');
@@ -1278,6 +1390,7 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
     const xp = Math.min(160, Math.round(def.score / 25));
     const coins = Math.min(130, Math.round(def.score / 30));
     if (def.score > state.defenseHighScore) state.defenseHighScore = def.score;
+    bumpDailyQuest('arcadePlayed');
     grantRewards(xp, coins);
 
     $('defOverStats').innerHTML = `
@@ -1293,6 +1406,143 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
   $('defStartEndlessBtn').addEventListener('click', () => startDefense(false));
   $('defBigPracticeBtn').addEventListener('click', () => startDefense(false));
   $('defReplayBtn').addEventListener('click', () => startDefense(def.waveMode));
+
+  /* ==================== ARCADE 2: LIGHTNING BLITZ 45s ==================== */
+  let blitz = {
+    timeLeft: 45,
+    score: 0,
+    combo: 1,
+    correct: 0,
+    count: 0,
+    queue: [],
+    current: null,
+    locked: false
+  };
+
+  function stopBlitzTimer() {
+    clearInterval(blitzIntervalId);
+    blitzIntervalId = null;
+  }
+
+  function updateBlitzHud() {
+    $('blitzTimer').textContent = `${Math.max(0, blitz.timeLeft)}s`;
+    $('blitzScore').textContent = blitz.score.toLocaleString();
+    $('blitzCombo').textContent = `x${blitz.combo}`;
+    $('blitzCorrect').textContent = blitz.correct;
+    $('blitzHigh').textContent = Math.max(state.blitzHighScore || 0, blitz.score).toLocaleString();
+  }
+
+  function startBlitz() {
+    SoundFX.bossAlert();
+    stopBlitzTimer();
+    blitz = {
+      timeLeft: 45,
+      score: 0,
+      combo: 1,
+      correct: 0,
+      count: 0,
+      queue: shuffle(BLITZ_QUESTIONS),
+      current: null,
+      locked: false
+    };
+    $('blitzIntro').classList.add('hidden');
+    $('blitzOver').classList.add('hidden');
+    $('blitzPlay').classList.remove('hidden');
+    $('blitzFeedback').textContent = '';
+
+    updateBlitzHud();
+    nextBlitzQuestion();
+
+    blitzIntervalId = setInterval(() => {
+      blitz.timeLeft -= 1;
+      updateBlitzHud();
+      if (blitz.timeLeft <= 0) finishBlitz();
+    }, 1000);
+  }
+
+  function nextBlitzQuestion() {
+    blitz.locked = false;
+    if (!blitz.queue.length) blitz.queue = shuffle(BLITZ_QUESTIONS);
+    blitz.current = blitz.queue.pop();
+    blitz.count += 1;
+    $('blitzCountBadge').textContent = `ข้อที่ ${blitz.count}`;
+    $('blitzStatement').textContent = blitz.current.stmt;
+    $('blitzTrueBtn').disabled = false;
+    $('blitzFalseBtn').disabled = false;
+  }
+
+  function answerBlitz(choiceBool) {
+    if (blitz.locked || blitz.timeLeft <= 0) return;
+    blitz.locked = true;
+    $('blitzTrueBtn').disabled = true;
+    $('blitzFalseBtn').disabled = true;
+
+    const ok = choiceBool === blitz.current.isTrue;
+    const fb = $('blitzFeedback');
+    if (ok) {
+      SoundFX.attack();
+      const gained = 80 * blitz.combo;
+      blitz.score += gained;
+      blitz.correct += 1;
+      blitz.combo = Math.min(6, blitz.combo + 1);
+      blitz.timeLeft = Math.min(60, blitz.timeLeft + 2);
+      fb.style.color = 'var(--accent)';
+      fb.textContent = `⚡ ถูกต้อง! +${gained} คะแนน (+2 วิ) — ${blitz.current.fact}`;
+    } else {
+      SoundFX.wrong();
+      blitz.combo = 1;
+      blitz.timeLeft = Math.max(0, blitz.timeLeft - 3);
+      fb.style.color = 'var(--danger)';
+      fb.textContent = `❌ ผิด! (-3 วิ) — ${blitz.current.fact}`;
+    }
+
+    updateBlitzHud();
+    if (blitz.timeLeft <= 0) {
+      setTimeout(finishBlitz, 500);
+    } else {
+      setTimeout(nextBlitzQuestion, 850);
+    }
+  }
+
+  function finishBlitz() {
+    stopBlitzTimer();
+    $('blitzPlay').classList.add('hidden');
+    $('blitzOver').classList.remove('hidden');
+
+    const xp = Math.min(150, Math.round(blitz.score / 18));
+    const coins = Math.min(120, Math.round(blitz.score / 22));
+    if (blitz.score > (state.blitzHighScore || 0)) state.blitzHighScore = blitz.score;
+    bumpDailyQuest('arcadePlayed');
+    grantRewards(xp, coins);
+    SoundFX.levelUp();
+
+    $('blitzOverStats').innerHTML = `
+      <div class="reward-box"><span>คะแนนรวม</span><strong>${blitz.score.toLocaleString()}</strong></div>
+      <div class="reward-box"><span>ตอบถูกทั้งหมด</span><strong>${blitz.correct} ข้อ</strong></div>
+      <div class="reward-box"><span>สถิติสูงสุด</span><strong>${state.blitzHighScore.toLocaleString()}</strong></div>
+      <div class="reward-box"><span>รางวัล</span><strong>+${xp}XP • 💰${coins}</strong></div>
+    `;
+  }
+
+  $('blitzStartBtn').addEventListener('click', startBlitz);
+  $('blitzReplayBtn').addEventListener('click', startBlitz);
+  $('blitzTrueBtn').addEventListener('click', () => answerBlitz(true));
+  $('blitzFalseBtn').addEventListener('click', () => answerBlitz(false));
+
+  document.querySelectorAll('.arcade-tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      SoundFX.click();
+      stopDefenseTimer();
+      stopBlitzTimer();
+      const target = btn.dataset.arcade;
+      document.querySelectorAll('.arcade-tab').forEach((b) => {
+        b.className = `btn btn-sm arcade-tab ${b.dataset.arcade === target ? 'btn-neon active' : 'btn-ghost'}`;
+      });
+      $('arcade-packet').classList.toggle('hidden', target !== 'packet');
+      $('arcade-blitz').classList.toggle('hidden', target !== 'blitz');
+      $('blitzHigh').textContent = (state.blitzHighScore || 0).toLocaleString();
+    });
+  });
 
   /* ==================== SCREEN 5: PUZZLE VAULT (CHMOD + RAID) ==================== */
   let vaultIdx = 0;
@@ -1356,6 +1606,7 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
       fb.classList.add('ok');
       if (!state.solvedChmod.includes(p.id)) {
         state.solvedChmod.push(p.id);
+        bumpDailyQuest('labsOrPuzzles');
         grantRewards(p.rewardXp, p.rewardCoins);
         SoundFX.coin();
         fb.innerHTML = `<strong>🔓 ปลดล็อกตู้เซฟสำเร็จ!</strong> <code>chmod ${p.target} ${p.file}</code> (${octalToSym(p.target)}) • รับ +${p.rewardXp} XP และ +💰${p.rewardCoins}`;
@@ -1461,6 +1712,7 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
       fb.classList.add('ok');
       if (!state.solvedRaid.includes(ch.id)) {
         state.solvedRaid.push(ch.id);
+        bumpDailyQuest('labsOrPuzzles');
         grantRewards(55, 45);
         SoundFX.coin();
         fb.innerHTML = `<strong>✅ ออกแบบผ่านฉลุย!</strong> ${ch.explain} • รับ +55 XP และ +💰45`;
@@ -1500,6 +1752,154 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
     renderRaidVisual(btn.dataset.raid, 0);
   }));
 
+  /* Puzzle 3: Firewall Rule Master */
+  let fwIdx = 0;
+  let fwUserState = {};
+
+  function renderFirewallPuzzle() {
+    const p = FIREWALL_PUZZLES[fwIdx];
+    const solved = (state.solvedFirewall || []).includes(p.id);
+    $('fwSolvedChip').textContent = `ผ่านแล้ว ${(state.solvedFirewall || []).length} / ${FIREWALL_PUZZLES.length}`;
+    $('fwServerName').textContent = `${p.serverName} ${solved ? '✅' : ''}`;
+    $('fwBrief').textContent = p.brief;
+    $('fwIndexText').textContent = `ด่าน ${fwIdx + 1} / ${FIREWALL_PUZZLES.length}`;
+    $('fwFeedback').classList.add('hidden');
+
+    fwUserState = {};
+    const grid = $('fwRulesGrid');
+    grid.innerHTML = '';
+
+    p.ports.forEach((item) => {
+      fwUserState[item.port] = false; // Default Deny!
+      const row = document.createElement('div');
+      row.className = 'fw-rule-card is-deny';
+      row.innerHTML = `
+        <div>
+          <div class="fw-port-num">Port ${item.port}</div>
+          <div class="fw-port-label">${item.label}</div>
+        </div>
+        <button type="button" class="fw-toggle-btn deny">DENY ✕</button>
+      `;
+      const btn = row.querySelector('button');
+      btn.addEventListener('click', () => {
+        SoundFX.click();
+        fwUserState[item.port] = !fwUserState[item.port];
+        const allow = fwUserState[item.port];
+        row.className = `fw-rule-card ${allow ? 'is-allow' : 'is-deny'}`;
+        btn.className = `fw-toggle-btn ${allow ? 'allow' : 'deny'}`;
+        btn.textContent = allow ? 'ALLOW ✓' : 'DENY ✕';
+      });
+      grid.appendChild(row);
+    });
+  }
+
+  $('fwTestBtn').addEventListener('click', () => {
+    const p = FIREWALL_PUZZLES[fwIdx];
+    const mistakes = p.ports.filter((item) => Boolean(fwUserState[item.port]) !== item.shouldAllow);
+    const fb = $('fwFeedback');
+    fb.classList.remove('hidden', 'ok', 'err');
+
+    if (mistakes.length === 0) {
+      recordAnalytics('security', true);
+      fb.classList.add('ok');
+      if (!state.solvedFirewall.includes(p.id)) {
+        state.solvedFirewall.push(p.id);
+        bumpDailyQuest('labsOrPuzzles');
+        grantRewards(p.rewardXp, p.rewardCoins);
+        SoundFX.coin();
+        fb.innerHTML = `<strong>🛡️ ปราการ Firewall สมบูรณ์แบบ!</strong> ${p.explain} • รับ +${p.rewardXp} XP และ +💰${p.rewardCoins}`;
+      } else {
+        SoundFX.correct();
+        fb.innerHTML = `<strong>🛡️ กฎ Firewall ถูกต้อง 100%!</strong> ${p.explain}`;
+      }
+      $('fwSolvedChip').textContent = `ผ่านแล้ว ${state.solvedFirewall.length} / ${FIREWALL_PUZZLES.length}`;
+      $('fwServerName').textContent = `${p.serverName} ✅`;
+    } else {
+      SoundFX.wrong();
+      recordAnalytics('security', false);
+      const hintPorts = mistakes.map((m) => `Port ${m.port} (${m.label})`).join(', ');
+      fb.classList.add('err');
+      fb.innerHTML = `<strong>❌ ทดสอบทราฟฟิกไม่ผ่าน!</strong> พบกฎที่ยังไม่ถูกต้อง ${mistakes.length} จุด ได้แก่: <strong>${hintPorts}</strong> — ลองปรับ Allow/Deny ใหม่แล้วกดทดสอบอีกครั้ง!`;
+    }
+  });
+
+  $('fwPrevBtn').addEventListener('click', () => {
+    SoundFX.click();
+    fwIdx = (fwIdx - 1 + FIREWALL_PUZZLES.length) % FIREWALL_PUZZLES.length;
+    renderFirewallPuzzle();
+  });
+
+  $('fwNextBtn').addEventListener('click', () => {
+    SoundFX.click();
+    fwIdx = (fwIdx + 1) % FIREWALL_PUZZLES.length;
+    renderFirewallPuzzle();
+  });
+
+  /* Puzzle 4: IP & Subnet Medic */
+  let snIdx = 0;
+
+  function renderSubnetPuzzle() {
+    const p = SUBNET_PUZZLES[snIdx];
+    const solved = (state.solvedSubnet || []).includes(p.id);
+    $('snSolvedChip').textContent = `ผ่านแล้ว ${(state.solvedSubnet || []).length} / ${SUBNET_PUZZLES.length}`;
+    $('snTitle').textContent = `${p.title} ${solved ? '✅' : ''}`;
+    $('snBrief').textContent = p.brief;
+    $('snIndexText').textContent = `เคส ${snIdx + 1} / ${SUBNET_PUZZLES.length}`;
+    $('snFeedback').classList.add('hidden');
+
+    const opts = $('snOptions');
+    opts.innerHTML = '';
+    const keys = ['A', 'B', 'C', 'D'];
+    p.options.forEach((text, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerHTML = `<span class="opt-key">${keys[i]}</span><span>${text}</span>`;
+      btn.addEventListener('click', () => {
+        const fb = $('snFeedback');
+        fb.classList.remove('hidden', 'ok', 'err');
+        opts.querySelectorAll('.option-btn').forEach((b, idx) => {
+          b.disabled = true;
+          if (idx === p.answer) b.classList.add('correct');
+        });
+        if (i === p.answer) {
+          recordAnalytics('network', true);
+          fb.classList.add('ok');
+          if (!state.solvedSubnet.includes(p.id)) {
+            state.solvedSubnet.push(p.id);
+            bumpDailyQuest('labsOrPuzzles');
+            grantRewards(p.rewardXp, p.rewardCoins);
+            SoundFX.coin();
+            fb.innerHTML = `<strong>📡 คำนวณถูกต้อง!</strong> ${p.explain} • รับ +${p.rewardXp} XP และ +💰${p.rewardCoins}`;
+          } else {
+            SoundFX.correct();
+            fb.innerHTML = `<strong>📡 ถูกต้อง!</strong> ${p.explain}`;
+          }
+          $('snSolvedChip').textContent = `ผ่านแล้ว ${state.solvedSubnet.length} / ${SUBNET_PUZZLES.length}`;
+          $('snTitle').textContent = `${p.title} ✅`;
+        } else {
+          SoundFX.wrong();
+          btn.classList.add('wrong');
+          recordAnalytics('network', false);
+          fb.classList.add('err');
+          fb.innerHTML = `<strong>❌ ยังไม่ถูกต้อง</strong> — ${p.explain}`;
+        }
+      });
+      opts.appendChild(btn);
+    });
+  }
+
+  $('snPrevBtn').addEventListener('click', () => {
+    SoundFX.click();
+    snIdx = (snIdx - 1 + SUBNET_PUZZLES.length) % SUBNET_PUZZLES.length;
+    renderSubnetPuzzle();
+  });
+
+  $('snNextBtn').addEventListener('click', () => {
+    SoundFX.click();
+    snIdx = (snIdx + 1) % SUBNET_PUZZLES.length;
+    renderSubnetPuzzle();
+  });
+
   document.querySelectorAll('.puzzle-tab').forEach((btn) => {
     btn.addEventListener('click', () => {
       SoundFX.click();
@@ -1507,8 +1907,9 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
       document.querySelectorAll('.puzzle-tab').forEach((b) => {
         b.className = `btn btn-sm puzzle-tab ${b.dataset.ptab === target ? 'btn-neon active' : 'btn-ghost'}`;
       });
-      $('ptab-chmod').classList.toggle('hidden', target !== 'chmod');
-      $('ptab-raid').classList.toggle('hidden', target !== 'raid');
+      ['chmod', 'raid', 'firewall', 'subnet'].forEach((t) => {
+        $(`ptab-${t}`).classList.toggle('hidden', target !== t);
+      });
     });
   });
 
@@ -1743,12 +2144,15 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
 
     $('lbSyncCloudBtn').classList.toggle('hidden', !AuthSystem.getCloudUrl());
 
+    const maxStars = ALL_STAGES_FLAT.length * 3;
+    const maxLabs = CLI_LABS.length;
+
     // Top 3 Podium
     const podium = $('lbPodium');
     podium.innerHTML = '';
     const medals = ['🥇 อันดับ 1', '🥈 อันดับ 2', '🥉 อันดับ 3'];
     accounts.slice(0, 3).forEach((entry, idx) => {
-      const metricStr = lbSortBy === 'stars' ? `⭐ ${entry.m.stars}/54`
+      const metricStr = lbSortBy === 'stars' ? `⭐ ${entry.m.stars}/${maxStars}`
         : lbSortBy === 'defense' ? `🛡️ ${entry.m.defense.toLocaleString()}`
         : lbSortBy === 'exam' ? `🎓 ${entry.m.exam}/15`
         : `⚡ ${entry.m.xp.toLocaleString()} XP`;
@@ -1777,8 +2181,8 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
         <td>${entry.m.avatar} <strong>${entry.acc.fullName}</strong> ${isMe ? '<span class="stage-chip">คุณ</span>' : ''}</td>
         <td>${entry.acc.classroom || '-'}</td>
         <td><strong>${entry.m.xp.toLocaleString()} XP</strong> <span class="muted-text">(LV.${entry.m.rank.level})</span></td>
-        <td>⭐ ${entry.m.stars}/54</td>
-        <td>💻 ${entry.m.labs}/14</td>
+        <td>⭐ ${entry.m.stars}/${maxStars}</td>
+        <td>💻 ${entry.m.labs}/${maxLabs}</td>
         <td>${entry.m.defense.toLocaleString()}</td>
         <td>${entry.m.exam}/15 ${entry.m.passed ? '✅' : ''}</td>
       `;
@@ -1835,10 +2239,13 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
     const avgStars = count ? (allStudents.reduce((s, x) => s + x.m.stars, 0) / count).toFixed(1) : '0.0';
     const passedCert = allStudents.filter((x) => x.m.passed).length;
 
+    const maxStars = ALL_STAGES_FLAT.length * 3;
+    const maxLabs = CLI_LABS.length;
+
     $('teacherKpis').innerHTML = `
       <div class="kpi-card"><span>นักศึกษาทั้งหมด</span><strong>${count} คน</strong></div>
       <div class="kpi-card"><span>ค่าเฉลี่ย XP</span><strong>${avgXp.toLocaleString()} XP</strong></div>
-      <div class="kpi-card"><span>ค่าเฉลี่ยดาวแคมเปญ</span><strong>⭐ ${avgStars} / 54</strong></div>
+      <div class="kpi-card"><span>ค่าเฉลี่ยดาวแคมเปญ</span><strong>⭐ ${avgStars} / ${maxStars}</strong></div>
       <div class="kpi-card"><span>สอบผ่านรับเกียรติบัตร</span><strong>🎓 ${passedCert} / ${count}</strong></div>
     `;
 
@@ -1871,8 +2278,8 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
           <td>${m.avatar} <strong>${acc.fullName}</strong></td>
           <td>${acc.classroom || '-'}</td>
           <td><strong>${m.xp.toLocaleString()}</strong></td>
-          <td>⭐ ${m.stars}/54</td>
-          <td>💻 ${m.labs}/14</td>
+          <td>⭐ ${m.stars}/${maxStars}</td>
+          <td>💻 ${m.labs}/${maxLabs}</td>
           <td>${m.defense.toLocaleString()}</td>
           <td>${m.exam}/15</td>
           <td>${m.passed ? '<span class="role-badge">ผ่าน ✓</span>' : '<span class="muted-text">ยังไม่ผ่าน</span>'}</td>

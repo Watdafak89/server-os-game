@@ -108,7 +108,17 @@ const AuthSystem = (() => {
       completedLabs: [],
       solvedChmod: [],
       solvedRaid: [],
+      solvedFirewall: [],
+      solvedSubnet: [],
       defenseHighScore: 0,
+      blitzHighScore: 0,
+      dailyQuests: {
+        date: '',
+        battlesWon: 0,
+        labsOrPuzzles: 0,
+        arcadePlayed: 0,
+        claimed: []
+      },
       examBestScore: 0,
       examPassed: false,
       unlockedBadges: [],
@@ -120,7 +130,9 @@ const AuthSystem = (() => {
         users: { correct: 0, total: 0 },
         cli: { correct: 0, total: 0 },
         security: { correct: 0, total: 0 },
-        backup: { correct: 0, total: 0 }
+        backup: { correct: 0, total: 0 },
+        cloud: { correct: 0, total: 0 },
+        forensics: { correct: 0, total: 0 }
       }
     };
   }
@@ -702,8 +714,8 @@ const AuthSystem = (() => {
 
     const header = [
       'รหัสนักศึกษา', 'ชื่อ-นามสกุล', 'ห้องเรียน', 'XP รวม',
-      'ดาวแคมเปญ (เต็ม 54)', 'แล็บ CLI (เต็ม 14)', 'Packet Defense สูงสุด',
-      'คะแนนสอบสูงสุด (เต็ม 15)', 'เกียรติบัตร', 'เหรียญตรา', 'อัปเดตล่าสุด'
+      'ดาวแคมเปญ (เต็ม 72)', 'แล็บ CLI (เต็ม 18)', 'Packet Defense สูงสุด',
+      'Lightning Blitz สูงสุด', 'คะแนนสอบสูงสุด (เต็ม 15)', 'เกียรติบัตร', 'เหรียญตรา', 'อัปเดตล่าสุด'
     ];
 
     const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
@@ -725,6 +737,7 @@ const AuthSystem = (() => {
         stars,
         labs,
         g.defenseHighScore || 0,
+        g.blitzHighScore || 0,
         g.examBestScore || 0,
         g.examPassed ? 'ผ่าน' : 'ยังไม่ผ่าน',
         badges,
