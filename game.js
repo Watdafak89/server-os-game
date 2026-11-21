@@ -853,18 +853,20 @@
       }
       box.classList.remove('hidden');
       box.innerHTML = `
-        <span class="zone-peers-lbl">👥 เพื่อนในโซนนี้ (${peersList.length} คน):</span>
-        ${peersList.map((p) => `
-          <span class="zone-peer-chip">
-            ${avatarHtml(p.avatar, 'hud-fit')}
-            <span class="peer-chip-name">${p.acc.fullName}</span>
-            <span class="peer-chip-star">⭐${p.totalStars}</span>
-          </span>
-        `).join('')}
+        <div class="zone-peers-lbl">👥 เพื่อนในโซนนี้ (${peersList.length} คน):</div>
+        <div class="zone-peers-rows">
+          ${peersList.map((p) => `
+            <div class="zone-peer-line">
+              <span class="peer-av-1cm">${avatarHtml(p.avatar, 'hud-fit')}</span>
+              <span class="peer-chip-name">${p.acc.fullName}</span>
+              <span class="peer-chip-star">⭐${p.totalStars}</span>
+            </div>
+          `).join('')}
+        </div>
       `;
     }
 
-    // 2. Render clickable RO Region Pins (10 per continent) + Organized Classmate Avatars & Names
+    // 2. Render clickable RO Region Pins (10 per continent) + 1cm x 1cm Avatar & Name per line
     const hasWarpPass = (state.inventory?.warp_pass || 0) > 0;
     continentEntries.forEach(({ zone, zIdx }) => {
       const unlocked = isZoneUnlocked(zIdx);
@@ -878,32 +880,30 @@
 
       let peerLabelHtml = '';
       let peerPopoverHtml = '';
-      if (peersHere.length === 1) {
-        const p = peersHere[0];
+      if (peersHere.length > 0) {
+        const shownOnPin = peersHere.slice(0, 2);
+        const extraOnPin = peersHere.length - shownOnPin.length;
         peerLabelHtml = `
-          <div class="ro-pin-peer-tag">
-            <span class="peer-mini-av">${avatarHtml(p.avatar, 'hud-fit')}</span>
-            <span class="ro-peer-tag-name">${shortPeerName(p.acc.fullName)}</span>
+          <div class="ro-pin-peers-rows">
+            ${shownOnPin.map((p) => `
+              <div class="ro-pin-peer-row">
+                <span class="peer-av-1cm">${avatarHtml(p.avatar, 'hud-fit')}</span>
+                <span class="ro-peer-tag-name">${shortPeerName(p.acc.fullName)}</span>
+              </div>
+            `).join('')}
+            ${extraOnPin > 0 ? `<div class="ro-pin-peer-more">👥 + อีก ${extraOnPin} คน (ชี้เพื่อดูทั้งหมด)</div>` : ''}
           </div>
         `;
-      } else if (peersHere.length > 1) {
-        const firstP = peersHere[0];
-        const popPos = zone.mapY < 34 ? 'pop-bottom' : 'pop-top';
-        peerLabelHtml = `
-          <div class="ro-pin-peer-tag multi">
-            <span class="ro-pin-peer-stack">
-              ${peersHere.slice(0, 3).map((p) => `<span class="peer-mini-av">${avatarHtml(p.avatar, 'hud-fit')}</span>`).join('')}
-            </span>
-            <span class="ro-peer-tag-name">${shortPeerName(firstP.acc.fullName)} +${peersHere.length - 1}</span>
-          </div>
-        `;
+      }
+      if (peersHere.length > 1) {
+        const popPos = zone.mapY < 38 ? 'pop-bottom' : 'pop-top';
         peerPopoverHtml = `
           <div class="ro-pin-peer-popover ${popPos}">
             <div class="pop-head">👥 เพื่อนในโซนนี้ (${peersHere.length} คน)</div>
             <div class="pop-grid">
               ${peersHere.slice(0, 8).map((p) => `
                 <div class="pop-row">
-                  <span class="pop-av">${avatarHtml(p.avatar, 'hud-fit')}</span>
+                  <span class="peer-av-1cm">${avatarHtml(p.avatar, 'hud-fit')}</span>
                   <span class="pop-name">${p.acc.fullName}</span>
                   <span class="pop-star">⭐${p.totalStars}</span>
                 </div>
@@ -1130,14 +1130,15 @@
       }).join('');
 
       const zonePeers = peerSnap.othersByZone[zone.id] || [];
-      const visiblePeers = zonePeers.slice(0, 6);
-      const hiddenPeers = zonePeers.slice(6);
-      const renderPeerChip = (p) => `
-        <span class="zone-peer-chip">
-          ${avatarHtml(p.avatar, 'hud-fit')}
+      const visiblePeers = zonePeers.slice(0, 4);
+      const hiddenPeers = zonePeers.slice(4);
+      const renderPeerLine = (p) => `
+        <div class="zone-peer-line">
+          <span class="peer-av-1cm">${avatarHtml(p.avatar, 'hud-fit')}</span>
           <span class="peer-chip-name">${p.acc.fullName}</span>
+          ${p.acc.classroom && p.acc.classroom !== '-' ? `<span class="peer-chip-class">${p.acc.classroom}</span>` : ''}
           <span class="peer-chip-star">⭐${p.totalStars}</span>
-        </span>
+        </div>
       `;
       const zonePeersHtml = zonePeers.length
         ? `<div class="zone-peers-strip">
@@ -1145,9 +1146,9 @@
               <span class="zone-peers-lbl">👥 เพื่อนที่อยู่โซนนี้ (${zonePeers.length} คน)</span>
               ${hiddenPeers.length ? `<button type="button" class="btn btn-ghost btn-xs toggle-extra-peers-btn">ดูทั้งหมด (+${hiddenPeers.length} คน) ▾</button>` : ''}
             </div>
-            <div class="zone-peers-chips">
-              ${visiblePeers.map(renderPeerChip).join('')}
-              ${hiddenPeers.length ? `<span class="extra-peers-wrap hidden">${hiddenPeers.map(renderPeerChip).join('')}</span>` : ''}
+            <div class="zone-peers-rows">
+              ${visiblePeers.map(renderPeerLine).join('')}
+              ${hiddenPeers.length ? `<div class="extra-peers-wrap hidden">${hiddenPeers.map(renderPeerLine).join('')}</div>` : ''}
             </div>
           </div>`
         : '';
