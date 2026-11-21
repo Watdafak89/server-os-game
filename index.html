@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=5.3" />
+  <link rel="stylesheet" href="styles.css?v=5.4" />
 </head>
 <body>
   <div class="cyber-bg" aria-hidden="true"></div>
@@ -45,21 +45,18 @@
         </div>
       </div>
 
-      <!-- Auth Gate (Student ID Login / Teacher Login) -->
+      <!-- Auth Gate (Student ID Login) -->
       <div id="authGate" class="auth-panel">
-        <div class="auth-tabs">
-          <button type="button" class="auth-tab active" id="tabStudentBtn" data-auth-tab="student">🎓 นักศึกษา (รหัสนักศึกษา)</button>
-          <button type="button" class="auth-tab" id="tabTeacherBtn" data-auth-tab="teacher">👨‍🏫 ครูผู้สอน (Teacher)</button>
-        </div>
+        <div class="auth-single-head">🎓 เข้าสู่ระบบด้วยรหัสนักศึกษา (Student ID)</div>
 
         <div id="authErrorBox" class="auth-error hidden"></div>
         <div id="authInfoBox" class="info-note hidden" style="margin-bottom:0.85rem;"></div>
 
-        <!-- TAB 1: Student ID Login (Primary Classroom Flow) -->
+        <!-- Student ID Login (Primary Classroom Flow) -->
         <form id="studentLoginForm" class="auth-form">
           <div class="form-field">
             <label for="stuIdInput">รหัสนักศึกษา (Student ID)</label>
-            <input type="text" id="stuIdInput" class="game-input left-input" placeholder="กรอกรหัสนักศึกษา เช่น 67010001 หรือ student01" required autocomplete="username" />
+            <input type="text" id="stuIdInput" class="game-input left-input" placeholder="กรอกรหัสนักศึกษา เช่น 67010001" required autocomplete="username" />
           </div>
 
           <!-- Shown automatically if this Student ID has a password set -->
@@ -89,64 +86,7 @@
           </div>
 
           <button type="submit" class="btn btn-neon btn-lg" id="stuSubmitBtn" style="width:100%;">🚀 เข้าสู่ระบบด้วยรหัสนักศึกษา</button>
-
-          <div class="demo-login-bar">
-            <span class="muted-text">หรือทดลองใช้งานด่วน:</span>
-            <div class="demo-btns">
-              <button type="button" class="btn btn-secondary btn-xs" id="demoStudentBtn">🎓 ทดลองเข้าเป็น student01</button>
-              <button type="button" class="btn btn-secondary btn-xs" id="demoTeacherBtn">👨‍🏫 ทดลองเข้าเป็นครูผู้สอน</button>
-            </div>
-          </div>
         </form>
-
-        <!-- TAB 2: Teacher Login & Teacher Registration -->
-        <div id="teacherAuthWrap" class="hidden">
-          <form id="loginForm" class="auth-form">
-            <div class="form-field">
-              <label for="loginUsername">ชื่อผู้ใช้ครูผู้สอน (Username)</label>
-              <input type="text" id="loginUsername" class="game-input left-input" placeholder="เช่น teacher" required autocomplete="username" />
-            </div>
-            <div class="form-field">
-              <label for="loginPassword">รหัสผ่าน (Password)</label>
-              <input type="password" id="loginPassword" class="game-input left-input" placeholder="กรอกรหัสผ่าน" required autocomplete="current-password" />
-            </div>
-            <button type="submit" class="btn btn-neon btn-lg" style="width:100%;">🔓 เข้าสู่ระบบครูผู้สอน</button>
-            <div style="text-align:center;margin-top:0.3rem;">
-              <button type="button" class="btn btn-ghost btn-xs" id="showTeacherRegBtn">📝 สมัครบัญชีครูผู้สอนใหม่ (ต้องใช้รหัสครู)</button>
-            </div>
-          </form>
-
-          <form id="registerForm" class="auth-form hidden">
-            <div class="form-grid-2">
-              <div class="form-field">
-                <label for="regUsername">ชื่อผู้ใช้ครู (Username) *</label>
-                <input type="text" id="regUsername" class="game-input left-input" placeholder="เช่น kru_somchai" required />
-              </div>
-              <div class="form-field">
-                <label for="regTeacherCode">รหัสยืนยันครูผู้สอน *</label>
-                <input type="text" id="regTeacherCode" class="game-input left-input" placeholder="TEACHER2026" required />
-              </div>
-            </div>
-            <div class="form-field">
-              <label for="regFullName">ชื่อ-นามสกุลอาจารย์ผู้สอน *</label>
-              <input type="text" id="regFullName" class="game-input left-input" placeholder="เช่น อ.สมศักดิ์ วิชาการ" required />
-            </div>
-            <div class="form-grid-2">
-              <div class="form-field">
-                <label for="regPassword">รหัสผ่าน (อย่างน้อย 4 ตัว) *</label>
-                <input type="password" id="regPassword" class="game-input left-input" placeholder="ตั้งรหัสผ่าน" required />
-              </div>
-              <div class="form-field">
-                <label for="regConfirm">ยืนยันรหัสผ่าน *</label>
-                <input type="password" id="regConfirm" class="game-input left-input" placeholder="พิมพ์รหัสผ่านอีกครั้ง" required />
-              </div>
-            </div>
-            <button type="submit" class="btn btn-neon btn-lg" style="width:100%;">✨ สมัครบัญชีครูผู้สอน</button>
-            <div style="text-align:center;margin-top:0.3rem;">
-              <button type="button" class="btn btn-ghost btn-xs" id="backTeacherLoginBtn">← กลับหน้าเข้าสู่ระบบครู</button>
-            </div>
-          </form>
-        </div>
       </div>
 
       <div class="title-footer-bar">
@@ -1412,16 +1352,16 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="cloud-config.js?v=5.3"></script>
-  <script src="audio.js?v=5.3"></script>
-  <script src="data.js?v=5.3"></script>
-  <script src="anime-avatars.js?v=5.3"></script>
-  <script src="zones-expansion.js?v=5.3"></script>
-  <script src="codex-data.js?v=5.3"></script>
-  <script src="codex-expansion.js?v=5.3"></script>
-  <script src="auth.js?v=5.3"></script>
-  <script src="vbox-sim.js?v=5.3"></script>
-  <script src="anime-sprites.js?v=5.3"></script>
-  <script src="game.js?v=5.3"></script>
+  <script src="cloud-config.js?v=5.4"></script>
+  <script src="audio.js?v=5.4"></script>
+  <script src="data.js?v=5.4"></script>
+  <script src="anime-avatars.js?v=5.4"></script>
+  <script src="zones-expansion.js?v=5.4"></script>
+  <script src="codex-data.js?v=5.4"></script>
+  <script src="codex-expansion.js?v=5.4"></script>
+  <script src="auth.js?v=5.4"></script>
+  <script src="vbox-sim.js?v=5.4"></script>
+  <script src="anime-sprites.js?v=5.4"></script>
+  <script src="game.js?v=5.4"></script>
 </body>
 </html>

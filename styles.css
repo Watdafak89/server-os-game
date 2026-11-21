@@ -1804,6 +1804,18 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   background: #f8fafc;
 }
 
+.auth-single-head {
+  padding: 0.65rem 0.9rem;
+  border-radius: 10px;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  font-size: 0.94rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+}
+
 .auth-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;

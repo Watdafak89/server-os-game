@@ -493,15 +493,12 @@ const AuthSystem = (() => {
 
     const acc = loadAccounts()[cleanId] || null;
     if (!acc) return { ok: true, exists: false, studentId: cleanId };
-    if (acc.role === 'teacher') {
-      return { ok: false, error: 'บัญชีนี้เป็นบัญชีครูผู้สอน กรุณาเข้าสู่ระบบที่แท็บ "👨‍🏫 ครูผู้สอน"' };
-    }
     return {
       ok: true,
       exists: true,
       studentId: cleanId,
       account: acc,
-      requiresPassword: Boolean(acc.passwordRequired)
+      requiresPassword: Boolean(acc.passwordRequired || acc.role === 'teacher')
     };
   }
 
@@ -514,7 +511,7 @@ const AuthSystem = (() => {
 
     if (check.exists) {
       const acc = check.account;
-      if (acc.passwordRequired) {
+      if (acc.passwordRequired || acc.role === 'teacher') {
         if (!password) {
           return { ok: false, needPassword: true, account: acc, error: 'บัญชีนี้ตั้งรหัสผ่านไว้ กรุณากรอกรหัสผ่าน' };
         }
