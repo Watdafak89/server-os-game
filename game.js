@@ -117,6 +117,17 @@
     return copy;
   }
 
+  function randomizeQuestionChoices(q) {
+    if (!q || !Array.isArray(q.options) || q.options.length < 2) return q;
+    const indexed = q.options.map((text, idx) => ({ text, isCorrect: idx === q.answer }));
+    const shuffled = shuffle(indexed);
+    return {
+      ...q,
+      options: shuffled.map((o) => o.text),
+      answer: shuffled.findIndex((o) => o.isCorrect)
+    };
+  }
+
   function getTotalStars() {
     return Object.values(state.stageStars).reduce((sum, s) => sum + s, 0);
   }
@@ -1312,8 +1323,11 @@
       activeRoZoneId = stage.zoneId;
     }
 
+    const randomizedQuestions = (stage.questions || []).map(randomizeQuestionChoices);
+
     battle = {
       stage,
+      questions: randomizedQuestions,
       qIdx: 0,
       playerHp: 3,
       maxPlayerHp: 3,
@@ -1380,8 +1394,8 @@
   function renderBattleQuestion() {
     battle.answered = false;
     battle.hintUsedThisQ = false;
-    const q = battle.stage.questions[battle.qIdx];
-    $('battleStepPill').textContent = `Wave ${battle.qIdx + 1} / ${battle.stage.questions.length}`;
+    const q = battle.questions[battle.qIdx];
+    $('battleStepPill').textContent = `Wave ${battle.qIdx + 1} / ${battle.questions.length}`;
     $('battleContext').textContent = q.context;
     $('battleQuestion').textContent = q.q;
 
@@ -1414,7 +1428,7 @@
   function handleBattleAnswer(selectedIdx, btn) {
     if (battle.answered) return;
     battle.answered = true;
-    const q = battle.stage.questions[battle.qIdx];
+    const q = battle.questions[battle.qIdx];
     const isCorrect = selectedIdx === q.answer;
     recordAnalytics(battle.stage.category, isCorrect);
 
@@ -1427,7 +1441,7 @@
     const debrief = $('battleDebrief');
     debrief.classList.remove('hidden', 'ok', 'err');
 
-    const dmgPerHit = Math.ceil(battle.maxEnemyHp / battle.stage.questions.length);
+    const dmgPerHit = Math.ceil(battle.maxEnemyHp / battle.questions.length);
 
     if (isCorrect) {
       SoundFX.attack();
@@ -1494,7 +1508,7 @@
 
     if (battle.playerHp <= 0) {
       nextBtn.textContent = 'สรุปผลการต่อสู้';
-    } else if (battle.qIdx === battle.stage.questions.length - 1) {
+    } else if (battle.qIdx === battle.questions.length - 1) {
       nextBtn.textContent = 'ปิดฉากและรับรางวัล 🏆';
     } else {
       nextBtn.textContent = 'ลุยเวฟถัดไป ⚡';
@@ -1563,7 +1577,7 @@
 
   $('battleNextBtn').addEventListener('click', () => {
     SoundFX.click();
-    if (battle.playerHp <= 0 || battle.qIdx >= battle.stage.questions.length - 1) {
+    if (battle.playerHp <= 0 || battle.qIdx >= battle.questions.length - 1) {
       finishBattle();
     } else {
       battle.qIdx += 1;
@@ -1592,7 +1606,7 @@
     if (state.inventory.hint <= 0 || battle.hintUsedThisQ || battle.answered) return;
     state.inventory.hint -= 1;
     battle.hintUsedThisQ = true;
-    const q = battle.stage.questions[battle.qIdx];
+    const q = battle.questions[battle.qIdx];
     const wrongIndices = shuffle([0, 1, 2, 3].filter((i) => i !== q.answer)).slice(0, 2);
     $('battleOptions').querySelectorAll('.option-btn').forEach((btn) => {
       if (wrongIndices.includes(Number(btn.dataset.idx))) {
@@ -3270,7 +3284,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     }
 
     SoundFX.bossAlert();
-    examQs = shuffle(EXAM_BANK).slice(0, EXAM_QUESTION_COUNT);
+    examQs = shuffle(EXAM_BANK).slice(0, EXAM_QUESTION_COUNT).map(randomizeQuestionChoices);
     examIdx = 0;
     examAns = [];
     examPick = null;
