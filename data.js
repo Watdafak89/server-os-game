@@ -1,420 +1,1086 @@
-/* Educational Curriculum Data for: รายวิชาระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น */
+/* ServerOps: Data Center Defender — Full RPG Curriculum & Game Data */
 
 const CATEGORIES = {
-  fundamentals: 'พื้นฐาน Server OS & ฮาร์ดแวร์',
-  network: 'เครือข่าย พอร์ต และบริการหลัก',
+  fundamentals: 'พื้นฐาน Server OS & สถาปัตยกรรม',
+  hardware: 'ฮาร์ดแวร์ Server, VM & Container',
+  storage: 'ระบบจัดเก็บข้อมูล RAID & File System',
+  network: 'เครือข่าย พอร์ต DNS & DHCP',
   users: 'ผู้ใช้ กลุ่ม สิทธิ์ & Active Directory',
-  cli: 'คำสั่งจัดการระบบ (CLI / Terminal)',
-  security: 'ความปลอดภัย Firewall & Backup'
+  cli: 'คำสั่งจัดการระบบ (Linux & Windows CLI)',
+  security: 'ความปลอดภัย Firewall, SSH & Logs',
+  backup: 'การสำรองข้อมูล & กู้คืนภัยพิบัติ (DR)'
 };
 
+const AVATARS = ['👨‍💻', '👩‍💻', '🤖', '🦊', '🛡️', '⚡'];
+
 const RANKS = [
-  { minXp: 0, title: 'SysAdmin ฝึกหัด' },
-  { minXp: 200, title: 'Junior Server Technician' },
-  { minXp: 450, title: 'System Administrator' },
-  { minXp: 750, title: 'Senior Infrastructure Admin' },
-  { minXp: 1100, title: 'Data Center Architect' }
+  { minXp: 0, title: 'Rookie Technician' },
+  { minXp: 250, title: 'Junior SysAdmin' },
+  { minXp: 600, title: 'Server Operator' },
+  { minXp: 1100, title: 'Senior Systems Engineer' },
+  { minXp: 1700, title: 'Cloud & Security Specialist' },
+  { minXp: 2400, title: 'Grand Data Center Architect' }
+];
+
+const SHOP_ITEMS = [
+  {
+    id: 'shield',
+    icon: '🛡️',
+    name: 'UPS Power Shield',
+    price: 60,
+    desc: 'สร้างเกราะป้องกันความเสียหาย 1 ครั้งเมื่อตอบผิดในฉากต่อสู้ (ไม่เสีย Server HP)'
+  },
+  {
+    id: 'hint',
+    icon: '💡',
+    name: 'NOVA-OS AI Scan',
+    price: 50,
+    desc: 'สแกนตัดตัวเลือกที่ผิดออก 2 ข้อทันทีในฉากต่อสู้ (50/50)'
+  },
+  {
+    id: 'heal',
+    icon: '💊',
+    name: 'Hot-Swap Repair Kit',
+    price: 75,
+    desc: 'เปลี่ยนอะไหล่ด่วน ฟื้นฟู Server HP กลับมาเต็มหลอดทันทีระหว่างสู้บอส'
+  },
+  {
+    id: 'boost',
+    icon: '⚡',
+    name: 'Overclock XP Boost',
+    price: 90,
+    desc: 'เปิดใช้งานคูณ XP และเหรียญ x2 เมื่อชนะด่านแคมเปญถัดไป'
+  }
 ];
 
 const BADGES = [
-  { id: 'first_mission', emoji: '🛡️', name: 'ผู้พิทักษ์เซิร์ฟเวอร์', desc: 'ผ่านภารกิจจำลองครั้งแรก' },
-  { id: 'all_missions', emoji: '👑', name: 'เจ้าแห่งศูนย์ข้อมูล', desc: 'ผ่านภารกิจจำลองครบทั้ง 8 ด่าน' },
-  { id: 'cli_novice', emoji: '⌨️', name: 'จอมยุทธ์ Terminal', desc: 'สำเร็จแล็บ CLI อย่างน้อย 4 แล็บ' },
-  { id: 'cli_master', emoji: '💻', name: 'ปรมาจารย์ Linux CLI', desc: 'สำเร็จแล็บ CLI ครบทั้ง 8 แล็บ' },
-  { id: 'port_ace', emoji: '⚡', name: 'นักคัดแยกพอร์ตไวแสง', desc: 'ทำคะแนน Port Rush ได้ตั้งแต่ 1,000 ขึ้นไป' },
-  { id: 'certified', emoji: '🎓', name: 'Certified SysAdmin', desc: 'สอบวัดความรู้ผ่านเกณฑ์ 70% ขึ้นไป' }
+  { id: 'first_blood', emoji: '⚔️', name: 'ภารกิจแรกสำเร็จ', desc: 'ชนะด่านในแคมเปญครั้งแรก' },
+  { id: 'zone1_clear', emoji: '🖥️', name: 'ผู้เชี่ยวชาญฮาร์ดแวร์', desc: 'พิชิตบอสโซน 1 (Hardware & Core)' },
+  { id: 'zone2_clear', emoji: '🌐', name: 'เจ้าแห่งเครือข่าย', desc: 'พิชิตบอสโซน 2 (Network Hub)' },
+  { id: 'zone3_clear', emoji: '🔐', name: 'ผู้พิทักษ์สิทธิ์', desc: 'พิชิตบอสโซน 3 (Identity Vault)' },
+  { id: 'zone4_clear', emoji: '⌨️', name: 'จอมยุทธ์ Dual-OS', desc: 'พิชิตบอสโซน 4 (Command Deck)' },
+  { id: 'zone5_clear', emoji: '🛡️', name: 'ปราการเหล็กไซเบอร์', desc: 'พิชิตบอสโซน 5 (Defense Bunker)' },
+  { id: 'final_boss', emoji: '👑', name: 'ผู้กอบกู้ศูนย์ข้อมูล', desc: 'โค่น Final Boss: Blackout Overlord' },
+  { id: 'cli_hero', emoji: '💻', name: 'แฮกเกอร์สายขาว CLI', desc: 'ผ่านแล็บ CLI อย่างน้อย 7 แล็บ' },
+  { id: 'cli_god', emoji: '🚀', name: 'ปรมาจารย์ CLI ครบสูตร', desc: 'ผ่านแล็บ Linux & Windows ครบทั้ง 14 แล็บ' },
+  { id: 'port_defender', emoji: '⚡', name: 'แนวป้องกันแพ็กเก็ต', desc: 'ทำคะแนน Packet Defense ถึง 1,500' },
+  { id: 'puzzle_master', emoji: '🧩', name: 'ยอดนักไขปริศนา', desc: 'ผ่านทั้ง CHMOD Vault และ RAID Challenge อย่างน้อย 3 ด่าน' },
+  { id: 'certified', emoji: '🎓', name: 'Certified SysAdmin', desc: 'สอบผ่าน Guild Exam ตั้งแต่ 70% ขึ้นไป' }
 ];
 
-/* ==================== 8 INCIDENT MISSIONS (2 STEPS EACH) ==================== */
-const MISSIONS = [
+/* ==================== 6 CAMPAIGN ZONES (18 STAGES = 42 QUESTIONS) ==================== */
+const CAMPAIGN_ZONES = [
   {
-    id: 'm1',
-    title: 'ด่าน 1: วางโครงสร้างเครื่องแม่ข่ายใหม่',
-    category: 'fundamentals',
-    difficulty: 'เริ่มต้น',
-    xp: 80,
-    summary: 'วิทยาลัยกำลังจัดตั้งระบบเครือข่ายห้องปฏิบัติการคอมพิวเตอร์ 60 เครื่อง ต้องเลือกสถาปัตยกรรมและฮาร์ดแวร์ที่เหมาะสม',
-    steps: [
+    id: 'z1',
+    code: 'ZONE 01',
+    name: 'Hardware & Server Core',
+    subtitle: 'พื้นฐาน Server OS, ฮาร์ดแวร์, Virtualization และ RAID',
+    themeColor: '#38bdf8',
+    icon: '🖥️',
+    stages: [
       {
-        context: 'ผู้บริหารต้องการให้จัดเก็บบัญชีผู้ใช้และไฟล์งานไว้ที่ส่วนกลาง บริหารจัดการความปลอดภัยได้จากจุดเดียว รองรับเครื่องลูกข่าย 60 เครื่อง',
-        question: 'สถาปัตยกรรมเครือข่ายแบบใดเหมาะสมที่สุดสำหรับองค์กรนี้?',
-        options: [
-          'Peer-to-Peer (P2P) เพราะทุกเครื่องมีสิทธิ์เท่ากันและไม่ต้องใช้เครื่องแม่ข่าย',
-          'Client-Server เพราะมีเครื่องแม่ข่ายจัดการสิทธิ์ ข้อมูล และบริการจากส่วนกลางได้',
-          'Standalone Network เพราะไม่ต้องเชื่อมต่อเครือข่ายจึงปลอดภัยที่สุด',
-          'Personal Area Network (PAN) เชื่อมต่อผ่าน Bluetooth ระหว่างห้องเรียน'
-        ],
-        answer: 1,
-        explanation: 'ระบบ Client-Server เหมาะกับองค์กรที่มีเครื่องจำนวนมาก (มากกว่า 10 เครื่องขึ้นไป) เพราะรวมศูนย์การจัดการบัญชีผู้ใช้ ความปลอดภัย การสำรองข้อมูล และบริการเครือข่ายไว้ที่ Server'
+        id: 'z1_s1',
+        title: '1-1: ปฐมบท Client-Server',
+        category: 'fundamentals',
+        isBoss: false,
+        enemy: { name: 'Legacy P2P Drone', sprite: '🤖', hp: 100 },
+        dialogue: 'NOVA-OS: ยินดีต้อนรับ SysAdmin ใหม่! ห้องแล็บ 60 เครื่องกำลังจะเปลี่ยนจาก P2P เป็นระบบศูนย์กลาง ช่วยออกแบบสถาปัตยกรรมที!',
+        xp: 70,
+        coins: 45,
+        questions: [
+          {
+            context: 'องค์กรมีคอมพิวเตอร์ 80 เครื่อง ต้องการควบคุมบัญชีผู้ใช้ นโยบายความปลอดภัย และการสำรองไฟล์จากจุดเดียว',
+            q: 'สถาปัตยกรรมเครือข่ายแบบใดเหมาะสมที่สุด?',
+            options: [
+              'Peer-to-Peer (P2P) เพราะไม่ต้องตั้งรหัสผ่าน',
+              'Client-Server เพราะมีเครื่องแม่ข่ายรวมศูนย์การจัดการและให้บริการ',
+              'Workgroup อิสระแยกกัน 80 เครื่องโดยไม่เชื่อมสายแลน',
+              'Bluetooth Mesh เชื่อมต่อทีละคู่'
+            ],
+            answer: 1,
+            explain: 'ระบบ Client-Server รองรับองค์กรขนาดกลาง-ใหญ่ รวมศูนย์การยืนยันตัวตน (Authentication), สิทธิ์การใช้งาน, การแชร์ไฟล์ และบริการเครือข่ายไว้ที่ Server'
+          },
+          {
+            context: 'ผู้ดูแลระบบต้องเลือกระบบปฏิบัติการสำหรับเครื่องแม่ข่ายเว็บโอเพนซอร์สที่เสถียร ฟรี ไม่มีค่าลิขสิทธิ์ และรองรับ Long Term Support (LTS)',
+            q: 'ระบบปฏิบัติการคู่ใดเป็น Linux Server OS ยอดนิยมในองค์กร?',
+            options: [
+              'Windows 11 Home และ macOS Sonoma',
+              'Ubuntu Server LTS และ Rocky Linux / RHEL',
+              'Android TV และ iPadOS',
+              'MS-DOS 6.22 และ Windows ME'
+            ],
+            answer: 1,
+            explain: 'Ubuntu Server LTS และตระกูล RHEL (Red Hat Enterprise Linux / Rocky Linux / AlmaLinux) เป็น Linux Server OS มาตรฐานอุตสาหกรรม ส่วนฝั่ง Microsoft คือ Windows Server'
+          }
+        ]
       },
       {
-        context: 'เมื่อเลือกซื้อฮาร์ดแวร์สำหรับเครื่อง Server ที่ต้องเปิดทำงานตลอด 24 ชั่วโมง 7 วัน (24/7)',
-        question: 'คุณสมบัติฮาร์ดแวร์คู่ใดที่เป็นจุดเด่นสำคัญของเครื่องแม่ข่าย (Server) ต่างจาก PC ทั่วไป?',
-        options: [
-          'การ์ดจอเล่นเกม RGB และระบบระบายความร้อนด้วยน้ำแบบเปิด',
-          'ECC RAM (ตรวจจับและแก้ไขข้อผิดพลาดหน่วยความจำ) และ Redundant Power Supply (แหล่งจ่ายไฟสำรอง)',
-          'ลำโพงรอบทิศทาง 7.1 และจอภาพความถี่ 240Hz',
-          'แบตเตอรี่ลิเธียมในตัวเหมือนโน้ตบุ๊ก และพอร์ต HDMI 4 ช่อง'
-        ],
-        answer: 1,
-        explanation: 'เครื่องแม่ข่ายเน้นเสถียรภาพ (Reliability) และความพร้อมใช้งานสูง (High Availability) จึงใช้ ECC RAM ลดอาการจอฟ้า/ข้อมูลเพี้ยน และ Redundant PSU เพื่อไม่ให้เครื่องดับเมื่อเพาเวอร์ซัพพลายตัวหนึ่งเสีย'
+        id: 'z1_s2',
+        title: '1-2: ฮาร์ดแวร์ 24/7 & Virtualization',
+        category: 'hardware',
+        isBoss: false,
+        enemy: { name: 'Overheat Gremlin', sprite: '🔥', hp: 100 },
+        dialogue: 'ผอ.เก่ง: เครื่อง Server ของเราต้องรัน 24 ชั่วโมงห้ามดับ! แถมต้องรันหลายบริการพร้อมกันบนเครื่องจริงเครื่องเดียว',
+        xp: 80,
+        coins: 55,
+        questions: [
+          {
+            context: 'ในห้อง Data Center จริง มักพบคุณสมบัติฮาร์ดแวร์เฉพาะทางที่ไม่มีในเครื่อง PC บ้านทั่วไป',
+            q: 'คู่ฮาร์ดแวร์ใดช่วยป้องกัน "ข้อมูลในแรมเพี้ยน" และ "เครื่องดับเมื่อเพาเวอร์ซัพพลายเสีย 1 ตัว"?',
+            options: [
+              'ECC RAM และ Redundant Power Supply (PSU คู่)',
+              'การ์ดจอ RGB และพัดลมเคส LED',
+              'แบตเตอรี่ลิเธียม และซาวด์การ์ด 7.1',
+              'SSD M.2 1 ตัว และจอ 144Hz'
+            ],
+            answer: 0,
+            explain: 'ECC (Error-Correcting Code) RAM ตรวจแก้บิตผิดพลาดในหน่วยความจำอัตโนมัติ และ Redundant PSU จ่ายไฟสำรองสลับทันทีหากเพาเวอร์ซัพพลายตัวหลักเสีย'
+          },
+          {
+            context: 'ฝ่ายไอทีซื้อ Server จริงแรง ๆ 1 เครื่อง (CPU 64 Core, RAM 256 GB) และต้องการแบ่งรัน Web Server, AD Server และ DB Server แยก OS กันอย่างมีประสิทธิภาพสูงสุด',
+            q: 'เทคโนโลยีใดที่ติดตั้งลงบนฮาร์ดแวร์โดยตรง (Bare-Metal) เพื่อสร้างเครื่องเสมือน (VM) หลายเครื่อง?',
+            options: [
+              'Type-1 Hypervisor เช่น VMware ESXi, Proxmox VE หรือ Microsoft Hyper-V',
+              'เว็บเบราว์เซอร์ Google Chrome เปิดหลายแท็บ',
+              'โปรแกรมบีบอัดไฟล์ WinRAR',
+              'การลง Windows ซ้ำในโฟลเดอร์เดียวกัน'
+            ],
+            answer: 0,
+            explain: 'Type-1 (Bare-Metal) Hypervisor รันตรงบนฮาร์ดแวร์โดยไม่ต้องผ่าน Host OS ทำให้มีประสิทธิภาพและเสถียรภาพสูงกว่า Type-2 (เช่น VirtualBox) จึงใช้ใน Data Center จริง'
+          }
+        ]
+      },
+      {
+        id: 'z1_boss',
+        title: '1-BOSS: RAID & Storage Colossus',
+        category: 'storage',
+        isBoss: true,
+        enemy: { name: 'Disk-Crash Colossus', sprite: '💀', hp: 150 },
+        dialogue: '⚠️ BOSS ALERT! ดิสก์ในคลังข้อมูลกำลังถูกโจมตี! จงเลือกโครงสร้าง RAID และระบบไฟล์ให้ถูกต้องเพื่อโค่น Disk-Crash Colossus!',
+        xp: 120,
+        coins: 90,
+        questions: [
+          {
+            context: 'ฐานข้อมูลมีฮาร์ดดิสก์ 4 ลูก ขนาดลูกละ 2 TB และต้องการพื้นที่ใช้งานสูงถึง 6 TB พร้อมทนดิสก์เสียได้ 1 ลูก',
+            q: 'ควรเลือกโครงสร้าง RAID ระดับใด?',
+            options: [
+              'RAID 0 (ได้ 8 TB แต่เสีย 1 ลูกข้อมูลหายหมด)',
+              'RAID 5 (ได้ (N-1)=6 TB มี Parity ทนเสียได้ 1 ลูก)',
+              'RAID 1 (ใช้ได้เพียง 2 ลูกคู่เดียว)',
+              'ไม่ใช้ RAID เลย'
+            ],
+            answer: 1,
+            explain: 'RAID 5 ใช้ดิสก์อย่างน้อย 3 ลูก มีความจุใช้งาน (N-1) ลูก (4-1 = 3 ลูก = 6 TB) และกระจาย Parity ทำให้ทนดิสก์เสียได้ 1 ลูก'
+          },
+          {
+            context: 'หากเปลี่ยนโจทย์เป็นระบบคลังข้อมูลขนาดใหญ่ 6 ลูก ที่ต้องทนฮาร์ดดิสก์เสียพร้อมกันได้ถึง "2 ลูก"',
+            q: 'RAID ระดับใดที่มี Dual Parity ทนดิสก์เสียพร้อมกันได้ 2 ลูก?',
+            options: [
+              'RAID 0',
+              'RAID 1',
+              'RAID 5',
+              'RAID 6'
+            ],
+            answer: 3,
+            explain: 'RAID 6 ใช้ดิสก์อย่างน้อย 4 ลูก มี Parity 2 ชุด (Dual Parity) ความจุใช้งานคือ (N-2) ลูก และทนดิสก์เสียพร้อมกันได้ถึง 2 ลูก'
+          },
+          {
+            context: 'คุณต้องเลือก File System สำหรับเซิร์ฟเวอร์ Linux รุ่นใหม่ที่รองรับไฟล์ขนาดใหญ่ระดับ Terabyte และรองรับ Journaling ป้องกันข้อมูลพังเวลาไฟดับ',
+            q: 'ข้อใดคือระบบไฟล์ (File System) มาตรฐานของ Linux Server?',
+            options: [
+              'FAT16 และ FAT32',
+              'ext4, XFS หรือ ZFS',
+              'NTFS เท่านั้น',
+              'CDFS (ระบบไฟล์แผ่นซีดี)'
+            ],
+            answer: 1,
+            explain: 'Linux Server นิยมใช้ ext4 (มาตรฐาน Ubuntu/Debian), XFS (มาตรฐาน RHEL/Rocky) หรือ ZFS (เด่นเรื่อง Snapshot และตรวจข้อมูลเสียหาย) ส่วน NTFS/ReFS เป็นของ Windows Server'
+          }
+        ]
       }
     ]
   },
   {
-    id: 'm2',
-    title: 'ด่าน 2: เว็บไซต์วิทยาลัยล่มกะทันหัน!',
-    category: 'cli',
-    difficulty: 'เริ่มต้น',
-    xp: 90,
-    summary: 'นักศึกษาแจ้งว่าเข้าเว็บลงทะเบียนเรียนไม่ได้ (Connection Refused) คุณต้องตรวจสอบบริการ Web Server บน Ubuntu Server',
-    steps: [
+    id: 'z2',
+    code: 'ZONE 02',
+    name: 'Network & Protocol Hub',
+    subtitle: 'Static IP, Subnet, DHCP DORA, DNS Records และ 18 พอร์ตมาตรฐาน',
+    themeColor: '#34d399',
+    icon: '🌐',
+    stages: [
       {
-        context: 'คุณ SSH เข้าไปยังเครื่อง SRV-WEB-01 (Ubuntu Server) และต้องการดูว่าบริการ Nginx ยังทำงานอยู่หรือไม่',
-        code: 'root@srv-web-01:~# ???',
-        question: 'คำสั่งใดใช้ตรวจสอบสถานะการทำงานของ Service "nginx" บน Linux รุ่นใหม่ (systemd)?',
-        options: [
-          'systemctl status nginx',
-          'ipconfig /all nginx',
-          'mkdir status nginx',
-          'chmod 777 nginx'
-        ],
-        answer: 0,
-        explanation: 'คำสั่ง systemctl status <ชื่อบริการ> ใช้ดูสถานะของ Service บนระบบ Linux ที่ใช้ systemd เช่น Ubuntu Server, Debian, Rocky Linux และ RHEL'
+        id: 'z2_s1',
+        title: '2-1: Static IP & DHCP DORA',
+        category: 'network',
+        isBoss: false,
+        enemy: { name: 'IP-Conflict Phantom', sprite: '👾', hp: 100 },
+        dialogue: 'NOVA-OS: ห้องปฏิบัติการ 200 เครื่องขึ้น IP 169.254.x.x กันหมด! รีบตรวจสอบกระบวนการ DHCP และค่า Static IP ของ Server ด่วน!',
+        xp: 80,
+        coins: 55,
+        questions: [
+          {
+            context: 'เครื่องลูกข่ายเปิดขึ้นมาแล้วได้ IP 169.254.45.12 (APIPA) ซึ่งหมายความว่าติดต่อเครื่องแจก IP อัตโนมัติไม่ได้',
+            q: 'กระบวนการ 4 ขั้นตอนที่เครื่อง Client ขอรับ IP จาก DHCP Server เรียกว่าอะไรตามลำดับ?',
+            options: [
+              'DORA: Discover → Offer → Request → Acknowledge',
+              'HTTP: Header → Text → Transfer → Protocol',
+              'CRUD: Create → Read → Update → Delete',
+              'PING: Pack → In → Net → Gate'
+            ],
+            answer: 0,
+            explain: 'DHCP ใช้ขั้นตอน DORA: Client ส่ง Discover หา Server → Server ส่ง Offer เสนอ IP → Client ส่ง Request ขอยืนยัน → Server ส่ง Acknowledge (ACK) อนุมัติ IP'
+          },
+          {
+            context: 'เครือข่ายองค์กรใช้ Subnet 192.168.10.0/24 (Subnet Mask 255.255.255.0)',
+            q: 'มีจำนวนหมายเลข IP ที่สามารถกำหนดให้เครื่องใช้งานได้จริง (Usable Host IPs) กี่หมายเลข และเครื่อง Server ควรใช้ IP แบบใด?',
+            options: [
+              '254 หมายเลข / และ Server ควรตั้งเป็น Static IP',
+              '256 หมายเลข / และ Server ควรเปลี่ยน IP ทุกชั่วโมง',
+              '10 หมายเลข / และไม่ต้องตั้ง Gateway',
+              '1,000 หมายเลข / และใช้ IP 192.168.10.255 ให้เครื่องเว็บ'
+            ],
+            answer: 0,
+            explain: 'Subnet /24 มีทั้งหมด 256 หมายเลข หัก Network ID (.0) และ Broadcast (.255) ออก เหลือใช้งานจริง 254 หมายเลข (.1 ถึง .254) โดย Server ต้องกำหนด Static IP เพื่อไม่ให้ IP เปลี่ยน'
+          }
+        ]
       },
       {
-        context: 'ผลลัพธ์แสดงว่า Active: inactive (dead) หลังจากอัปเดตไฟล์ตั้งค่า คุณต้องการสั่งเริ่มบริการใหม่และให้เปิดอัตโนมัติทุกครั้งที่รีบูตเครื่อง',
-        code: '● nginx.service - A high performance web server\n   Loaded: loaded\n   Active: inactive (dead)',
-        question: 'ควรใช้คำสั่งใดเพื่อเริ่มบริการและตั้งค่าเปิดอัตโนมัติเมื่อเปิดเครื่อง?',
-        options: [
-          'systemctl stop nginx && systemctl disable nginx',
-          'systemctl enable --now nginx (หรือ start แล้ว enable)',
-          'rm -rf /etc/nginx',
-          'apt remove nginx'
-        ],
-        answer: 1,
-        explanation: 'systemctl start nginx ใช้เปิดบริการทันที ส่วน systemctl enable nginx ใช้ตั้งให้เปิดอัตโนมัติตอนบูตเครื่อง (หรือรวมกันเป็น systemctl enable --now nginx)'
+        id: 'z2_s2',
+        title: '2-2: เจาะลึก DNS Records',
+        category: 'network',
+        isBoss: false,
+        enemy: { name: 'NXDOMAIN Glitch', sprite: '🌀', hp: 100 },
+        dialogue: 'ผอ.เก่ง: เว็บวิทยาลัยและอีเมลองค์กรเข้าด้วยชื่อโดเมนไม่ได้! มาตรวจสอบ DNS Record แต่ละประเภทกัน',
+        xp: 85,
+        coins: 60,
+        questions: [
+          {
+            context: 'คุณต้องการผูกชื่อโดเมน www.college.ac.th ให้ชี้ไปยัง IPv4 Address 203.150.10.25 ของเครื่อง Web Server',
+            q: 'ต้องสร้าง DNS Record ประเภทใด?',
+            options: [
+              'A Record (Address Record สำหรับ IPv4)',
+              'MX Record (Mail Exchanger)',
+              'PTR Record (Reverse DNS)',
+              'TXT Record (ข้อความทั่วไป)'
+            ],
+            answer: 0,
+            explain: 'A Record แปลงชื่อโดเมนเป็น IPv4 (ส่วน AAAA Record ใช้กับ IPv6), CNAME ใช้ทำชื่อนามแฝง (Alias), และ MX Record ใช้ระบุ Mail Server'
+          },
+          {
+            context: 'หากอีเมลที่ส่งมายัง user@college.ac.th ตีกลับทั้งหมดเพราะระบบไม่รู้ว่าจะส่งเมลไปที่ Mail Server เครื่องใด',
+            q: 'ผู้ดูแลระบบต้องตรวจสอบและตั้งค่า DNS Record ประเภทใด?',
+            options: [
+              'MX Record (Mail Exchanger)',
+              'AAAA Record',
+              'DHCP Scope',
+              'RAID Parity'
+            ],
+            answer: 0,
+            explain: 'MX (Mail Exchanger) Record ทำหน้าที่ชี้บอกว่า Mail Server เครื่องใดรับผิดชอบรับอีเมลของโดเมนนั้น พร้อมค่า Priority'
+          }
+        ]
+      },
+      {
+        id: 'z2_boss',
+        title: '2-BOSS: Port Storm Hydra',
+        category: 'network',
+        isBoss: true,
+        enemy: { name: 'Port-Storm Hydra', sprite: '🐙', hp: 160 },
+        dialogue: '⚠️ BOSS ALERT! Port-Storm Hydra ส่งแพ็กเก็ตหลากโปรโตคอลถล่มเกตเวย์! แยกแยะพอร์ตและโปรโตคอลให้แม่นยำ!',
+        xp: 130,
+        coins: 100,
+        questions: [
+          {
+            context: 'ทราฟฟิกชุดแรกต้องการเชื่อมต่อ "ฐานข้อมูล MySQL" และ "รีโมทหน้าจอ Windows Server" จากเครือข่ายฝ่ายไอที',
+            q: 'คู่หมายเลขพอร์ตมาตรฐานใดตรงกับบริการทั้งสอง?',
+            options: [
+              '3306 (MySQL) และ 3389 (RDP)',
+              '80 (HTTP) และ 25 (SMTP)',
+              '21 (FTP) และ 23 (Telnet)',
+              '53 (DNS) และ 123 (NTP)'
+            ],
+            answer: 0,
+            explain: 'MySQL/MariaDB ใช้พอร์ต 3306 ส่วน Windows Remote Desktop (RDP) ใช้พอร์ต 3389'
+          },
+          {
+            context: 'เครื่องแม่ข่ายหลายเครื่องในคลัสเตอร์เวลาคลาดเคลื่อนกัน 5 นาที ทำให้ระบบยืนยันตัวตน Kerberos ใน Active Directory ล้มเหลว!',
+            q: 'ต้องเปิดใช้งานบริการเทียบเวลามาตรฐานใด และใช้พอร์ตหมายเลขใด?',
+            options: [
+              'NTP (Network Time Protocol) — พอร์ต 123 (UDP)',
+              'FTP — พอร์ต 21',
+              'POP3 — พอร์ต 110',
+              'SMB — พอร์ต 445'
+            ],
+            answer: 0,
+            explain: 'NTP (UDP Port 123) ใช้ซิงค์เวลาเครื่องแม่ข่ายทุกเครื่องให้ตรงกัน ซึ่งสำคัญมากต่อ Kerberos (AD), SSL Certificate และ Log Audit'
+          },
+          {
+            context: 'ระบบ Monitoring ต้องการดึงค่า CPU/RAM/Traffic จาก Switch และ Server อัตโนมัติ และส่งไฟล์ Log รวมศูนย์',
+            q: 'โปรโตคอลคู่ใดใช้สำหรับ Network Monitoring และส่งข้อความ Log รวมศูนย์?',
+            options: [
+              'SNMP (พอร์ต 161) และ Syslog (พอร์ต 514)',
+              'Telnet (พอร์ต 23) และ HTTP (พอร์ต 80)',
+              'IMAP (พอร์ต 143) และ RDP (พอร์ต 3389)',
+              'DHCP (พอร์ต 67) และ SSH (พอร์ต 22)'
+            ],
+            answer: 0,
+            explain: 'SNMP (Port 161/162) ใช้มอนิเตอร์อุปกรณ์เครือข่ายและเซิร์ฟเวอร์ ส่วน Syslog (Port 514) ใช้ส่ง Log ไปรวมที่ Log Server'
+          }
+        ]
       }
     ]
   },
   {
-    id: 'm3',
-    title: 'ด่าน 3: วิกฤตเครือข่าย ไร้ IP & เข้าเว็บด้วยชื่อไม่ได้',
-    category: 'network',
-    difficulty: 'ปานกลาง',
-    xp: 100,
-    summary: 'ห้องแล็บใหม่เปิดเครื่องแล้วไม่ได้รับหมายเลข IP และเครื่องที่กรอก IP เองกลับเข้าเว็บไซต์ด้วยชื่อโดเมนไม่ได้',
-    steps: [
+    id: 'z3',
+    code: 'ZONE 03',
+    name: 'Identity & Access Vault',
+    subtitle: 'Active Directory (AD DS), OU, GPO, Linux Users, chmod & chown',
+    themeColor: '#a78bfa',
+    icon: '🔐',
+    stages: [
       {
-        context: 'เครื่องลูกข่ายทุกเครื่องในห้องแล็บขึ้น IP เป็น 169.254.x.x (APIPA) ซึ่งบ่งชี้ว่าไม่ได้รับการแจกหมายเลข IP อัตโนมัติ',
-        question: 'คุณควรตรวจสอบบริการใดบนเครื่องแม่ข่ายเป็นอันดับแรก และเครื่อง Server เองควรตั้งค่า IP แบบใด?',
-        options: [
-          'ตรวจสอบบริการ DHCP Server / และเครื่อง Server ควรกำหนดเป็น Static IP',
-          'ตรวจสอบบริการ FTP Server / และเครื่อง Server ควรรับ IP แบบสุ่มทุกวัน',
-          'ตรวจสอบบริการ SMTP Server / และปิดการ์ดแลนทั้งหมด',
-          'ตรวจสอบบริการ Print Server / และตั้งค่า Subnet Mask เป็น 0.0.0.0'
-        ],
-        answer: 0,
-        explanation: 'DHCP (Port 67/68) มีหน้าที่แจก IP, Subnet Mask, Gateway และ DNS อัตโนมัติให้ Client ส่วนตัวเครื่อง Server เองต้องตั้งค่า Static IP เพื่อไม่ให้ IP เปลี่ยนจน Client ติดต่อไม่ได้'
+        id: 'z3_s1',
+        title: '3-1: ป้อมปราการ Active Directory',
+        category: 'users',
+        isBoss: false,
+        enemy: { name: 'Rogue Account Mimic', sprite: '🎭', hp: 100 },
+        dialogue: 'ผอ.เก่ง: พนักงานใหม่เข้ามาพร้อมกัน 40 คนใน 4 แผนก! มาจัดระเบียบบัญชีและนโยบายด้วย Windows Server Active Directory กัน',
+        xp: 85,
+        coins: 60,
+        questions: [
+          {
+            context: 'บน Windows Server คุณต้องการจัดกลุ่มบัญชีผู้ใช้และเครื่องคอมพิวเตอร์ตามแผนก (เช่น บัญชี, ไอที, บุคคล) เพื่อผูกรวมนโยบายแยกแต่ละแผนก',
+            q: 'โครงสร้างใดใน Active Directory ใช้จัดหมวดหมู่และผูกกับ Group Policy (GPO) ได้โดยตรง?',
+            options: [
+              'Organizational Unit (OU)',
+              'Recycle Bin',
+              'Control Panel',
+              'Windows Media Player'
+            ],
+            answer: 0,
+            explain: 'Organizational Unit (OU) เป็นภาชนะจัดระเบียบ Users/Groups/Computers ใน Domain และเป็นจุดที่ผู้ดูแลระบบนำ GPO ไปผูกเพื่อบังคับใช้นโยบาย'
+          },
+          {
+            context: 'โปรโตคอลใดที่ Active Directory ใช้เป็นมาตรฐานในการค้นหาข้อมูลผู้ใช้ในไดเรกทอรี (Directory Query) และยืนยันตัวตน (Authentication)?',
+            q: 'เลือกคู่โปรโตคอลหลักของ Active Directory Domain Services (AD DS)',
+            options: [
+              'LDAP (พอร์ต 389) และ Kerberos (พอร์ต 88)',
+              'FTP (พอร์ต 21) และ Telnet (พอร์ต 23)',
+              'POP3 (พอร์ต 110) และ IMAP (พอร์ต 143)',
+              'HTTP (พอร์ต 80) และ NTP (พอร์ต 123)'
+            ],
+            answer: 0,
+            explain: 'Active Directory อาศัย LDAP (Port 389/636) สำหรับสืบค้นข้อมูลไดเรกทอรี และ Kerberos (Port 88) สำหรับออกตั๋วยืนยันตัวตนอย่างปลอดภัย'
+          }
+        ]
       },
       {
-        context: 'หลังกู้ DHCP สำเร็จ เครื่องลูกข่ายสามารถ ping 8.8.8.8 ได้ปกติ แต่เมื่อเปิดเบราว์เซอร์พิมพ์ www.college.ac.th กลับขึ้น "DNS_PROBE_FINISHED_NXDOMAIN"',
-        question: 'ปัญหาดังกล่าวเกิดจากบริการใดทำงานผิดพลาด และบริการนั้นใช้พอร์ตมาตรฐานหมายเลขใด?',
-        options: [
-          'SSH — พอร์ต 22',
-          'DNS (Domain Name System) — พอร์ต 53',
-          'HTTP — พอร์ต 80',
-          'RDP — พอร์ต 3389'
-        ],
-        answer: 1,
-        explanation: 'DNS (พอร์ต 53 ทั้ง UDP และ TCP) ทำหน้าที่แปลงชื่อโดเมนที่มนุษย์จำง่ายให้เป็นหมายเลข IP Address หาก ping IP ได้แต่เข้าด้วยชื่อไม่ได้ แสดงว่า DNS มีปัญหา'
+        id: 'z3_s2',
+        title: '3-2: Linux Users, Groups & Shadow',
+        category: 'users',
+        isBoss: false,
+        enemy: { name: 'Privilege Escalator', sprite: '🕵️', hp: 100 },
+        dialogue: 'NOVA-OS: มีคนพยายามแอบเจาะไฟล์รหัสผ่าน Linux! คุณต้องรู้ว่า Linux เก็บบัญชีและรหัสผ่านเข้ารหัสไว้ที่ไฟล์ใด',
+        xp: 90,
+        coins: 65,
+        questions: [
+          {
+            context: 'บน Linux Server ข้อมูลรายชื่อผู้ใช้จะอยู่ใน /etc/passwd ซึ่งทุกคนอ่านได้ แต่รหัสผ่านที่ถูกแฮช (Hashed Password) จะถูกแยกเก็บในไฟล์ที่เฉพาะ root อ่านได้เท่านั้น',
+            q: 'ไฟล์ใดบน Linux ที่เก็บรหัสผ่านแบบเข้ารหัส (Hashed Passwords)?',
+            options: [
+              '/etc/shadow',
+              '/etc/hosts',
+              '/var/www/index.html',
+              '/tmp/passwords.txt'
+            ],
+            answer: 0,
+            explain: '/etc/shadow เก็บรหัสผ่านแบบแฮชและนโยบายวันหมดอายุรหัสผ่าน โดยมีสิทธิ์จำกัดเฉพาะ root/shadow เท่านั้นเพื่อความปลอดภัย'
+          },
+          {
+            context: 'คุณสร้างบัญชีผู้ใช้ชื่อ somchai และต้องการมอบสิทธิ์ให้สามารถรันคำสั่งผู้ดูแลระบบผ่าน sudo ได้บน Ubuntu Server',
+            q: 'คำสั่งใดใช้เพิ่มผู้ใช้ somchai เข้ากลุ่ม sudo โดยไม่ลบกลุ่มเดิมที่เขาอยู่?',
+            options: [
+              'usermod -aG sudo somchai',
+              'rm -rf /home/somchai',
+              'chmod 000 somchai',
+              'ping sudo somchai'
+            ],
+            answer: 0,
+            explain: 'usermod -aG <group> <user> (-a = append เพิ่มต่อท้าย, -G = supplementary group) จะเพิ่มผู้ใช้เข้ากลุ่ม sudo โดยยังคงกลุ่มเดิมไว้ครบถ้วน'
+          }
+        ]
+      },
+      {
+        id: 'z3_boss',
+        title: '3-BOSS: Permission Sentinel',
+        category: 'users',
+        isBoss: true,
+        enemy: { name: 'Rootkit Sentinel', sprite: '👹', hp: 160 },
+        dialogue: '⚠️ BOSS ALERT! Rootkit Sentinel ป่วนสิทธิ์ไฟล์ทั้งเซิร์ฟเวอร์! คำนวณ chmod และ chown ให้เป๊ะเพื่อทวงคืนการควบคุม!',
+        xp: 140,
+        coins: 110,
+        questions: [
+          {
+            context: 'ไฟล์กุญแจ SSH ส่วนตัว id_rsa ต้องจำกัดสิทธิ์ให้เฉพาะเจ้าของ (Owner) อ่านและเขียนได้เท่านั้น ห้ามกลุ่มและคนอื่นเข้าถึงเด็ดขาด',
+            code: '-rwxrwxrwx 1 admin dev 1679 Nov 21 id_rsa',
+            q: 'ต้องใช้คำสั่งใดแก้ไขสิทธิ์ของ id_rsa?',
+            options: [
+              'chmod 600 id_rsa',
+              'chmod 777 id_rsa',
+              'chmod 644 id_rsa',
+              'chmod 755 id_rsa'
+            ],
+            answer: 0,
+            explain: '600 (-rw-------) คือ Owner อ่าน+เขียน (4+2=6) ส่วน Group และ Others = 0 (ไม่มีสิทธิ์เลย) หากตั้งสิทธิ์กว้างกว่านี้ SSH จะปฏิเสธไม่ยอมใช้คีย์เพื่อความปลอดภัย'
+          },
+          {
+            context: 'เว็บเซิร์ฟเวอร์ Nginx ทำงานภายใต้ผู้ใช้ www-data แต่โฟลเดอร์ /var/www/html ยังมีเจ้าของเป็น root ทำให้เว็บอัปโหลดไฟล์ไม่ได้',
+            q: 'คำสั่งใดใช้เปลี่ยน "เจ้าของไฟล์และกลุ่มเจ้าของ" ของโฟลเดอร์ /var/www/html ทั้งหมดให้เป็น www-data?',
+            options: [
+              'chown -R www-data:www-data /var/www/html',
+              'df -h /var/www/html',
+              'ufw allow www-data',
+              'cat /var/www/html'
+            ],
+            answer: 0,
+            explain: 'chown (Change Owner) ใช้เปลี่ยนเจ้าของและกลุ่ม โดยออปชัน -R (Recursive) จะเปลี่ยนรวมทุกไฟล์และโฟลเดอร์ย่อยข้างในด้วย'
+          },
+          {
+            context: 'เมื่อกำหนดสิทธิ์แชร์โฟลเดอร์บน Windows Server โดยตั้ง Share Permission = Full Control แต่ตั้ง NTFS Permission = Read Only',
+            q: 'เมื่อผู้ใช้เชื่อมต่อผ่านเครือข่ายเข้ามา สิทธิ์ที่มีผลบังคับใช้จริง (Effective Permission) คืออะไร?',
+            options: [
+              'Read Only (ยึดสิทธิ์ที่เข้มงวดกว่าเสมอเมื่อ Share กับ NTFS รวมกัน)',
+              'Full Control (ยึดสิทธิ์ที่กว้างกว่าเสมอ)',
+              'สามารถลบโฟลเดอร์ได้แต่เปิดอ่านไม่ได้',
+              'กลายเป็น Domain Admin อัตโนมัติ'
+            ],
+            answer: 0,
+            explain: 'กฎสำคัญของ Windows File Server: เมื่อเข้าผ่าน Network Share ระบบจะนำ Share Permission มาตัดกับ NTFS Permission แล้วเลือก "สิทธิ์ที่เข้มงวดที่สุด (Most Restrictive)"'
+          }
+        ]
       }
     ]
   },
   {
-    id: 'm4',
-    title: 'ด่าน 4: จัดระเบียบบัญชีผู้ใช้ด้วย Windows Active Directory',
-    category: 'users',
-    difficulty: 'ปานกลาง',
-    xp: 100,
-    summary: 'บริษัทขยายทีมเพิ่ม 3 แผนก (บัญชี, ไอที, การตลาด) ต้องจัดการบัญชีผู้ใช้และนโยบายเครื่องบน Windows Server',
-    steps: [
+    id: 'z4',
+    code: 'ZONE 04',
+    name: 'Linux & Windows Command Deck',
+    subtitle: 'systemd, Process, Disk/RAM Monitoring, Logs และ Windows PowerShell',
+    themeColor: '#fbbf24',
+    icon: '⌨️',
+    stages: [
       {
-        context: 'คุณติดตั้ง Windows Server 2022 เพื่อทำหน้าที่เป็น Domain Controller (DC) จัดการล็อกอินส่วนกลางให้ทุกเครื่องในองค์กร',
-        question: 'Role (บทบาท) ใดบน Windows Server ที่ต้องติดตั้งเพื่อสร้างระบบ Domain และจัดการผู้ใช้ส่วนกลาง?',
-        options: [
-          'Active Directory Domain Services (AD DS)',
-          'Windows Media Streaming Service',
-          'Print and Document Services',
-          'Hyper-V Virtual Switch Only'
-        ],
-        answer: 0,
-        explanation: 'Active Directory Domain Services (AD DS) คือหัวใจหลักของ Windows Server ในการสร้าง Domain, เก็บข้อมูลผู้ใช้/กลุ่ม/คอมพิวเตอร์ และยืนยันตัวตน (Authentication)'
+        id: 'z4_s1',
+        title: '4-1: คุมบริการ & Process บน Linux',
+        category: 'cli',
+        isBoss: false,
+        enemy: { name: 'Zombie Process Swarm', sprite: '🧟', hp: 100 },
+        dialogue: 'NOVA-OS: CPU พุ่ง 100% และบริการเว็บค้าง! ใช้คำสั่งจัดการ Service และ Process บน Linux Server แก้ไขสถานการณ์ด่วน!',
+        xp: 90,
+        coins: 65,
+        questions: [
+          {
+            context: 'หลังแก้ไขไฟล์ตั้งค่า /etc/nginx/nginx.conf คุณต้องการสั่งให้บริการ nginx โหลดค่าใหม่และเปิดทำงานอัตโนมัติทุกครั้งที่บูตเครื่อง',
+            q: 'คำสั่งใดใช้ตรวจสอบสถานะและสั่งรีสตาร์ทบริการบน systemd?',
+            options: [
+              'systemctl restart nginx และ systemctl enable nginx',
+              'ipconfig /flushdns nginx',
+              'mkdir -p nginx',
+              'apt purge nginx'
+            ],
+            answer: 0,
+            explain: 'systemctl restart ใช้รีสตาร์ทบริการทันทีหลังแก้คอนฟิก ส่วน systemctl enable ตั้งให้บริการเริ่มอัตโนมัติเมื่อเปิดเครื่อง'
+          },
+          {
+            context: 'เครื่องแม่ข่ายทำงานช้าผิดปกติ คุณต้องการดูรายการ Process ที่กำลังกิน CPU และ RAM แบบเรียลไทม์ รวมถึงดูพื้นที่ RAM ที่เหลืออยู่',
+            q: 'ชุดคำสั่งใดเหมาะสำหรับตรวจสอบ Process และ RAM บน Linux Server?',
+            options: [
+              'top (หรือ htop) และ free -h',
+              'touch และ mkdir',
+              'chmod และ chown',
+              'echo และ pwd'
+            ],
+            answer: 0,
+            explain: 'top/htop แสดง Process ที่ใช้ CPU/RAM แบบเรียลไทม์, ps aux ดูรายการโปรเซสทั้งหมด และ free -h ดูหน่วยความจำ RAM/Swap แบบอ่านง่าย'
+          }
+        ]
       },
       {
-        context: 'ฝ่ายบริหารต้องการบังคับให้พนักงานแผนกบัญชีทุกคนเปลี่ยนรหัสผ่านทุก 90 วัน และล็อกหน้าจออัตโนมัติเมื่อไม่ใช้งาน 10 นาที โดยไม่ต้องเดินไปตั้งค่าทีละเครื่อง',
-        question: 'เครื่องมือใดใน Active Directory ใช้กำหนดนโยบายลงไปยังกลุ่มผู้ใช้หรือ Organizational Unit (OU) ได้พร้อมกัน?',
-        options: [
-          'Disk Defragmenter',
-          'Group Policy Object (GPO)',
-          'Task Manager',
-          'Device Manager'
-        ],
-        answer: 1,
-        explanation: 'Group Policy (GPO) ช่วยให้ผู้ดูแลระบบกำหนดนโยบายความปลอดภัย การติดตั้งซอฟต์แวร์ และการตั้งค่าเครื่องลูกข่ายทั้งหมดใน OU ได้จากส่วนกลาง'
+        id: 'z4_s2',
+        title: '4-2: บัญชาการ Windows PowerShell',
+        category: 'cli',
+        isBoss: false,
+        enemy: { name: 'BlueScreen Specter', sprite: '👻', hp: 100 },
+        dialogue: 'ผอ.เก่ง: สลับมาดูแลเครื่อง Windows Server Core ที่ไม่มีหน้าต่าง GUI กันบ้าง! ต้องใช้ PowerShell cmdlet จัดการให้คล่อง!',
+        xp: 95,
+        coins: 70,
+        questions: [
+          {
+            context: 'คุณเพิ่งแก้ Group Policy (GPO) บน Windows Server และต้องการบังคับให้เครื่องลูกข่ายดึงนโยบายใหม่ไปใช้งานทันทีโดยไม่ต้องรอ 90 นาที',
+            q: 'คำสั่งใดบน Windows CMD/PowerShell ใช้บังคับอัปเดต Group Policy ทันที?',
+            options: [
+              'gpupdate /force',
+              'format C:',
+              'chmod 755 gpo',
+              'systemctl reload gpo'
+            ],
+            answer: 0,
+            explain: 'gpupdate /force บังคับให้ Windows ดึงและประยุกต์ใช้ Group Policy ใหม่จาก Domain Controller ทันที'
+          },
+          {
+            context: 'บน Windows PowerShell คำสั่งจะใช้โครงสร้างแบบ Verb-Noun (กริยา-คำนาม) เช่น Get-Service, Restart-Service',
+            q: 'หากต้องการทดสอบว่าเครื่อง Server ปลายทาง 192.168.10.20 เปิดพอร์ต 443 หรือไม่บน PowerShell ใช้คำสั่งใด?',
+            options: [
+              'Test-NetConnection 192.168.10.20 -Port 443',
+              'Delete-Port 443',
+              'Show-Wallpaper 443',
+              'ufw allow 443'
+            ],
+            answer: 0,
+            explain: 'Test-NetConnection (ชื่อย่อ tnc) เป็นคำสั่ง PowerShell ที่ยอดเยี่ยมมากสำหรับทดสอบ Ping และทดสอบการเชื่อมต่อพอร์ต TCP ของเซิร์ฟเวอร์ปลายทาง'
+          }
+        ]
+      },
+      {
+        id: 'z4_boss',
+        title: '4-BOSS: Kernel Panic Automaton',
+        category: 'cli',
+        isBoss: true,
+        enemy: { name: 'Kernel-Panic Mech', sprite: '🦾', hp: 170 },
+        dialogue: '⚠️ BOSS ALERT! Kernel-Panic Mech บุกลานคำสั่ง! วิเคราะห์ Log, พื้นที่ดิสก์ และแพ็กเกจซอฟต์แวร์เพื่อหยุดมัน!',
+        xp: 150,
+        coins: 120,
+        questions: [
+          {
+            context: 'บริการ nginx เปิดไม่ขึ้น คุณต้องการอ่านข้อความ Error Log ล่าสุดของบริการ nginx จากระบบ systemd',
+            q: 'คำสั่งใดใช้ดู Log ของบริการ systemd และไฟล์ Log ระบบหลักบน Linux เก็บอยู่ที่โฟลเดอร์ใด?',
+            options: [
+              'journalctl -u nginx / โฟลเดอร์ Log หลักอยู่ที่ /var/log',
+              'df -h nginx / โฟลเดอร์ Log อยู่ที่ /bin',
+              'useradd nginx / โฟลเดอร์ Log อยู่ที่ /boot',
+              'ping nginx / โฟลเดอร์ Log อยู่ที่ /dev'
+            ],
+            answer: 0,
+            explain: 'journalctl -u <service> ใช้ดู Log ของ service ใน systemd และไฟล์ Log ของโปรแกรมต่าง ๆ บน Linux จะรวมไว้ที่ /var/log (เช่น /var/log/syslog, /var/log/auth.log)'
+          },
+          {
+            context: 'ดิสก์ /var เต็ม 99% คุณใช้ df -h เห็นพาร์ติชันเต็มแล้ว แต่อยากรู้ว่า "โฟลเดอร์ย่อยไหนใน /var กินพื้นที่มากที่สุด"',
+            q: 'คำสั่งใดใช้สรุปขนาดพื้นที่ของแต่ละโฟลเดอร์แบบอ่านง่าย?',
+            options: [
+              'du -sh /var/*',
+              'whoami /var/*',
+              'nslookup /var/*',
+              'hostname /var/*'
+            ],
+            answer: 0,
+            explain: 'df -h ดูพื้นที่ว่างทั้งพาร์ติชัน ส่วน du -sh (Disk Usage, -s summary, -h human-readable) ใช้หาว่าโฟลเดอร์หรือไฟล์ใดกินพื้นที่มากที่สุด'
+          },
+          {
+            context: 'คุณต้องการอัปเดตรายการแพ็กเกจและติดตั้ง Security Patch ล่าสุดบน Ubuntu Server',
+            q: 'คำสั่งคู่ใดถูกต้องสำหรับการอัปเดตบน Ubuntu/Debian Server?',
+            options: [
+              'sudo apt update && sudo apt upgrade',
+              'sudo rm -rf /etc/apt',
+              'ipconfig /renew',
+              'chmod 777 /usr'
+            ],
+            answer: 0,
+            explain: 'apt update จะดึงรายการแพ็กเกจล่าสุดจาก Repository ก่อน แล้ว apt upgrade จึงจะดาวน์โหลดและติดตั้งแพ็กเกจเวอร์ชันใหม่'
+          }
+        ]
       }
     ]
   },
   {
-    id: 'm5',
-    title: 'ด่าน 5: ไฟล์ความลับรั่วไหล! แก้ไขสิทธิ์ Linux Permissions',
-    category: 'users',
-    difficulty: 'ปานกลาง',
-    xp: 110,
-    summary: 'พบไฟล์สคริปต์และไฟล์คีย์เชื่อมต่อฐานข้อมูลถูกตั้งสิทธิ์เป็น 777 ทำให้ผู้ใช้ทุกคนแก้ไขและอ่านรหัสผ่านได้',
-    steps: [
+    id: 'z5',
+    code: 'ZONE 05',
+    name: 'Cyber Defense & Backup Bunker',
+    subtitle: 'Firewall, DMZ, SSH Hardening, SSL/TLS, 3-2-1 Backup และ Disaster Recovery',
+    themeColor: '#f87171',
+    icon: '🛡️',
+    stages: [
       {
-        context: 'ไฟล์ db_secret.env มีรหัสผ่านฐานข้อมูลอยู่ข้างใน คุณต้องการให้เฉพาะเจ้าของไฟล์ (Owner) อ่านและแก้ไขได้เท่านั้น ส่วนกลุ่ม (Group) และผู้อื่น (Others) ห้ามเข้าถึงเลย',
-        code: '-rwxrwxrwx 1 admin staff 512 Nov 20 db_secret.env',
-        question: 'ควรใช้คำสั่ง chmod ค่าใดตามหลัก Principle of Least Privilege?',
-        options: [
-          'chmod 777 db_secret.env',
-          'chmod 600 db_secret.env',
-          'chmod 644 db_secret.env',
-          'chmod 111 db_secret.env'
-        ],
-        answer: 1,
-        explanation: '600 หมายถึง Owner = 4(r)+2(w) = 6 (อ่านและเขียนได้), Group = 0 (ไม่มีสิทธิ์), Others = 0 (ไม่มีสิทธิ์) แสดงเป็น -rw------- เหมาะมากสำหรับไฟล์รหัสผ่านและ SSH Private Key'
+        id: 'z5_s1',
+        title: '5-1: ปราการ Firewall & DMZ',
+        category: 'security',
+        isBoss: false,
+        enemy: { name: 'Brute-Force Botnet', sprite: '🕷️', hp: 110 },
+        dialogue: 'NOVA-OS: ตรวจพบการยิงสแกนพอร์ตและสุ่มรหัสผ่าน SSH กว่า 10,000 ครั้ง/นาที! รีบตั้งกฎ Firewall และ SSH Hardening!',
+        xp: 100,
+        coins: 75,
+        questions: [
+          {
+            context: 'องค์กรมี Web Server ที่ต้องเปิดให้คนจากอินเทอร์เน็ตเข้าชม และมี Database Server ที่เก็บข้อมูลความลับภายใน',
+            q: 'โซนเครือข่ายใดที่ใช้แยก Web Server สาธารณะออกจากเครือข่ายภายใน (Internal LAN) เพื่อลดความเสียหายหากเว็บถูกแฮก?',
+            options: [
+              'DMZ (Demilitarized Zone)',
+              'Home Wi-Fi Guest',
+              'Loopback 127.0.0.1',
+              'USB Hub'
+            ],
+            answer: 0,
+            explain: 'DMZ เป็นโซนกันชนระหว่างอินเทอร์เน็ตกับเครือข่ายภายใน วางเครื่องที่ต้องรับทราฟฟิกจากภายนอก (เช่น Web/Mail/DNS Proxy) โดยไม่ให้เข้าถึง Internal DB ได้โดยตรง'
+          },
+          {
+            context: 'คุณต้องการป้องกันการโจมตี Brute-Force ที่พยายามสุ่มรหัสผ่าน SSH (พอร์ต 22) เข้าบัญชี root',
+            q: 'แนวทาง SSH Hardening ใดปลอดภัยที่สุด?',
+            options: [
+              'ปิด PermitRootLogin, ใช้ SSH Key Authentication แทนรหัสผ่าน และติดตั้ง Fail2ban',
+              'เปลี่ยนไปใช้ Telnet พอร์ต 23 แทน SSH',
+              'ปิด Firewall ทั้งหมดเพื่อลดภาระ CPU',
+              'ตั้งรหัสผ่าน root เป็น admin1234'
+            ],
+            answer: 0,
+            explain: 'SSH Key + ปิดการล็อกอิน root ตรง + Fail2ban (แบน IP ที่สุ่มรหัสผิดซ้ำ ๆ) เป็นแนวปฏิบัติมาตรฐานทองคำของการป้องกัน Linux Server'
+          }
+        ]
       },
       {
-        context: 'ต่อไปคุณมีไฟล์สคริปต์สำรองข้อมูลชื่อ backup.sh ที่ต้องการให้ Owner อ่าน-เขียน-รันได้ (rwx) ส่วน Group และ Others อ่านและรันได้ (r-x) แต่ห้ามแก้ไข',
-        question: 'รหัสเลขฐานแปดใดตรงกับสิทธิ์ -rwxr-xr-x?',
-        options: [
-          '755',
-          '744',
-          '655',
-          '700'
-        ],
-        answer: 0,
-        explanation: 'Owner: r(4)+w(2)+x(1) = 7, Group: r(4)+x(1) = 5, Others: r(4)+x(1) = 5 รวมเป็น 755 ซึ่งเป็นสิทธิ์มาตรฐานของสคริปต์และไดเรกทอรีบน Linux Server'
+        id: 'z5_s2',
+        title: '5-2: SSL/TLS & แผนสำรองข้อมูล 3-2-1',
+        category: 'backup',
+        isBoss: false,
+        enemy: { name: 'Data-Wiper Virus', sprite: '🦠', hp: 110 },
+        dialogue: 'ผอ.เก่ง: ข้อมูลนักศึกษาและระบบการเงินต้องปลอดภัยทั้งขณะส่งผ่านเว็บ และต้องกู้คืนได้แม้เกิดไฟไหม้หรือ Ransomware!',
+        xp: 105,
+        coins: 80,
+        questions: [
+          {
+            context: 'เว็บไซต์ลงทะเบียนยังขึ้น "Not Secure" (HTTP พอร์ต 80) ทำให้รหัสผ่านที่นักศึกษาพิมพ์อาจถูกดักอ่านระหว่างทาง',
+            q: 'ต้องติดตั้งเทคโนโลยีใดบน Web Server เพื่อให้รับส่งข้อมูลแบบเข้ารหัส HTTPS (พอร์ต 443)?',
+            options: [
+              'ใบรับรอง SSL/TLS Certificate (เช่น จาก Let’s Encrypt หรือ CA)',
+              'การเปลี่ยนฟอนต์เว็บไซต์เป็นตัวหนา',
+              'การเปิดพอร์ต FTP 21 เพิ่ม',
+              'การปิดบริการ DNS'
+            ],
+            answer: 0,
+            explain: 'SSL/TLS Certificate ใช้เข้ารหัสการเชื่อมต่อระหว่างเบราว์เซอร์กับ Web Server (HTTPS พอร์ต 443) และยืนยันตัวตนของเว็บไซต์'
+          },
+          {
+            context: 'ฝ่ายไอทีออกแบบแผนสำรองข้อมูลตาม "กฎ 3-2-1 Backup Rule" เพื่อป้องกันทั้งดิสก์เสียและภัยพิบัติ',
+            q: 'กฎ 3-2-1 หมายถึงข้อใด?',
+            options: [
+              'เก็บข้อมูล 3 ชุด • บนสื่อบันทึกอย่างน้อย 2 ชนิด • เก็บนอกสถานที่ (Off-site/Cloud) อย่างน้อย 1 ชุด',
+              'สำรองข้อมูล 3 เดือนครั้ง • ใช้ 2 รหัสผ่าน • เก็บในไดรฟ์ C: 1 โฟลเดอร์',
+              'ใช้ RAID 0 จำนวน 3 ลูก • Windows 2 เครื่อง • แอดมิน 1 คน',
+              'บีบอัด 3 รอบ • แตกไฟล์ 2 รอบ • ส่งเมล 1 ครั้ง'
+            ],
+            answer: 0,
+            explain: '3-2-1 (และยุคใหม่ขยายเป็น 3-2-1-1-0 คือเพิ่ม 1 ชุดแบบ Offline/Immutable กัน Ransomware และ 0 Error จากการทดสอบกู้คืน)'
+          }
+        ]
+      },
+      {
+        id: 'z5_boss',
+        title: '5-BOSS: RansomWorm-X',
+        category: 'backup',
+        isBoss: true,
+        enemy: { name: 'RansomWorm-X', sprite: '🐉', hp: 180 },
+        dialogue: '⚠️ BOSS ALERT! RansomWorm-X บุกเข้ารหัสไฟล์ในเซิร์ฟเวอร์! ใช้ความรู้เรื่อง Backup Types และ RTO/RPO กอบกู้ระบบ!',
+        xp: 160,
+        coins: 130,
+        questions: [
+          {
+            context: 'องค์กรทำ Full Backup ทุกวันอาทิตย์ และต้องการแบ็กอัปวันจันทร์-เสาร์ให้ "ใช้เวลาและพื้นที่น้อยที่สุด" โดยเก็บเฉพาะไฟล์ที่เปลี่ยนแปลงนับจากครั้งก่อนหน้า',
+            q: 'รูปแบบ Backup ใดตรงกับความต้องการนี้?',
+            options: [
+              'Incremental Backup',
+              'Full Backup ทุกวัน',
+              'RAID 0 Striping',
+              'Disk Defragmentation'
+            ],
+            answer: 0,
+            explain: 'Incremental Backup เร็วและประหยัดพื้นที่ที่สุด แต่ตอนกู้คืนต้องใช้ Full ล่าสุด + Incremental ทุกชุดเรียงลำดับ ส่วน Differential กู้คืนเร็วกว่า (ใช้ Full + Differential ล่าสุด) แต่กินพื้นที่เพิ่มทุกวัน'
+          },
+          {
+            context: 'ผู้บริหารกำหนดเงื่อนไข Disaster Recovery ว่า "ระบบต้องกู้กลับมาออนไลน์ภายใน 2 ชั่วโมง" และ "ยอมรับข้อมูลสูญหายย้อนหลังได้ไม่เกิน 15 นาที"',
+            q: 'ตัวชี้วัดคู่ใดตรงกับ "ระยะเวลากู้คืน (2 ชม.)" และ "จุดข้อมูลที่ยอมเสียได้ (15 นาที)" ตามลำดับ?',
+            options: [
+              'RTO (Recovery Time Objective) และ RPO (Recovery Point Objective)',
+              'CPU และ GPU',
+              'DNS และ DHCP',
+              'RAM และ ROM'
+            ],
+            answer: 0,
+            explain: 'RTO = ระยะเวลาสูงสุดที่ยอมให้ระบบล่มได้ก่อนกู้กลับมา (2 ชม.) ส่วน RPO = ช่วงเวลาข้อมูลย้อนหลังสูงสุดที่ยอมให้สูญหายได้ (15 นาที → ต้องสำรอง/Replicate ทุก 15 นาที)'
+          },
+          {
+            context: 'มีคนเถียงว่า "เราทำ RAID 10 แล้ว ไม่ต้องทำ Backup ก็ได้!"',
+            q: 'เหตุใดคำกล่าว "RAID ไม่ใช่ Backup (RAID is NOT a Backup)" จึงเป็นความจริงสำคัญสำหรับ SysAdmin?',
+            options: [
+              'เพราะ RAID กันได้แค่ฮาร์ดดิสก์เสีย แต่ถ้าเผลอลบไฟล์ โดน Ransomware หรือไฟไหม้ ข้อมูลจะพังพร้อมกันทุกดิสก์',
+              'เพราะ RAID เก็บได้เฉพาะไฟล์รูปภาพเท่านั้น',
+              'เพราะ RAID ใช้กับ Windows Server ไม่ได้',
+              'เพราะ RAID ช้ากว่าแผ่นฟลอปปี้ดิสก์'
+            ],
+            answer: 0,
+            explain: 'RAID ช่วยเรื่องความพร้อมใช้งาน (Availability) เมื่อดิสก์พัง แต่เมื่อไฟล์ถูกลบหรือถูกเข้ารหัสจาก Ransomware ระบบจะเขียนทับไปยังทุกดิสก์ทันที จึงต้องมี Offline/Off-site Backup เสมอ'
+          }
+        ]
       }
     ]
   },
   {
-    id: 'm6',
-    title: 'ด่าน 6: ตั้งปราการ Firewall รับมือผู้บุกรุก',
-    category: 'security',
-    difficulty: 'ปานกลาง',
-    xp: 110,
-    summary: 'ระบบตรวจจับพบการสแกนพอร์ตจากภายนอกจำนวนมาก คุณต้องกำหนดกฎ Firewall (UFW) บน Web Server สาธารณะ',
-    steps: [
+    id: 'z6',
+    code: 'FINAL ZONE',
+    name: 'Data Center Blackout Crisis',
+    subtitle: 'ภารกิจรวมทุกศาสตร์! โค่น Final Boss กอบกู้ศูนย์ข้อมูลระดับประเทศ',
+    themeColor: '#f472b6',
+    icon: '👑',
+    stages: [
       {
-        context: 'เครื่อง SRV-WEB-01 ให้บริการเฉพาะเว็บไซต์ (HTTP/HTTPS) และต้องให้ผู้ดูแลระบบเข้าจัดการผ่าน SSH เท่านั้น ส่วนพอร์ตฐานข้อมูล (3306) ไม่ควรเปิดรับจากอินเทอร์เน็ตภายนอก',
-        question: 'ชุดพอร์ตใดควรอนุญาต (Allow) จากภายนอกบน Firewall ของ Web Server นี้?',
-        options: [
-          'พอร์ต 22 (SSH), 80 (HTTP), 443 (HTTPS)',
-          'พอร์ต 23 (Telnet), 3306 (MySQL), 445 (SMB)',
-          'เปิดทุกพอร์ต 1–65535 เพื่อให้ใช้งานได้สะดวก',
-          'ปิดทุกพอร์ตรวมถึงพอร์ต 22 ขณะกำลังรีโมท SSH อยู่โดยไม่วางแผน'
-        ],
-        answer: 0,
-        explanation: 'หลักการ Firewall ที่ดีคือ Default Deny Incoming แล้วเปิดเฉพาะพอร์ตที่จำเป็นจริง ๆ ได้แก่ 80/443 สำหรับเว็บ และ 22 สำหรับ SSH (ห้ามเปิด Telnet ที่ไม่เข้ารหัส หรือพอร์ต DB ออกสู่สาธารณะ)'
+        id: 'z6_s1',
+        title: '6-1: แนวรบ Container & Load Balancer',
+        category: 'hardware',
+        isBoss: false,
+        enemy: { name: 'DDoS Overload Core', sprite: '⚡', hp: 130 },
+        dialogue: 'NOVA-OS: ผู้ใช้งานพร้อมกันพุ่งเป็น 50,000 คน! เซิร์ฟเวอร์เครื่องเดียวรับไม่ไหวแล้ว ต้องใช้ High Availability & Container!',
+        xp: 120,
+        coins: 95,
+        questions: [
+          {
+            context: 'เว็บประกาศผลสอบมีคนเข้าพร้อมกันจำนวนมากจน Web Server 1 เครื่องล่ม คุณจึงติดตั้ง Web Server 3 เครื่องทำงานคู่กัน',
+            q: 'อุปกรณ์หรือซอฟต์แวร์ใดทำหน้าที่กระจายทราฟฟิกให้ Web Server ทั้ง 3 เครื่องอย่างสมดุล และตัดเครื่องที่ล่มออกอัตโนมัติ?',
+            options: [
+              'Load Balancer (เช่น Nginx, HAProxy หรือ Cloud Load Balancer)',
+              'เครื่องพิมพ์เลเซอร์เครือข่าย',
+              'DHCP Client',
+              'สาย HDMI Splitter'
+            ],
+            answer: 0,
+            explain: 'Load Balancer ช่วยกระจายภาระงาน (Load Distribution) และทำ Health Check เพื่อให้ได้ High Availability (HA) แม้เซิร์ฟเวอร์บางเครื่องจะล่ม ระบบก็ยังให้บริการต่อได้'
+          },
+          {
+            context: 'ทีมพัฒนาต้องการแพ็กเกจแอปพลิเคชันเว็บให้เปิดทำงานเร็วภายในไม่กี่วินาทีและกินทรัพยากรน้อยกว่าการสร้าง VM เต็มรูปแบบ',
+            q: 'ข้อใดคือความแตกต่างหลักระหว่าง Container (เช่น Docker) กับ Virtual Machine (VM)?',
+            options: [
+              'Container แชร์ Kernel ของ Host OS จึงเบาและเริ่มทำงานเร็วกว่า ส่วน VM จำลองทั้งฮาร์ดแวร์และ Guest OS แยกเต็มระบบ',
+              'Container ต้องใช้ฮาร์ดดิสก์อย่างน้อย 500 GB ต่อ 1 ตัว',
+              'VM ไม่ต้องใช้ CPU ในการทำงาน',
+              'Container ทำงานได้เฉพาะบน Windows 95'
+            ],
+            answer: 0,
+            explain: 'Container (Docker/Podman) แยกสภาพแวดล้อมระดับ OS-level โดยแชร์ Host Kernel จึงประหยัด RAM และเปิดได้ในเสี้ยววินาที ต่างจาก VM ที่ต้องบูต Guest OS แยกทุกตัว'
+          }
+        ]
       },
       {
-        context: 'คุณพบว่ามีบอตพยายามสุ่มรหัสผ่านเข้าบัญชี root ผ่านพอร์ต SSH 22 ตลอดทั้งคืน',
-        question: 'แนวทาง SSH Hardening ใดช่วยเพิ่มความปลอดภัยให้เครื่องแม่ข่าย Linux ได้ดีที่สุด?',
-        options: [
-          'ตั้งรหัสผ่าน root เป็น 123456 เพื่อให้ทีมงานจำง่าย',
-          'ปิดการล็อกอินตรงด้วย root (PermitRootLogin no) และใช้ SSH Key Authentication แทนรหัสผ่าน',
-          'เปลี่ยนไปใช้โปรโตคอล Telnet พอร์ต 23 แทน SSH',
-          'ลบไฟล์ /etc/passwd ออกจากเครื่อง'
-        ],
-        answer: 1,
-        explanation: 'การใช้ SSH Public/Private Key ร่วมกับการปิด PermitRootLogin และใช้โปรแกรมป้องกันอย่าง Fail2ban ช่วยลดความเสี่ยงจากการโจมตีแบบ Brute-Force ได้อย่างมหาศาล'
-      }
-    ]
-  },
-  {
-    id: 'm7',
-    title: 'ด่าน 7: ดิสก์ใกล้เต็ม & ระบบ RAID เสีย 1 ลูก!',
-    category: 'fundamentals',
-    difficulty: 'ท้าทาย',
-    xp: 120,
-    summary: 'เซิร์ฟเวอร์ฐานข้อมูลส่งสัญญาณเตือนไฟสีส้ม ฮาร์ดดิสก์ 1 ลูกในชุด RAID มีปัญหา และพาร์ติชัน /var ใกล้เต็ม',
-    steps: [
-      {
-        context: 'เครื่องฐานข้อมูลใช้ฮาร์ดดิสก์ขนาด 2 TB จำนวน 4 ลูก และต้องการทั้ง "ความเร็วสูง" และ "ทนทานต่อดิสก์เสียได้" หากต้องเลือกระหว่าง RAID 0 กับ RAID 5',
-        question: 'ข้อใดอธิบายความแตกต่างระหว่าง RAID 0 และ RAID 5 ได้ถูกต้องที่สุด?',
-        options: [
-          'RAID 0 ทนดิสก์เสียได้ 2 ลูก ส่วน RAID 5 ไม่ทนดิสก์เสียเลย',
-          'RAID 0 เร็วและได้ความจุเต็มแต่หากดิสก์เสีย 1 ลูกข้อมูลหายหมด ส่วน RAID 5 ใช้ Parity ทนดิสก์เสียได้ 1 ลูก',
-          'RAID 0 ใช้ดิสก์อย่างน้อย 5 ลูก ส่วน RAID 5 ใช้ดิสก์แค่ 1 ลูก',
-          'ทั้ง RAID 0 และ RAID 5 สามารถทดแทนการทำ Backup นอกสถานที่ได้ 100%'
-        ],
-        answer: 1,
-        explanation: 'RAID 0 ทำ Striping ล้วนไม่มีการสำรองข้อมูล (Fault Tolerance = 0) ส่วน RAID 5 ใช้ดิสก์อย่างน้อย 3 ลูก มี Parity กระจาย ทำให้ทนดิสก์เสียได้ 1 ลูก แต่จำไว้เสมอว่า "RAID ไม่ใช่ Backup!"'
+        id: 'z6_s2',
+        title: '6-2: ฉุกเฉิน! กู้ระบบ 3 ชั้นรวด',
+        category: 'security',
+        isBoss: false,
+        enemy: { name: 'Zero-Day Shadow', sprite: '🌑', hp: 140 },
+        dialogue: 'ผอ.เก่ง: ก่อนถึงห้องบอสใหญ่ ระบบแจ้งเตือนทั้งพอร์ตหลุด, Log ผิดปกติ และไฟล์คอนฟิกพัง จงวิเคราะห์อย่างมีสติ!',
+        xp: 130,
+        coins: 100,
+        questions: [
+          {
+            context: 'คุณต้องการตรวจสอบว่าขณะนี้เครื่อง Linux Server กำลังเปิดพอร์ต TCP/UDP ใดรอรับการเชื่อมต่ออยู่บ้าง และโปรแกรมใดเป็นคนเปิดพอร์ตนั้น',
+            q: 'คำสั่งใดให้ข้อมูล Listening Ports พร้อมชื่อ Process ได้ชัดเจนที่สุด?',
+            options: [
+              'sudo ss -tulnp',
+              'ls -a',
+              'mkdir -p ports',
+              'cat /etc/hostname'
+            ],
+            answer: 0,
+            explain: 'ss -tulnp (-t TCP, -u UDP, -l Listening, -n ตัวเลขพอร์ต, -p ชื่อ Process) เป็นคำสั่งมาตรฐานยุคใหม่แทน netstat สำหรับตรวจพอร์ตเปิดบน Linux'
+          },
+          {
+            context: 'หลักการ CIA Triad เป็นหัวใจสำคัญของความปลอดภัยระบบเครื่องแม่ข่าย',
+            q: 'ตัวอักษร C - I - A ย่อมาจากอะไร?',
+            options: [
+              'Confidentiality (ความลับ), Integrity (ความถูกต้องครบถ้วน), Availability (ความพร้อมใช้งาน)',
+              'Computer, Internet, Antivirus',
+              'CPU, IP, Admin',
+              'Cloud, Interface, Access'
+            ],
+            answer: 0,
+            explain: 'CIA Triad คือ 3 เสาหลักของความมั่นคงปลอดภัยสารสนเทศ: รักษาความลับ (C), ข้อมูลไม่ถูกปลอมแปลงแก้ไข (I), และระบบพร้อมให้บริการเสมอ (A)'
+          }
+        ]
       },
       {
-        context: 'ระบบแจ้งเตือนว่าไม่สามารถเขียนไฟล์ Log ได้อีกต่อไปเพราะพื้นที่เก็บข้อมูลเต็ม คุณต้องการตรวจสอบการใช้งานพื้นที่ดิสก์แต่ละพาร์ติชันบน Linux แบบอ่านหน่วย GB/MB ได้ง่าย',
-        question: 'คำสั่งใดใช้ตรวจสอบพื้นที่ว่างของดิสก์ในรูปแบบที่มนุษย์อ่านง่าย (Human-readable)?',
-        options: [
-          'df -h',
-          'ping -t',
-          'useradd -m',
-          'nslookup'
-        ],
-        answer: 0,
-        explanation: 'df -h (Disk Free, -h = human-readable) แสดงพื้นที่ทั้งหมด พื้นที่ใช้ไป และพื้นที่ว่างของแต่ละ Mount Point เป็นหน่วย MB/GB ได้อย่างชัดเจน'
-      }
-    ]
-  },
-  {
-    id: 'm8',
-    title: 'ด่าน 8: รับมือแรนซัมแวร์และวางแผน Backup 3-2-1',
-    category: 'security',
-    difficulty: 'ท้าทาย',
-    xp: 130,
-    summary: 'เกิดเหตุไฟล์งานบางส่วนถูกเข้ารหัสเรียกค่าไถ่ (Ransomware) ฝ่ายไอทีต้องวางนโยบายสำรองข้อมูลมาตรฐานสากล',
-    steps: [
-      {
-        context: 'อาจารย์หัวหน้าสาขาให้คุณออกแบบแผนสำรองข้อมูลตาม "กฎ 3-2-1 Backup Rule" เพื่อป้องกันทั้งฮาร์ดดิสก์เสีย ไฟไหม้ และ Ransomware',
-        question: 'กฎการสำรองข้อมูล 3-2-1 หมายถึงอะไร?',
-        options: [
-          'สำรองข้อมูล 3 ปีครั้ง, ใช้ 2 รหัสผ่าน, เก็บไว้ 1 โฟลเดอร์ในเครื่องเดิม',
-          'มีข้อมูล 3 ชุด, เก็บบนสื่อบันทึกอย่างน้อย 2 ชนิด, และเก็บนอกสถานที่ (Off-site/Cloud) อย่างน้อย 1 ชุด',
-          'ใช้ฮาร์ดดิสก์ 3 ลูกทำ RAID 0, ติดตั้ง 2 OS, และมีผู้ดูแล 1 คน',
-          'บีบอัดไฟล์ 3 รอบ, ส่งอีเมล 2 ฉบับ, พิมพ์ใส่กระดาษ 1 ชุด'
-        ],
-        answer: 1,
-        explanation: 'กฎ 3-2-1 คือมาตรฐานสากล: 3 ชุด (ต้นฉบับ 1 + สำรอง 2), บนสื่อ 2 ประเภทต่างกัน (เช่น NAS + External/Tape/Cloud), และอย่างน้อย 1 ชุดต้องอยู่นอกสถานที่หรือตัดขาดจากเครือข่าย (Air-gapped/Immutable)'
-      },
-      {
-        context: 'ฐานข้อมูลมีขนาดใหญ่ 500 GB หากทำ Full Backup ทุกวันจะเต็มเร็วและใช้เวลานานมาก คุณต้องการให้การสำรองรายวันเร็วที่สุดและใช้พื้นที่น้อยที่สุด โดยบันทึกเฉพาะข้อมูลที่เปลี่ยนแปลงนับจาก Backup ครั้งล่าสุด (ไม่ว่าจะเป็น Full หรือ Incremental)',
-        question: 'รูปแบบการสำรองข้อมูลแบบใดตรงกับความต้องการนี้?',
-        options: [
-          'Full Backup ทุกวัน',
-          'Incremental Backup',
-          'Disk Formatting',
-          'RAID 0 Striping'
-        ],
-        answer: 1,
-        explanation: 'Incremental Backup สำรองเฉพาะไฟล์ที่เปลี่ยนแปลงตั้งแต่การสำรองครั้งก่อนหน้า จึงใช้เวลาและพื้นที่น้อยที่สุด (แต่เวลา Restore ต้องไล่กู้ตั้งแต่ Full ล่าสุดตามด้วย Incremental ทุกชุดตามลำดับ)'
+        id: 'z6_boss',
+        title: 'FINAL BOSS: Blackout Overlord',
+        category: 'cli',
+        isBoss: true,
+        enemy: { name: 'BLACKOUT OVERLORD', sprite: '👾👑', hp: 250 },
+        dialogue: '🚨 FINAL BOSS! BLACKOUT OVERLORD กำลังจะปิดศูนย์ข้อมูลทั้งหมด! ตอบให้แม่นยำทั้ง 4 ขั้นตอนเพื่อกอบกู้ Data Center แห่งชาติ!',
+        xp: 250,
+        coins: 200,
+        questions: [
+          {
+            context: '[Phase 1 — Network] ผู้ใช้เข้าเว็บไม่ได้ แต่ ping IP 203.150.10.25 เจอปกติ ขณะที่ nslookup ล้มเหลว',
+            q: 'ต้องเร่งกู้บริการใดและพอร์ตใดเป็นอันดับแรก?',
+            options: [
+              'DNS Server (พอร์ต 53)',
+              'FTP Server (พอร์ต 21)',
+              'SMTP Server (พอร์ต 25)',
+              'RDP (พอร์ต 3389)'
+            ],
+            answer: 0,
+            explain: 'Ping ด้วย IP ได้แต่แปลงชื่อไม่ได้ คืออาการคลาสสิกของ DNS Server (พอร์ต 53) ขัดข้อง'
+          },
+          {
+            context: '[Phase 2 — Linux Permissions] พบไฟล์สคริปต์ระบบสำคัญ /opt/recovery.sh ถูกลดสิทธิ์เหลือ 000 จนรันไม่ได้',
+            q: 'คำสั่งใดตั้งสิทธิ์ให้ Owner อ่าน-เขียน-รัน และ Group/Others อ่าน-รันได้ (-rwxr-xr-x)?',
+            options: [
+              'chmod 755 /opt/recovery.sh',
+              'chmod 600 /opt/recovery.sh',
+              'chmod 444 /opt/recovery.sh',
+              'chmod 777 /opt/recovery.sh'
+            ],
+            answer: 0,
+            explain: '755 = Owner(rwx=7), Group(r-x=5), Others(r-x=5) ปลอดภัยและเหมาะกับสคริปต์ระบบ'
+          },
+          {
+            context: '[Phase 3 — Firewall] ระบบกู้เว็บกลับมาแล้ว แต่ต้องบล็อกพอร์ตอันตรายทั้งหมดและเปิดเฉพาะ SSH(22) กับ HTTPS(443)',
+            q: 'ลำดับแนวคิด Firewall ที่ถูกต้องบน Ubuntu UFW คือข้อใด?',
+            options: [
+              'ufw default deny incoming → ufw allow 22 → ufw allow 443 → ufw enable',
+              'ufw default allow incoming → ufw deny 22',
+              'ufw disable เพื่อให้เข้าเว็บง่ายที่สุด',
+              'ufw allow 23 เพื่อเปิด Telnet'
+            ],
+            answer: 0,
+            explain: 'ต้องเปิดพอร์ต SSH (22) ก่อนเปิด ufw enable เสมอ เพื่อไม่ให้เผลอตัดการเชื่อมต่อ SSH ของตัวเอง!'
+          },
+          {
+            context: '[Phase 4 — Final Strike: Disaster Recovery] ข้อมูลฐานข้อมูลหลักถูกโจมตี แต่เรามี Backup 3-2-1 แบบ Full วันอาทิตย์ + Differential ทุกวัน (วันนี้วันพฤหัสฯ)',
+            q: 'ต้องใช้ชุดข้อมูลใดบ้างในการ Restore ฐานข้อมูลให้กลับมาสมบูรณ์เร็วที่สุด?',
+            options: [
+              'Full Backup วันอาทิตย์ + Differential Backup ล่าสุด (วันพุธ) เพียง 2 ชุดเท่านั้น',
+              'Full Backup วันอาทิตย์ + ไฟล์ทุกวันตั้งแต่วันจันทร์ถึงพุธครบทุกชุด',
+              'ใช้เพียง RAID 0 ก็กู้ไฟล์ที่ถูกไวรัสเข้ารหัสได้',
+              'ไม่สามารถกู้คืนได้ ต้องพิมพ์ข้อมูลใหม่ทั้งหมด'
+            ],
+            answer: 0,
+            explain: 'จุดเด่นของ Differential Backup คือเก็บทุกอย่างที่เปลี่ยนนับจาก Full ล่าสุด ดังนั้นเวลา Restore ใช้แค่ Full ล่าสุด + Differential ชุดล่าสุดเพียง 2 ชุด!'
+          }
+        ]
       }
     ]
   }
 ];
 
-/* ==================== 8 INTERACTIVE LINUX CLI LABS ==================== */
+/* ==================== 14 INTERACTIVE CLI LABS (10 LINUX + 4 WINDOWS POWERSHELL) ==================== */
 const CLI_LABS = [
   {
     id: 'lab1',
-    title: 'แล็บ 1: ตรวจสอบตัวตนและระบบปฏิบัติการ',
+    os: 'linux',
+    title: 'L1: ตรวจสอบตัวตนและระบบ Linux',
     category: 'cli',
     xp: 50,
-    goal: 'ตรวจสอบชื่อบัญชีผู้ใช้ปัจจุบันหรือข้อมูล Kernel/OS ของเครื่องแม่ข่าย ด้วยคำสั่ง `whoami` หรือ `uname -a`',
-    hint: 'พิมพ์คำสั่ง: whoami หรือ uname -a แล้วกด Enter',
+    coins: 35,
+    goal: 'ตรวจสอบบัญชีผู้ใช้ปัจจุบันหรือข้อมูล Kernel ของเครื่องด้วย `whoami` หรือ `uname -a`',
+    hint: 'พิมพ์: whoami หรือ uname -a',
     quickCmds: ['whoami', 'uname -a', 'hostname', 'help'],
     check: (cmd) => /^(whoami|uname(\s+-[a-z]+)?|hostname)$/.test(cmd.trim())
   },
   {
     id: 'lab2',
-    title: 'แล็บ 2: ตรวจสอบหมายเลข IP ของเครื่องแม่ข่าย',
+    os: 'linux',
+    title: 'L2: ตรวจสอบหมายเลข IP ของเครื่อง',
     category: 'network',
-    xp: 60,
-    goal: 'ดูข้อมูลการ์ดเครือข่ายและหมายเลข IP Address ของเครื่อง Linux Server (ใช้คำสั่ง `ip a` หรือ `ip addr`)',
-    hint: 'พิมพ์คำสั่ง: ip a (หรือ ip addr / ifconfig)',
+    xp: 55,
+    coins: 40,
+    goal: 'ตรวจสอบการ์ดเครือข่ายและ Static IP บน Linux Server ด้วย `ip a` (หรือ `ip addr`)',
+    hint: 'พิมพ์: ip a',
     quickCmds: ['ip a', 'ip addr', 'ping 8.8.8.8'],
     check: (cmd) => /^(ip\s+a(ddr)?|ifconfig)$/.test(cmd.trim())
   },
   {
     id: 'lab3',
-    title: 'แล็บ 3: กู้คืนบริการ Web Server (Nginx)',
+    os: 'linux',
+    title: 'L3: กู้คืนบริการ Web Server (Nginx)',
     category: 'cli',
-    xp: 70,
-    goal: 'บริการ nginx กำลังหยุดทำงาน (inactive) ให้สั่งเริ่มบริการ nginx ขึ้นมาใหม่ด้วย `systemctl start nginx`',
-    hint: 'ตรวจสอบก่อนด้วย systemctl status nginx แล้วสั่ง: systemctl start nginx (หรือ systemctl restart nginx)',
+    xp: 65,
+    coins: 45,
+    goal: 'บริการ nginx หยุดทำงานอยู่ ให้สั่งเริ่มบริการด้วย `systemctl start nginx`',
+    hint: 'เช็กก่อนด้วย systemctl status nginx แล้วพิมพ์: systemctl start nginx',
     quickCmds: ['systemctl status nginx', 'systemctl start nginx', 'systemctl enable nginx'],
-    check: (cmd, state) => state.services.nginx === 'active'
+    check: (cmd, s) => s.services.nginx === 'active'
   },
   {
     id: 'lab4',
-    title: 'แล็บ 4: ตรวจสอบพื้นที่ว่างของฮาร์ดดิสก์',
-    category: 'fundamentals',
-    xp: 60,
-    goal: 'ตรวจสอบพื้นที่การใช้งานดิสก์ทุกพาร์ติชันในรูปแบบที่อ่านหน่วย GB/MB ได้ง่าย (`df -h`)',
-    hint: 'พิมพ์คำสั่ง: df -h',
-    quickCmds: ['df -h', 'free -h', 'ls -la'],
-    check: (cmd) => /^df\s+-h$/.test(cmd.trim())
+    os: 'linux',
+    title: 'L4: ตรวจสอบพอร์ตที่กำลังเปิดฟังอยู่',
+    category: 'network',
+    xp: 65,
+    coins: 45,
+    goal: 'ตรวจสอบพอร์ต TCP/UDP ที่กำลังเปิด Listening พร้อมชื่อโปรเซสด้วย `ss -tulnp`',
+    hint: 'พิมพ์: ss -tulnp (หรือ netstat -tulnp)',
+    quickCmds: ['ss -tulnp', 'netstat -tulnp'],
+    check: (cmd) => /^(ss|netstat)\s+-[a-z]*t[a-z]*$/.test(cmd.trim())
   },
   {
     id: 'lab5',
-    title: 'แล็บ 5: ป้องกันไฟล์ความลับด้วย chmod',
-    category: 'users',
-    xp: 80,
-    goal: 'ไฟล์ `secret.key` มีสิทธิ์หละหลวมเกินไป ให้เปลี่ยนสิทธิ์ให้เฉพาะเจ้าของอ่านและเขียนได้เท่านั้น (`chmod 600 secret.key`)',
-    hint: 'ดูสิทธิ์เดิมด้วย ls -l แล้วพิมพ์: chmod 600 secret.key',
-    quickCmds: ['ls -l', 'chmod 600 secret.key', 'chmod 755 backup.sh'],
-    check: (cmd, state) => state.files['secret.key'] === '-rw-------'
+    os: 'linux',
+    title: 'L5: ตรวจพื้นที่ดิสก์และหน่วยความจำ',
+    category: 'storage',
+    xp: 60,
+    coins: 40,
+    goal: 'ตรวจสอบพื้นที่ว่างของดิสก์ทุกพาร์ติชันแบบอ่านหน่วย GB ได้ง่ายด้วย `df -h`',
+    hint: 'พิมพ์: df -h',
+    quickCmds: ['df -h', 'du -sh /var/*', 'free -h'],
+    check: (cmd) => /^df\s+-h$/.test(cmd.trim())
   },
   {
     id: 'lab6',
-    title: 'แล็บ 6: ทำให้สคริปต์ backup.sh รันได้',
+    os: 'linux',
+    title: 'L6: ล็อกไฟล์ความลับด้วย chmod 600',
     category: 'users',
-    xp: 80,
-    goal: 'ตั้งค่าสิทธิ์ไฟล์ `backup.sh` เป็น 755 (Owner=rwx, Group=r-x, Others=r-x) ด้วยคำสั่ง `chmod 755 backup.sh`',
-    hint: 'พิมพ์คำสั่ง: chmod 755 backup.sh',
-    quickCmds: ['ls -l', 'chmod 755 backup.sh'],
-    check: (cmd, state) => state.files['backup.sh'] === '-rwxr-xr-x'
+    xp: 75,
+    coins: 55,
+    goal: 'ไฟล์ `secret.key` มีสิทธิ์ 777 อันตราย! เปลี่ยนสิทธิ์เป็น 600 ด้วย `chmod 600 secret.key`',
+    hint: 'พิมพ์: chmod 600 secret.key',
+    quickCmds: ['ls -l', 'chmod 600 secret.key'],
+    check: (cmd, s) => s.files['secret.key'] === '-rw-------'
   },
   {
     id: 'lab7',
-    title: 'แล็บ 7: เปิดพอร์ต HTTPS (443) บน Firewall',
-    category: 'security',
-    xp: 80,
-    goal: 'อนุญาตทราฟฟิกเว็บไซต์แบบเข้ารหัส HTTPS (พอร์ต 443) ผ่าน UFW Firewall ด้วยคำสั่ง `ufw allow 443` หรือ `ufw allow https`',
-    hint: 'ดูสถานะด้วย ufw status แล้วพิมพ์: ufw allow 443',
-    quickCmds: ['ufw status', 'ufw allow 443', 'ufw allow 80'],
-    check: (cmd, state) => state.firewall.includes('443/tcp (HTTPS)')
+    os: 'linux',
+    title: 'L7: ตั้งสิทธิ์สคริปต์ backup.sh เป็น 755',
+    category: 'users',
+    xp: 75,
+    coins: 55,
+    goal: 'เปลี่ยนสิทธิ์ไฟล์ `backup.sh` ให้รันได้ (-rwxr-xr-x) ด้วย `chmod 755 backup.sh`',
+    hint: 'พิมพ์: chmod 755 backup.sh',
+    quickCmds: ['ls -l', 'chmod 755 backup.sh'],
+    check: (cmd, s) => s.files['backup.sh'] === '-rwxr-xr-x'
   },
   {
     id: 'lab8',
-    title: 'แล็บ 8: สร้างบัญชีผู้ใช้ใหม่บนระบบ Server',
+    os: 'linux',
+    title: 'L8: เปิดพอร์ต HTTPS (443) บน Firewall',
+    category: 'security',
+    xp: 80,
+    coins: 60,
+    goal: 'อนุญาตพอร์ต 443 (HTTPS) ผ่าน UFW Firewall ด้วย `ufw allow 443` หรือ `ufw allow https`',
+    hint: 'พิมพ์: ufw allow 443',
+    quickCmds: ['ufw status', 'ufw allow 443', 'ufw allow 80'],
+    check: (cmd, s) => s.firewall.includes('443/tcp (HTTPS)')
+  },
+  {
+    id: 'lab9',
+    os: 'linux',
+    title: 'L9: สร้างผู้ใช้ใหม่และตรวจสิทธิ์',
     category: 'users',
     xp: 80,
-    goal: 'สร้างบัญชีผู้ใช้ชื่อ `student01` สำหรับเข้าใช้งานระบบด้วยคำสั่ง `useradd student01` (หรือ `adduser student01`)',
-    hint: 'พิมพ์คำสั่ง: useradd student01',
+    coins: 60,
+    goal: 'สร้างบัญชีผู้ใช้ชื่อ `student01` บนเครื่องแม่ข่ายด้วย `useradd student01`',
+    hint: 'พิมพ์: useradd student01',
     quickCmds: ['useradd student01', 'id student01', 'cat /etc/passwd'],
-    check: (cmd, state) => state.users.includes('student01')
+    check: (cmd, s) => s.users.includes('student01')
+  },
+  {
+    id: 'lab10',
+    os: 'linux',
+    title: 'L10: ตรวจสอบ Log ระบบของ Nginx',
+    category: 'security',
+    xp: 80,
+    coins: 60,
+    goal: 'ใช้คำสั่ง `journalctl -u nginx` เพื่อตรวจสอบประวัติการทำงานและ Error Log ของบริการ nginx',
+    hint: 'พิมพ์: journalctl -u nginx',
+    quickCmds: ['journalctl -u nginx', 'ls /var/log'],
+    check: (cmd) => /^journalctl\s+-u\s+nginx$/.test(cmd.trim())
+  },
+  {
+    id: 'lab11',
+    os: 'windows',
+    title: 'W1: ตรวจค่า IP & DNS (Windows Server)',
+    category: 'network',
+    xp: 70,
+    coins: 50,
+    goal: '[Windows PowerShell] ตรวจสอบข้อมูล IP, Subnet Mask, Gateway และ DNS Server ทั้งหมดด้วย `ipconfig /all`',
+    hint: 'พิมพ์: ipconfig /all',
+    quickCmds: ['ipconfig /all', 'nslookup college.ac.th', 'help'],
+    check: (cmd) => /^ipconfig\s+\/all$/i.test(cmd.trim())
+  },
+  {
+    id: 'lab12',
+    os: 'windows',
+    title: 'W2: รีสตาร์ทบริการ DNS บน Windows',
+    category: 'cli',
+    xp: 80,
+    coins: 60,
+    goal: '[Windows PowerShell] บริการ DNS หยุดทำงานอยู่ ให้รีสตาร์ทด้วยคำสั่ง `Restart-Service DNS`',
+    hint: 'ดูสถานะด้วย Get-Service DNS แล้วพิมพ์: Restart-Service DNS',
+    quickCmds: ['Get-Service DNS', 'Restart-Service DNS'],
+    check: (cmd, s) => s.winServices.DNS === 'Running'
+  },
+  {
+    id: 'lab13',
+    os: 'windows',
+    title: 'W3: บังคับอัปเดต Group Policy (GPO)',
+    category: 'users',
+    xp: 80,
+    coins: 60,
+    goal: '[Windows PowerShell] บังคับให้เครื่องอัปเดตนโยบาย Active Directory ทันทีด้วย `gpupdate /force`',
+    hint: 'พิมพ์: gpupdate /force',
+    quickCmds: ['gpupdate /force', 'Get-ADUser -Filter *'],
+    check: (cmd) => /^gpupdate\s+\/force$/i.test(cmd.trim())
+  },
+  {
+    id: 'lab14',
+    os: 'windows',
+    title: 'W4: ทดสอบพอร์ตปลายทางด้วย PowerShell',
+    category: 'network',
+    xp: 85,
+    coins: 65,
+    goal: '[Windows PowerShell] ทดสอบว่าเซิร์ฟเวอร์ 192.168.10.10 เปิดพอร์ต 443 หรือไม่ด้วย `Test-NetConnection 192.168.10.10 -Port 443`',
+    hint: 'พิมพ์: Test-NetConnection 192.168.10.10 -Port 443',
+    quickCmds: ['Test-NetConnection 192.168.10.10 -Port 443', 'netstat -ano'],
+    check: (cmd) => /^(test-netconnection|tnc)\s+\S+\s+-port\s+443$/i.test(cmd.trim())
   }
 ];
 
-/* ==================== PORT & SERVICE RUSH DATA ==================== */
+/* ==================== 18 STANDARD PORTS FOR PACKET DEFENSE ARCADE ==================== */
 const PORT_CARDS = [
-  { port: '22', proto: 'SSH', layer: 'Secure Remote CLI', prompt: 'รีโมทเข้าจัดการ Linux Server แบบเข้ารหัสผ่าน Command Line', sub: 'Secure Shell Protocol' },
-  { port: '80', proto: 'HTTP', layer: 'Web Service', prompt: 'ให้บริการหน้าเว็บไซต์แบบปกติ (ยังไม่เข้ารหัส SSL/TLS)', sub: 'Hypertext Transfer Protocol' },
-  { port: '443', proto: 'HTTPS', layer: 'Secure Web', prompt: 'ให้บริการหน้าเว็บไซต์แบบเข้ารหัสปลอดภัย (มีรูปแม่กุญแจ)', sub: 'HTTP over TLS/SSL' },
-  { port: '53', proto: 'DNS', layer: 'Name Resolution', prompt: 'แปลงชื่อโดเมน (เช่น google.com) ให้เป็นหมายเลข IP Address', sub: 'Domain Name System (UDP/TCP)' },
-  { port: '67 / 68', proto: 'DHCP', layer: 'IP Assignment', prompt: 'แจกหมายเลข IP, Subnet Mask และ Gateway อัตโนมัติให้เครื่องลูกข่าย', sub: 'Dynamic Host Configuration Protocol' },
-  { port: '21', proto: 'FTP', layer: 'File Transfer', prompt: 'รับ-ส่งและอัปโหลดไฟล์ระหว่าง Client กับ File Server (Control Port)', sub: 'File Transfer Protocol' },
-  { port: '25', proto: 'SMTP', layer: 'Mail Sending', prompt: 'ส่งอีเมลออกจากเครื่องหรือส่งต่ออีเมลระหว่าง Mail Server', sub: 'Simple Mail Transfer Protocol' },
-  { port: '3389', proto: 'RDP', layer: 'Windows Remote', prompt: 'รีโมทควบคุมหน้าจอแบบกราฟิก (GUI) ของเครื่อง Windows Server', sub: 'Remote Desktop Protocol' },
-  { port: '445', proto: 'SMB / CIFS', layer: 'File Sharing', prompt: 'แชร์ไฟล์และแชร์เครื่องพิมพ์ในเครือข่ายท้องถิ่นของ Windows', sub: 'Server Message Block' },
-  { port: '3306', proto: 'MySQL / MariaDB', layer: 'Database', prompt: 'เชื่อมต่อบริการฐานข้อมูลยอดนิยม MySQL หรือ MariaDB', sub: 'Relational Database Port' },
-  { port: '23', proto: 'Telnet', layer: 'Legacy (Insecure)', prompt: 'รีโมทควบคุมผ่านข้อความแบบไม่เข้ารหัส (ไม่แนะนำให้ใช้งานจริง)', sub: 'Unencrypted Remote Terminal' },
-  { port: '110', proto: 'POP3', layer: 'Mail Receiving', prompt: 'ดึงอีเมลจาก Mail Server ลงมาเก็บไว้บนเครื่องผู้รับ', sub: 'Post Office Protocol v3' },
+  { port: '22', proto: 'SSH / SFTP', layer: 'Secure Remote', prompt: 'รีโมทเข้าจัดการ Linux Server และโอนไฟล์แบบเข้ารหัสปลอดภัย', sub: 'Secure Shell Protocol' },
+  { port: '80', proto: 'HTTP', layer: 'Web Service', prompt: 'ให้บริการหน้าเว็บไซต์ปกติ (ยังไม่เข้ารหัส SSL/TLS)', sub: 'Hypertext Transfer Protocol' },
+  { port: '443', proto: 'HTTPS', layer: 'Encrypted Web', prompt: 'ให้บริการเว็บไซต์แบบเข้ารหัสปลอดภัยด้วย SSL/TLS', sub: 'HTTP over TLS' },
+  { port: '53', proto: 'DNS', layer: 'Name Resolution', prompt: 'แปลงชื่อโดเมน (เช่น college.ac.th) เป็นหมายเลข IP Address', sub: 'Domain Name System (UDP/TCP)' },
+  { port: '67 / 68', proto: 'DHCP', layer: 'IP Assignment', prompt: 'แจก IP, Subnet Mask, Gateway และ DNS อัตโนมัติให้เครื่องลูกข่าย', sub: 'Dynamic Host Configuration Protocol' },
+  { port: '21', proto: 'FTP', layer: 'File Transfer', prompt: 'เชื่อมต่อควบคุมการรับ-ส่งไฟล์ระหว่าง Client กับ File Server', sub: 'File Transfer Protocol (Control)' },
+  { port: '25', proto: 'SMTP', layer: 'Mail Sending', prompt: 'ส่งอีเมลออกจากเครื่องหรือส่งต่อระหว่าง Mail Server', sub: 'Simple Mail Transfer Protocol' },
+  { port: '3389', proto: 'RDP', layer: 'Windows Remote', prompt: 'รีโมทควบคุมหน้าจอกราฟิก (GUI) ของ Windows Server', sub: 'Remote Desktop Protocol' },
+  { port: '445', proto: 'SMB / CIFS', layer: 'Windows Sharing', prompt: 'แชร์ไฟล์และเครื่องพิมพ์ในเครือข่ายท้องถิ่นของ Windows', sub: 'Server Message Block' },
+  { port: '3306', proto: 'MySQL / MariaDB', layer: 'Database', prompt: 'พอร์ตมาตรฐานเชื่อมต่อฐานข้อมูล MySQL หรือ MariaDB', sub: 'Relational Database Service' },
+  { port: '5432', proto: 'PostgreSQL', layer: 'Database', prompt: 'พอร์ตมาตรฐานเชื่อมต่อฐานข้อมูลโอเพนซอร์ส PostgreSQL', sub: 'PostgreSQL Database' },
+  { port: '23', proto: 'Telnet', layer: 'Legacy Insecure', prompt: 'รีโมทแบบข้อความธรรมดาไม่เข้ารหัส (เสี่ยงสูง ไม่ควรเปิดใช้)', sub: 'Unencrypted Terminal' },
+  { port: '110', proto: 'POP3', layer: 'Mail Receiving', prompt: 'ดึงอีเมลจาก Mail Server ลงเครื่องผู้รับ', sub: 'Post Office Protocol v3' },
   { port: '143', proto: 'IMAP', layer: 'Mail Sync', prompt: 'อ่านและซิงค์อีเมลบนเซิร์ฟเวอร์ให้ตรงกันทุกอุปกรณ์', sub: 'Internet Message Access Protocol' },
-  { port: '123', proto: 'NTP', layer: 'Time Sync', prompt: 'ซิงโครไนซ์นาฬิกาและเวลาของเครื่อง Server ทุกเครื่องให้ตรงกัน', sub: 'Network Time Protocol' }
+  { port: '123', proto: 'NTP', layer: 'Time Sync', prompt: 'ซิงค์นาฬิกาเครื่องแม่ข่ายทุกเครื่องให้เวลาตรงกัน', sub: 'Network Time Protocol (UDP)' },
+  { port: '389', proto: 'LDAP', layer: 'Directory Service', prompt: 'สืบค้นข้อมูลบัญชีผู้ใช้และไดเรกทอรีใน Active Directory / OpenLDAP', sub: 'Lightweight Directory Access Protocol' },
+  { port: '161', proto: 'SNMP', layer: 'Monitoring', prompt: 'ดึงค่าสถานะ CPU/RAM/Traffic จาก Server และ Switch มาเฝ้าระวัง', sub: 'Simple Network Management Protocol' },
+  { port: '514', proto: 'Syslog', layer: 'Central Logging', prompt: 'ส่งข้อความบันทึกเหตุการณ์ (System Logs) ไปรวมที่ Log Server', sub: 'System Logging Protocol (UDP)' }
 ];
 
-/* ==================== RAID SIMULATOR DATA ==================== */
+/* ==================== 8 CHMOD VAULT CRACKER PUZZLES ==================== */
+const CHMOD_PUZZLES = [
+  { id: 'c1', file: 'id_rsa', target: '600', brief: 'ล็อกไฟล์ SSH Private Key: เฉพาะ Owner อ่านและเขียนได้เท่านั้น ห้าม Group และ Others เข้าถึงเลย', rewardXp: 40, rewardCoins: 30 },
+  { id: 'c2', file: 'deploy.sh', target: '755', brief: 'สคริปต์ Deploy เว็บ: Owner อ่าน/เขียน/รันได้ ส่วน Group และ Others อ่านและรันได้ (ห้ามแก้)', rewardXp: 45, rewardCoins: 35 },
+  { id: 'c3', file: 'nginx.conf', target: '644', brief: 'ไฟล์ตั้งค่าเว็บเซิร์ฟเวอร์: Owner อ่านและเขียนได้ ส่วน Group และ Others อ่านได้อย่างเดียว', rewardXp: 40, rewardCoins: 30 },
+  { id: 'c4', file: 'admin_vault/', target: '700', brief: 'โฟลเดอร์ลับของผู้ดูแลระบบ: เฉพาะ Owner เท่านั้นที่ทำได้ทุกอย่าง (rwx) คนอื่นห้ามเข้าเด็ดขาด', rewardXp: 45, rewardCoins: 35 },
+  { id: 'c5', file: 'team_report.txt', target: '664', brief: 'ไฟล์รายงานทีม: ทั้ง Owner และ Group อ่านและแก้ไขได้ ส่วน Others อ่านได้อย่างเดียว', rewardXp: 50, rewardCoins: 40 },
+  { id: 'c6', file: 'team_script.sh', target: '750', brief: 'สคริปต์ภายในแผนกไอที: Owner ทำได้ทุกอย่าง, Group อ่านและรันได้, ส่วน Others ห้ามเข้าถึงเลย', rewardXp: 55, rewardCoins: 45 },
+  { id: 'c7', file: 'readonly_policy.pdf', target: '444', brief: 'ไฟล์ประกาศนโยบายถาวร: ให้ทุกคน (Owner, Group, Others) อ่านได้อย่างเดียว ห้ามแก้ไขและห้ามรัน', rewardXp: 50, rewardCoins: 40 },
+  { id: 'c8', file: 'db_backup.sql', target: '640', brief: 'ไฟล์สำรองฐานข้อมูล: Owner อ่าน/เขียนได้, Group อ่านได้อย่างเดียว, Others ไม่มีสิทธิ์เลย', rewardXp: 55, rewardCoins: 45 }
+];
+
+/* ==================== RAID SIMULATOR & 6 ARCHITECT CHALLENGES ==================== */
 const RAID_INFO = {
   '0': {
     name: 'RAID 0 (Striping)',
     minDisks: 2,
     usable: '100% (4 TB จาก 4 ลูก)',
-    faultTolerance: '0 ลูก (เสีย 1 ลูก ข้อมูลหายทั้งหมด!)',
-    speed: 'เร็วมากทั้งอ่านและเขียน',
-    useCase: 'งานตัดต่อวิดีโอชั่วคราวหรือแคชที่ไม่ห่วงข้อมูลหาย (ไม่เหมาะเก็บข้อมูลสำคัญ)',
+    faultTolerance: 0,
+    faultText: '0 ลูก (ดิสก์พังแม้แต่ 1 ลูก ข้อมูลหายทั้งหมด!)',
+    speed: 'เร็วสูงสุดทั้งอ่านและเขียน',
+    useCase: 'งานประมวลผลชั่วคราว/แคช ที่เน้นความเร็วล้วน ไม่ห่วงข้อมูลหาย',
     disks: [
       { name: 'Disk 1', blocks: [{ label: 'A1', cls: 'block-data' }, { label: 'A5', cls: 'block-data' }] },
       { name: 'Disk 2', blocks: [{ label: 'A2', cls: 'block-data' }, { label: 'A6', cls: 'block-data' }] },
@@ -426,21 +1092,23 @@ const RAID_INFO = {
     name: 'RAID 1 (Mirroring)',
     minDisks: 2,
     usable: '50% (1 TB จาก 2 ลูก)',
-    faultTolerance: 'ทนดิสก์เสียได้ 1 ลูก (ข้อมูลยังครบ)',
+    faultTolerance: 1,
+    faultText: 'ทนดิสก์เสียได้ 1 ลูก (ข้อมูลสำเนาอยู่ครบ)',
     speed: 'อ่านเร็ว / เขียนปกติ',
-    useCase: 'ดิสก์ติดตั้ง OS ของ Server หรือข้อมูลสำคัญที่ต้องการความเสถียรสูงแต่ใช้ดิสก์น้อย',
+    useCase: 'ดิสก์ติดตั้ง OS เครื่องแม่ข่าย หรือข้อมูลสำคัญที่ใช้ดิสก์แค่ 2 ลูก',
     disks: [
       { name: 'Disk 1 (Main)', blocks: [{ label: 'A1', cls: 'block-data' }, { label: 'A2', cls: 'block-data' }, { label: 'A3', cls: 'block-data' }] },
       { name: 'Disk 2 (Mirror)', blocks: [{ label: 'A1 Copy', cls: 'block-mirror' }, { label: 'A2 Copy', cls: 'block-mirror' }, { label: 'A3 Copy', cls: 'block-mirror' }] }
     ]
   },
   '5': {
-    name: 'RAID 5 (Striping with Parity)',
+    name: 'RAID 5 (Striping + Single Parity)',
     minDisks: 3,
     usable: '(N-1) ลูก → 3 TB จาก 4 ลูก (75%)',
-    faultTolerance: 'ทนดิสก์เสียได้ 1 ลูก (กู้คืนจาก Parity)',
-    speed: 'อ่านเร็วมาก / เขียนปานกลาง (ต้องคำนวณ Parity)',
-    useCase: 'File Server และ Web Server ยอดนิยม สมดุลระหว่างความจุ ความเร็ว และความปลอดภัย',
+    faultTolerance: 1,
+    faultText: 'ทนดิสก์เสียได้ 1 ลูก (คำนวณกู้คืนจาก Parity)',
+    speed: 'อ่านเร็วมาก / เขียนปานกลาง',
+    useCase: 'File Server / Web Server ยอดนิยม สมดุลทั้งความจุ ความเร็ว และความปลอดภัย',
     disks: [
       { name: 'Disk 1', blocks: [{ label: 'A1', cls: 'block-data' }, { label: 'B1', cls: 'block-data' }, { label: 'Parity C', cls: 'block-parity' }] },
       { name: 'Disk 2', blocks: [{ label: 'A2', cls: 'block-data' }, { label: 'Parity B', cls: 'block-parity' }, { label: 'C1', cls: 'block-data' }] },
@@ -448,13 +1116,29 @@ const RAID_INFO = {
       { name: 'Disk 4', blocks: [{ label: 'Parity A', cls: 'block-parity' }, { label: 'B3', cls: 'block-data' }, { label: 'C3', cls: 'block-data' }] }
     ]
   },
+  '6': {
+    name: 'RAID 6 (Striping + Dual Parity)',
+    minDisks: 4,
+    usable: '(N-2) ลูก → 2 TB จาก 4 ลูก (50%) หรือ 4 TB จาก 6 ลูก',
+    faultTolerance: 2,
+    faultText: 'ทนดิสก์เสียพร้อมกันได้ถึง 2 ลูก!',
+    speed: 'อ่านเร็ว / เขียนช้ากว่า RAID 5 เล็กน้อย (คำนวณ Parity 2 ชุด)',
+    useCase: 'คลังข้อมูลขนาดใหญ่ (Archive / Storage Server) ที่ห้ามข้อมูลหายเด็ดขาดแม้เสีย 2 ลูกซ้อน',
+    disks: [
+      { name: 'Disk 1', blocks: [{ label: 'A1', cls: 'block-data' }, { label: 'P-B1', cls: 'block-parity' }] },
+      { name: 'Disk 2', blocks: [{ label: 'A2', cls: 'block-data' }, { label: 'P-B2', cls: 'block-parity' }] },
+      { name: 'Disk 3', blocks: [{ label: 'P-A1', cls: 'block-parity' }, { label: 'B1', cls: 'block-data' }] },
+      { name: 'Disk 4', blocks: [{ label: 'P-A2', cls: 'block-parity' }, { label: 'B2', cls: 'block-data' }] }
+    ]
+  },
   '10': {
     name: 'RAID 10 (RAID 1+0: Mirror + Stripe)',
     minDisks: 4,
     usable: '50% (2 TB จาก 4 ลูก)',
-    faultTolerance: 'ทนดิสก์เสียได้ 1 ลูกต่อคู่ Mirror (สูงสุด 2 ลูกต่างคู่)',
-    speed: 'เร็วสูงมากทั้งอ่านและเขียน',
-    useCase: 'Database Server ที่มีธุรกรรมหนาแน่น (High IOPS) และต้องการความเสถียรระดับสูงสุด',
+    faultTolerance: 1,
+    faultText: 'ทนดิสก์เสียได้ 1 ลูกต่อคู่ Mirror (สูงสุด 2 ลูกต่างคู่)',
+    speed: 'เร็วสูงมากทั้งอ่านและเขียน (IOPS สูงสุดแบบปลอดภัย)',
+    useCase: 'Database Server ที่มีคนอ่าน-เขียนพร้อมกันหนาแน่น (OLTP / E-Commerce)',
     disks: [
       { name: 'Disk 1 (M1)', blocks: [{ label: 'A1', cls: 'block-data' }, { label: 'A3', cls: 'block-data' }] },
       { name: 'Disk 2 (M1)', blocks: [{ label: 'A1 Copy', cls: 'block-mirror' }, { label: 'A3 Copy', cls: 'block-mirror' }] },
@@ -464,235 +1148,160 @@ const RAID_INFO = {
   }
 };
 
-/* ==================== CODEX CHAPTERS ==================== */
+const RAID_CHALLENGES = [
+  {
+    id: 'r1',
+    client: 'สตูดิโอตัดต่อวิดีโอ 8K (Temp Cache)',
+    brief: 'มีดิสก์ 4 ลูก ต้องการความเร็วอ่าน-เขียนและพื้นที่ 100% เต็มพิกัดสำหรับไฟล์แคชชั่วคราว (ไม่ซีเรียสหากดิสก์เสีย)',
+    answer: '0',
+    failCount: 0,
+    explain: 'RAID 0 ให้พื้นที่ 100% และเร็วสูงสุด เหมาะกับงานแคชชั่วคราวที่ไม่ห่วงการสูญหายของข้อมูล'
+  },
+  {
+    id: 'r2',
+    client: 'เครื่อง Boot OS ของ Domain Controller',
+    brief: 'มีงบซื้อ SSD แค่ 2 ลูก ต้องการให้เครื่องยังเปิดทำงานต่อได้ทันทีแม้ SSD พังไป 1 ลูก',
+    answer: '1',
+    failCount: 1,
+    explain: 'RAID 1 (Mirroring) ใช้ดิสก์เพียง 2 ลูกและสำเนาข้อมูลเหมือนกัน 100% เหมาะที่สุดสำหรับ OS Drive'
+  },
+  {
+    id: 'r3',
+    client: 'File Server ของวิทยาลัย (4 ดิสก์)',
+    brief: 'มีดิสก์ 4 ลูก ต้องการพื้นที่ใช้งานคุ้มค่าถึง 75% (3 ลูก) และทนดิสก์เสียได้ 1 ลูก',
+    answer: '5',
+    failCount: 1,
+    explain: 'RAID 5 ให้ความจุใช้งาน (N-1) = 75% จาก 4 ลูก พร้อม Parity ทนดิสก์เสียได้ 1 ลูก'
+  },
+  {
+    id: 'r4',
+    client: 'คลังข้อมูลโรงพยาบาล (Critical Storage)',
+    brief: 'มีดิสก์ 4–6 ลูก ต้องการความปลอดภัยระดับสูงสุด สามารถทนฮาร์ดดิสก์เสียพร้อมกันได้ถึง 2 ลูกไม่ว่าลูกใดก็ตาม!',
+    answer: '6',
+    failCount: 2,
+    explain: 'RAID 6 มี Dual Parity จึงทนดิสก์เสียพร้อมกันได้ถึง 2 ลูกอย่างแน่นอน'
+  },
+  {
+    id: 'r5',
+    client: 'ฐานข้อมูลลงทะเบียนเรียน High-IOPS',
+    brief: 'มีดิสก์ 4 ลูก ต้องการความเร็วในการเขียนฐานข้อมูลสูงสุดโดยไม่ต้องเสียเวลาคำนวณ Parity และยังทนดิสก์เสียได้',
+    answer: '10',
+    failCount: 1,
+    explain: 'RAID 10 ผสาน Mirror+Stripe ไม่มีภาระคำนวณ Parity จึงให้ IOPS การเขียนสูงสุดสำหรับ Database Server'
+  },
+  {
+    id: 'r6',
+    client: 'ทดสอบความทนทาน 2 ดิสก์พังพร้อมกัน!',
+    brief: 'จำลองเหตุการณ์ดิสก์พังพร้อมกัน 2 ลูกในอาร์เรย์ 4 ลูก เลือก RAID ที่การันตีรอด 100% ไม่ว่า 2 ลูกไหนจะพัง',
+    answer: '6',
+    failCount: 2,
+    explain: 'RAID 6 การันตีทนดิสก์เสียได้ 2 ลูกใด ๆ ก็ตาม (ต่างจาก RAID 10 ที่หากพัง 2 ลูกในคู่ Mirror เดียวกันข้อมูลจะหาย)'
+  }
+];
+
+/* ==================== 8 COMPREHENSIVE CODEX CHAPTERS ==================== */
 const CODEX_CHAPTERS = [
   {
-    title: 'บทที่ 1: พื้นฐานระบบปฏิบัติการเครื่องแม่ข่าย',
+    title: 'บทที่ 1: พื้นฐาน Server OS & สถาปัตยกรรม',
     points: [
-      '<strong>Server OS</strong> ออกแบบมาเพื่อให้บริการเครื่องลูกข่ายจำนวนมากอย่างต่อเนื่อง 24/7 เช่น Windows Server, Ubuntu Server, RHEL/Rocky Linux',
-      '<strong>Client-Server</strong> รวมศูนย์การยืนยันตัวตน ข้อมูล และบริการ ต่างจาก Peer-to-Peer ที่จัดการแยกทีละเครื่อง',
-      '<strong>ฮาร์ดแวร์ระดับ Server</strong> มักมี ECC RAM, Redundant PSU, Hot-Swap Drive และระบบ RAID เพื่อความเสถียรสูง',
-      '<strong>Virtualization</strong> (เช่น VMware ESXi, Proxmox, Hyper-V) ช่วยรัน Server เสมือนหลายเครื่องบนเครื่องจริงเครื่องเดียว'
+      '<strong>Client-Server vs P2P:</strong> Client-Server รวมศูนย์บัญชีผู้ใช้ สิทธิ์ และบริการ เหมาะกับองค์กรตั้งแต่ 10 เครื่องขึ้นไป ส่วน P2P ต่างคนต่างจัดการ',
+      '<strong>ประเภทของ Server:</strong> Web (Nginx/Apache/IIS), File (SMB/NFS), DNS, DHCP, Database (MySQL/PostgreSQL), Mail, Proxy, Application และ Log Server',
+      '<strong>Server OS ยอดนิยม:</strong> Windows Server 2022/2025 (เด่นเรื่อง AD DS & GUI) และ Linux Server เช่น Ubuntu Server LTS, RHEL, Rocky Linux, Debian (เด่นเรื่องความเบา เสถียร ฟรี และ CLI)'
     ]
   },
   {
-    title: 'บทที่ 2: บริการเครือข่ายและพอร์ตมาตรฐาน',
+    title: 'บทที่ 2: ฮาร์ดแวร์ Server, Virtualization & Container',
     points: [
-      'เครื่อง Server ต้องใช้ <strong>Static IP</strong> เพื่อไม่ให้หมายเลข IP เปลี่ยนจน Client เชื่อมต่อไม่ได้',
-      '<strong>DNS (53)</strong> แปลงชื่อโดเมนเป็น IP • <strong>DHCP (67/68)</strong> แจก IP อัตโนมัติให้เครื่องลูกข่าย',
-      '<strong>HTTP (80) / HTTPS (443)</strong> บริการเว็บ • <strong>SSH (22)</strong> รีโมท Linux • <strong>RDP (3389)</strong> รีโมท Windows',
-      '<strong>SMB (445)</strong> แชร์ไฟล์เครือข่าย Windows • <strong>FTP (21)</strong> โอนถ่ายไฟล์ • <strong>NTP (123)</strong> เทียบเวลา'
+      '<strong>รูปแบบเครื่อง:</strong> Tower Server (ตั้งพื้น), Rack Server (1U/2U/4U ใส่ตู้แร็ก), Blade Server (ประหยัดพื้นที่ใน Data Center ใหญ่)',
+      '<strong>ฮาร์ดแวร์ 24/7:</strong> CPU ตระกูล Xeon/EPYC, <strong>ECC RAM</strong> แก้บิตเพี้ยนอัตโนมัติ, <strong>Redundant PSU</strong>, Hot-Swap Drive และระบบจัดการระยะไกล IPMI/iDRAC/iLO',
+      '<strong>Virtualization vs Container:</strong> Type-1 Hypervisor (ESXi, Proxmox, Hyper-V) รัน VM แยก OS เต็มตัว ส่วน <strong>Docker Container</strong> แชร์ Host Kernel จึงเบาและบูตเร็วมาก'
     ]
   },
   {
-    title: 'บทที่ 3: การจัดการผู้ใช้ กลุ่ม และสิทธิ์เข้าถึง',
+    title: 'บทที่ 3: ระบบจัดเก็บข้อมูล RAID & File Systems',
     points: [
-      '<strong>Windows Server Active Directory (AD DS)</strong> จัดการ Domain, Users, Groups, OU และบังคับใช้นโยบายด้วย <strong>GPO</strong>',
-      '<strong>Linux Permissions</strong> แบ่ง 3 กลุ่มคือ Owner (u), Group (g), Others (o) โดยมีค่า Read=4, Write=2, Execute=1',
-      'ค่าสิทธิ์ยอดนิยม: <code>755</code> (สคริปต์/โฟลเดอร์), <code>644</code> (ไฟล์ตั้งค่าทั่วไป), <code>600</code> (ไฟล์ความลับ/SSH Key)',
-      'ยึดหลัก <strong>Least Privilege</strong> ให้สิทธิ์เท่าที่จำเป็นต่อหน้าที่เพื่อลดความเสียหายหากบัญชีถูกแฮก'
+      '<strong>RAID 0:</strong> เร็ว+จุ 100% แต่ทนเสีย 0 ลูก • <strong>RAID 1:</strong> Mirror 2 ลูก จุ 50% ทนเสีย 1 ลูก',
+      '<strong>RAID 5:</strong> อย่างน้อย 3 ลูก จุ (N-1) ทนเสีย 1 ลูก • <strong>RAID 6:</strong> อย่างน้อย 4 ลูก จุ (N-2) ทนเสีย 2 ลูกพร้อมกัน',
+      '<strong>RAID 10:</strong> อย่างน้อย 4 ลูก จุ 50% เร็วสูงสุดสำหรับ Database • <strong>จำไว้:</strong> RAID ไม่ใช่ Backup!',
+      '<strong>File Systems:</strong> Linux ใช้ <code>ext4</code>, <code>XFS</code>, <code>ZFS</code> • Windows Server ใช้ <code>NTFS</code>, <code>ReFS</code>'
     ]
   },
   {
-    title: 'บทที่ 4: คำสั่งพื้นฐานสำหรับผู้ดูแลระบบ (CLI)',
+    title: 'บทที่ 4: เครือข่าย พอร์ต DNS & DHCP',
     points: [
-      'จัดการบริการ: <code>systemctl status / start / restart / enable &lt;service&gt;</code>',
-      'ตรวจสอบระบบ: <code>df -h</code> (พื้นที่ดิสก์), <code>free -h</code> (แรม), <code>top/htop</code> (CPU/Process)',
-      'ตรวจสอบเครือข่าย: <code>ip a</code>, <code>ping</code>, <code>ss -tulnp</code> (ดูพอร์ตที่เปิดฟังอยู่), <code>nslookup</code>',
-      'จัดการไฟล์และผู้ใช้: <code>ls -la</code>, <code>chmod</code>, <code>chown</code>, <code>useradd</code>, <code>passwd</code>, <code>sudo</code>'
+      '<strong>Static IP:</strong> เครื่อง Server ต้องใช้ IP คงที่เสมอ • Subnet <code>/24</code> (255.255.255.0) มี Host ใช้งานได้ 254 IP',
+      '<strong>DHCP (67/68):</strong> แจก IP อัตโนมัติด้วยขั้นตอน <strong>DORA</strong> (Discover → Offer → Request → Acknowledge)',
+      '<strong>DNS (53):</strong> <code>A</code>=IPv4, <code>AAAA</code>=IPv6, <code>CNAME</code>=ชื่อนามแฝง, <code>MX</code>=Mail Server, <code>TXT</code>=ยืนยันโดเมน/SPF',
+      '<strong>พอร์ตต้องจำ:</strong> 21 FTP, 22 SSH, 23 Telnet, 25 SMTP, 53 DNS, 80 HTTP, 123 NTP, 161 SNMP, 389 LDAP, 443 HTTPS, 445 SMB, 514 Syslog, 3306 MySQL, 3389 RDP, 5432 PostgreSQL'
     ]
   },
   {
-    title: 'บทที่ 5: ความปลอดภัย Firewall และการสำรองข้อมูล',
+    title: 'บทที่ 5: ผู้ใช้ กลุ่ม สิทธิ์ & Active Directory',
     points: [
-      '<strong>Firewall (UFW / iptables / Windows Firewall)</strong> ตั้ง Default Deny ขาเข้า แล้วอนุญาตเฉพาะพอร์ตที่จำเป็น',
-      '<strong>SSH Hardening</strong>: ปิด Root Login ตรง, ใช้ SSH Key แทนรหัสผ่าน, หมั่นอัปเดต Security Patch',
-      '<strong>Backup 3-2-1</strong>: 3 ชุดข้อมูล • 2 ประเภทสื่อบันทึก • 1 ชุดอยู่นอกสถานที่/ออฟไลน์',
-      '<strong>ชนิด Backup</strong>: Full (ครบทั้งหมด), Incremental (เฉพาะที่เปลี่ยนจากครั้งล่าสุด), Differential (ที่เปลี่ยนจาก Full ล่าสุด)'
+      '<strong>Windows Active Directory (AD DS):</strong> จัดการ Domain, OU, Users, Groups และบังคับนโยบายด้วย <strong>GPO</strong> (ใช้ LDAP 389 + Kerberos 88)',
+      '<strong>Share vs NTFS:</strong> เมื่อเข้าผ่านเครือข่าย ยึดสิทธิ์ที่ <strong>เข้มงวดที่สุด (Most Restrictive)</strong>',
+      '<strong>Linux Accounts:</strong> รายชื่ออยู่ที่ <code>/etc/passwd</code> รหัสผ่านแฮชอยู่ที่ <code>/etc/shadow</code> เพิ่มสิทธิ์ sudo ด้วย <code>usermod -aG sudo &lt;user&gt;</code>',
+      '<strong>Linux Permissions:</strong> r=4, w=2, x=1 • <code>755</code> สคริปต์/โฟลเดอร์, <code>644</code> คอนฟิก, <code>600</code> คีย์ลับ • เปลี่ยนเจ้าของด้วย <code>chown</code>'
+    ]
+  },
+  {
+    title: 'บทที่ 6: คำสั่งจัดการระบบ Linux & Windows CLI',
+    points: [
+      '<strong>Linux Services & Logs:</strong> <code>systemctl status/start/restart/enable</code>, <code>journalctl -u &lt;svc&gt;</code>, <code>/var/log/</code>',
+      '<strong>Linux System & Net:</strong> <code>df -h</code> (ดิสก์), <code>du -sh</code> (ขนาดโฟลเดอร์), <code>free -h</code> (แรม), <code>top/htop</code>, <code>ip a</code>, <code>ss -tulnp</code>, <code>apt update && apt upgrade</code>',
+      '<strong>Windows PowerShell/CMD:</strong> <code>ipconfig /all</code>, <code>nslookup</code>, <code>netstat -ano</code>, <code>Get-Service</code>, <code>Restart-Service</code>, <code>gpupdate /force</code>, <code>Test-NetConnection -Port</code>'
+    ]
+  },
+  {
+    title: 'บทที่ 7: ความปลอดภัย Firewall, SSH & Monitoring',
+    points: [
+      '<strong>CIA Triad:</strong> Confidentiality (ความลับ), Integrity (ความถูกต้อง), Availability (ความพร้อมใช้งาน)',
+      '<strong>DMZ & Firewall:</strong> วาง Web Server ใน DMZ, ตั้ง Firewall แบบ Default Deny ขาเข้า แล้วอนุญาตเฉพาะพอร์ตที่จำเป็น',
+      '<strong>SSH Hardening:</strong> ปิด <code>PermitRootLogin</code>, ใช้ SSH Key, ติดตั้ง <code>Fail2ban</code> และห้ามใช้ Telnet (23)',
+      '<strong>Encryption & Monitoring:</strong> ใช้ SSL/TLS Certificate สำหรับ HTTPS (443), เฝ้าระวังด้วย SNMP (161) และรวมศูนย์ Log ด้วย Syslog (514)'
+    ]
+  },
+  {
+    title: 'บทที่ 8: การสำรองข้อมูล (Backup) & กู้คืนภัยพิบัติ (DR)',
+    points: [
+      '<strong>กฎ 3-2-1-1-0:</strong> 3 ชุดข้อมูล • 2 ชนิดสื่อ • 1 ชุด Off-site • 1 ชุด Offline/Immutable กัน Ransomware • 0 Error จากการซ้อมกู้คืน',
+      '<strong>ชนิด Backup:</strong> Full (ครบทั้งหมด), Incremental (เปลี่ยนจากครั้งล่าสุด—เร็วสุด กู้หลายชุด), Differential (เปลี่ยนจาก Full ล่าสุด—กู้เร็วใช้แค่ 2 ชุด)',
+      '<strong>RTO vs RPO:</strong> RTO = เวลากู้ระบบสูงสุดที่ยอมรับได้ • RPO = ช่วงข้อมูลย้อนหลังสูงสุดที่ยอมให้สูญหายได้',
+      '<strong>High Availability (HA):</strong> ใช้ Load Balancer + Redundant Servers ลด Single Point of Failure'
     ]
   }
 ];
 
-/* ==================== EXAM QUESTION BANK (15 QUESTIONS -> RANDOM 10) ==================== */
+/* ==================== 30 CERTIFICATION EXAM QUESTIONS (RANDOM 15) ==================== */
 const EXAM_BANK = [
-  {
-    category: 'fundamentals',
-    q: 'ข้อใดคือหน้าที่หลักของ ECC RAM ในเครื่องแม่ข่าย (Server)?',
-    options: [
-      'เพิ่มเฟรมเรตการแสดงผลกราฟิก 3 มิติ',
-      'ตรวจจับและแก้ไขข้อผิดพลาดของข้อมูลในหน่วยความจำอัตโนมัติ ลดอาการระบบล่ม',
-      'สำรองไฟฟ้าแทนเครื่อง UPS เมื่อไฟดับ',
-      'แปลงสัญญาณอินเทอร์เน็ตจากสายไฟเบอร์เป็น Wi-Fi'
-    ],
-    answer: 1,
-    explain: 'ECC (Error-Correcting Code) RAM สามารถตรวจจับและแก้ Single-bit Error ได้ ช่วยให้เครื่องแม่ข่ายทำงานต่อเนื่องได้อย่างเสถียร'
-  },
-  {
-    category: 'fundamentals',
-    q: 'หากต้องการใช้ฮาร์ดดิสก์ 4 ลูก ขนาดลูกละ 2 TB ทำ RAID 5 จะได้พื้นที่ใช้งานจริงประมาณเท่าใด และทนดิสก์เสียได้กี่ลูก?',
-    options: [
-      '8 TB / ทนเสียได้ 0 ลูก',
-      '6 TB / ทนเสียได้ 1 ลูก',
-      '4 TB / ทนเสียได้ 3 ลูก',
-      '2 TB / ทนเสียได้ 2 ลูก'
-    ],
-    answer: 1,
-    explain: 'RAID 5 มีพื้นที่ใช้งานเท่ากับ (N - 1) × ขนาดดิสก์ = (4 - 1) × 2 TB = 6 TB และทนดิสก์เสียได้ 1 ลูก'
-  },
-  {
-    category: 'fundamentals',
-    q: 'ข้อใดกล่าวถูกต้องเกี่ยวกับ Virtualization (เทคโนโลยีเครื่องเสมือน)?',
-    options: [
-      'ต้องซื้อเครื่องแม่ข่ายจริง 1 เครื่องต่อ 1 บริการเสมอ',
-      'ใช้ Hypervisor แบ่งทรัพยากรเครื่องจริง 1 เครื่อง เพื่อรัน Server เสมือน (VM) หลายเครื่องพร้อมกันได้',
-      'ใช้ได้เฉพาะบนระบบปฏิบัติการ Windows 98 เท่านั้น',
-      'ทำให้ไม่จำเป็นต้องติดตั้งระบบปฏิบัติการใด ๆ เลย'
-    ],
-    answer: 1,
-    explain: 'Hypervisor (เช่น Proxmox, ESXi, Hyper-V) ช่วยรัน VM หลายตัวบนฮาร์ดแวร์เดียว ทำให้ใช้ทรัพยากรคุ้มค่าและทำ Snapshot/Backup ได้ง่าย'
-  },
-  {
-    category: 'network',
-    q: 'เหตุใดเครื่องแม่ข่าย (Server) จึงควรกำหนดหมายเลข IP แบบ Static IP แทนที่จะรับแบบ DHCP อัตโนมัติ?',
-    options: [
-      'เพราะ Static IP ทำให้ความเร็วอินเทอร์เน็ตเพิ่มขึ้น 10 เท่า',
-      'เพื่อให้หมายเลข IP คงที่ ไม่เปลี่ยนแปลง ทำให้เครื่องลูกข่ายและระบบ DNS ติดต่อได้ตลอดเวลา',
-      'เพราะระบบปฏิบัติการ Server ไม่รองรับ DHCP',
-      'เพื่อประหยัดพลังงานไฟฟ้าของเครื่องแม่ข่าย'
-    ],
-    answer: 1,
-    explain: 'หาก Server เปลี่ยน IP ไปเรื่อย ๆ บริการเว็บ ฐานข้อมูล หรือ DNS จะไม่สามารถเชื่อมต่อได้จากเครื่องลูกข่าย'
-  },
-  {
-    category: 'network',
-    q: 'บริการใดทำหน้าที่แปลงชื่อโดเมน (Domain Name) ให้เป็นหมายเลข IP Address และใช้พอร์ตหมายเลขใด?',
-    options: [
-      'DHCP — พอร์ต 67/68',
-      'DNS — พอร์ต 53',
-      'SSH — พอร์ต 22',
-      'SMTP — พอร์ต 25'
-    ],
-    answer: 1,
-    explain: 'DNS (Domain Name System) ทำงานบนพอร์ต 53 ทำหน้าที่แปลงชื่อโดเมนเป็น IP Address'
-  },
-  {
-    category: 'network',
-    q: 'หากผู้ดูแลระบบต้องการรีโมทเข้าไปจัดการหน้าจอ GUI ของ Windows Server ต้องเปิดพอร์ตมาตรฐานใด?',
-    options: [
-      'พอร์ต 22 (SSH)',
-      'พอร์ต 80 (HTTP)',
-      'พอร์ต 3389 (RDP)',
-      'พอร์ต 110 (POP3)'
-    ],
-    answer: 2,
-    explain: 'RDP (Remote Desktop Protocol) ของ Windows ใช้พอร์ตมาตรฐาน 3389'
-  },
-  {
-    category: 'users',
-    q: 'บนระบบปฏิบัติการ Linux สิทธิ์ของไฟล์แสดงเป็น "-rw-r--r--" เทียบเท่ากับรหัสเลขฐานแปดใด?',
-    options: [
-      '755',
-      '644',
-      '600',
-      '777'
-    ],
-    answer: 1,
-    explain: 'rw- = 4+2 = 6, r-- = 4, r-- = 4 รวมกันเป็น 644 ซึ่งเป็นสิทธิ์มาตรฐานของไฟล์ทั่วไปบน Linux'
-  },
-  {
-    category: 'users',
-    q: 'บน Windows Server องค์ประกอบใดใน Active Directory ที่ใช้กำหนดนโยบายความปลอดภัยลงไปยังเครื่องลูกข่ายทั้งหมดในแผนกได้พร้อมกัน?',
-    options: [
-      'Group Policy Object (GPO)',
-      'Recycle Bin',
-      'Windows Paint',
-      'Disk Cleanup'
-    ],
-    answer: 0,
-    explain: 'Group Policy Object (GPO) ใช้กำหนดและบังคับใช้นโยบายกับผู้ใช้และเครื่องคอมพิวเตอร์ใน Domain/OU จากส่วนกลาง'
-  },
-  {
-    category: 'users',
-    q: 'หลักการ "Principle of Least Privilege" ในการดูแลระบบเครื่องแม่ข่ายหมายถึงข้อใด?',
-    options: [
-      'ให้ผู้ใช้ทุกคนมีสิทธิ์ Administrator เพื่อทำงานได้เร็วที่สุด',
-      'ให้สิทธิ์ผู้ใช้และบริการต่าง ๆ เฉพาะเท่าที่จำเป็นต่อการปฏิบัติงานเท่านั้น',
-      'ลบบัญชีผู้ใช้ทั้งหมดออกจากระบบทุกสัปดาห์',
-      'ไม่ต้องตั้งรหัสผ่านให้บัญชีผู้ดูแลระบบ'
-    ],
-    answer: 1,
-    explain: 'Principle of Least Privilege ช่วยจำกัดขอบเขตความเสียหายหากบัญชีใดบัญชีหนึ่งถูกโจมตีหรือใช้งานผิดพลาด'
-  },
-  {
-    category: 'cli',
-    q: 'คำสั่งใดบน Linux Server ใช้สำหรับรีสตาร์ทบริการเว็บเซิร์ฟเวอร์ Apache (apache2)?',
-    options: [
-      'systemctl restart apache2',
-      'chmod restart apache2',
-      'df -h apache2',
-      'ping apache2'
-    ],
-    answer: 0,
-    explain: 'คำสั่ง systemctl restart <service> ใช้หยุดและเริ่มบริการใหม่ทันที (มักใช้หลังแก้ไขไฟล์คอนฟิก)'
-  },
-  {
-    category: 'cli',
-    q: 'คำสั่งใดใช้ตรวจสอบพอร์ตเครือข่ายที่เครื่อง Linux Server กำลังเปิดรอรับการเชื่อมต่อ (Listening Ports)?',
-    options: [
-      'ss -tulnp (หรือ netstat -tulnp)',
-      'mkdir -p',
-      'touch port.txt',
-      'pwd'
-    ],
-    answer: 0,
-    explain: 'ss -tulnp แสดงพอร์ต TCP/UDP ที่กำลังเปิด Listening พร้อมชื่อ Process ที่ใช้งานพอร์ตนั้น'
-  },
-  {
-    category: 'cli',
-    q: 'หากต้องการรันคำสั่งที่มีสิทธิ์ผู้ดูแลระบบ (Root) ชั่วคราวจากบัญชีผู้ใช้ทั่วไปบน Ubuntu Server ควรพิมพ์คำสั่งใดนำหน้า?',
-    options: [
-      'sudo',
-      'cd',
-      'echo',
-      'cat'
-    ],
-    answer: 0,
-    explain: 'sudo (Superuser Do) ใช้ยกระดับสิทธิ์ชั่วคราวเพื่อรันคำสั่งระดับผู้ดูแลระบบอย่างปลอดภัยและมีการบันทึก Log'
-  },
-  {
-    category: 'security',
-    q: 'เหตุใดผู้ดูแลระบบจึงควรใช้ SSH (พอร์ต 22) แทน Telnet (พอร์ต 23) ในการรีโมทจัดการเครื่องแม่ข่าย?',
-    options: [
-      'เพราะ Telnet มีขนาดไฟล์ใหญ่กว่า',
-      'เพราะ SSH เข้ารหัสข้อมูลและรหัสผ่านทั้งหมดระหว่างการรับส่ง ส่วน Telnet ส่งเป็นข้อความธรรมดา (Plaintext)',
-      'เพราะ SSH ไม่ต้องใช้อินเทอร์เน็ตหรือเครือข่าย',
-      'เพราะ Telnet ใช้ได้เฉพาะกับเครื่องพิมพ์'
-    ],
-    answer: 1,
-    explain: 'Telnet ส่งข้อมูลและรหัสผ่านแบบไม่เข้ารหัส ทำให้ถูกดักจับ (Sniffing) ได้ง่าย จึงต้องใช้ SSH ที่เข้ารหัสแทนเสมอ'
-  },
-  {
-    category: 'security',
-    q: 'ตามกฎ 3-2-1 Backup Rule เลข "1" หมายถึงข้อใด?',
-    options: [
-      'ต้องสำรองข้อมูลเพียง 1 ครั้งต่อปี',
-      'ต้องมีสำเนาข้อมูลอย่างน้อย 1 ชุดเก็บรักษานอกสถานที่ (Off-site) หรือแยกขาดจากเครือข่ายหลัก',
-      'ต้องใช้ฮาร์ดดิสก์เพียง 1 ลูกในการเก็บทั้งต้นฉบับและสำรอง',
-      'ต้องมีผู้ดูแลระบบเพียง 1 คนเท่านั้นที่รู้รหัสผ่าน'
-    ],
-    answer: 1,
-    explain: 'เลข 1 ในกฎ 3-2-1 คือการเก็บสำเนาอย่างน้อย 1 ชุดไว้ Off-site (เช่น Cloud หรือสาขาอื่น) เพื่อป้องกันภัยพิบัติหรือ Ransomware ในสถานที่หลัก'
-  },
-  {
-    category: 'security',
-    q: 'ข้อใดคือความแตกต่างสำคัญระหว่าง Incremental Backup กับ Differential Backup?',
-    options: [
-      'Incremental เก็บเฉพาะที่เปลี่ยนจาก Backup ครั้งล่าสุดทุกชนิด ส่วน Differential เก็บทุกอย่างที่เปลี่ยนจาก Full Backup ล่าสุด',
-      'Incremental ใช้พื้นที่มากกว่า Full Backup เสมอ',
-      'Differential ไม่ต้องมี Full Backup ตั้งต้นเลย',
-      'ทั้งสองแบบเหมือนกันทุกประการ ต่างกันแค่ชื่อเรียก'
-    ],
-    answer: 0,
-    explain: 'Incremental แบ็กอัปเร็วและใช้พื้นที่น้อยที่สุด แต่ตอนกู้คืนต้องใช้หลายชุด ส่วน Differential ใช้พื้นที่เพิ่มขึ้นเรื่อย ๆ แต่กู้คืนง่ายกว่า (ใช้แค่ Full + Differential ล่าสุด)'
-  }
+  { category: 'fundamentals', q: 'ข้อใดคือข้อได้เปรียบหลักของสถาปัตยกรรม Client-Server เมื่อเทียบกับ Peer-to-Peer ในองค์กรขนาด 100 เครื่อง?', options: ['ไม่ต้องใช้สายแลนหรือสวิตช์', 'รวมศูนย์การจัดการบัญชีผู้ใช้ ความปลอดภัย และการสำรองข้อมูลไว้ที่จุดเดียว', 'ทุกเครื่องไม่ต้องติดตั้งระบบปฏิบัติการ', 'ทำให้เครื่องลูกข่ายกลายเป็นเครื่องแม่ข่ายพร้อมกันทุกเครื่อง'], answer: 1, explain: 'Client-Server ช่วยให้ผู้ดูแลระบบบริหารจัดการบัญชี สิทธิ์ นโยบาย และข้อมูลจากศูนย์กลางได้อย่างมีประสิทธิภาพ' },
+  { category: 'fundamentals', q: 'ระบบปฏิบัติการใดต่อไปนี้จัดเป็น Server OS ทั้งหมด?', options: ['Windows Server 2022, Ubuntu Server, Rocky Linux', 'Windows 11 Home, Android 14, iOS', 'macOS Home, ChromeOS, Nintendo OS', 'MS-DOS, Windows 98, Symbian'], answer: 0, explain: 'Windows Server, Ubuntu Server และ Rocky Linux/RHEL ล้วนออกแบบมาสำหรับงานเครื่องแม่ข่ายโดยเฉพาะ' },
+  { category: 'hardware', q: 'หน้าที่สำคัญของ ECC RAM ในเครื่องแม่ข่ายคือข้อใด?', options: ['เพิ่มความสว่างของจอภาพ', 'ตรวจจับและแก้ไขข้อผิดพลาดของข้อมูลในหน่วยความจำอัตโนมัติ ลดอาการระบบล่ม', 'สำรองไฟแทน UPS ได้ 2 ชั่วโมง', 'เพิ่มจำนวนพอร์ต USB ด้านหลังเครื่อง'], answer: 1, explain: 'ECC RAM แก้ Single-bit Error อัตโนมัติ ช่วยให้เครื่องแม่ข่ายทำงาน 24/7 ได้อย่างเสถียร' },
+  { category: 'hardware', q: 'ข้อใดคือตัวอย่างของ Type-1 (Bare-Metal) Hypervisor ที่ใช้ใน Data Center?', options: ['VMware ESXi, Proxmox VE, Microsoft Hyper-V', 'Google Chrome, Firefox, Edge', 'Microsoft Word, Excel, PowerPoint', 'WinRAR, 7-Zip, Notepad++'], answer: 0, explain: 'Type-1 Hypervisor ติดตั้งตรงบนฮาร์ดแวร์โดยไม่ผ่าน Host OS จึงมีประสิทธิภาพสูงสุด' },
+  { category: 'hardware', q: 'เหตุใด Docker Container จึงเปิดทำงานได้เร็วและกินทรัพยากรน้อยกว่า Virtual Machine (VM)?', options: ['เพราะ Container แชร์ Kernel ของ Host OS ไม่ต้องบูต Guest OS แยกเต็มระบบ', 'เพราะ Container ไม่ใช้ RAM เลย', 'เพราะ Container ไม่ต้องใช้ซีพียู', 'เพราะ VM ไม่สามารถรันเว็บเซิร์ฟเวอร์ได้'], answer: 0, explain: 'Container เป็น OS-level Virtualization แชร์ Host Kernel จึงเบากว่าและสตาร์ตได้ภายในเสี้ยววินาที' },
+  { category: 'hardware', q: 'อุปกรณ์ใดช่วยกระจายทราฟฟิกไปยัง Web Server หลายเครื่องและตัดเครื่องที่ล่มออกอัตโนมัติ?', options: ['Load Balancer', 'Dot-Matrix Printer', 'Sound Card', 'KVM Mouse'], answer: 0, explain: 'Load Balancer ช่วยกระจายภาระงานและทำ Health Check เพื่อให้ได้ High Availability (HA)' },
+  { category: 'storage', q: 'หากนำฮาร์ดดิสก์ 4 ลูก ขนาดลูกละ 2 TB มาทำ RAID 5 จะได้พื้นที่ใช้งานจริงเท่าใด และทนเสียได้กี่ลูก?', options: ['8 TB / 0 ลูก', '6 TB / 1 ลูก', '4 TB / 2 ลูก', '2 TB / 3 ลูก'], answer: 1, explain: 'RAID 5 มีความจุ (N-1) = 3 × 2 TB = 6 TB และทนดิสก์เสียได้ 1 ลูก' },
+  { category: 'storage', q: 'RAID ระดับใดที่มี Dual Parity สามารถทนฮาร์ดดิสก์เสียพร้อมกันได้ 2 ลูกใด ๆ ก็ตาม?', options: ['RAID 0', 'RAID 1', 'RAID 5', 'RAID 6'], answer: 3, explain: 'RAID 6 ใช้ Parity 2 ชุด ทนดิสก์เสียพร้อมกันได้ถึง 2 ลูก ความจุใช้งาน (N-2)' },
+  { category: 'storage', q: 'RAID ระดับใดเหมาะสมที่สุดสำหรับ Database Server ที่ต้องการความเร็วเขียนสูง (High IOPS) และยังทนดิสก์เสียได้?', options: ['RAID 0', 'RAID 10 (1+0)', 'ไม่ใช้ RAID', 'Floppy RAID'], answer: 1, explain: 'RAID 10 ผสาน Mirror + Stripe ไม่มีภาระคำนวณ Parity จึงให้ประสิทธิภาพการอ่าน-เขียนสูงสุดแบบปลอดภัย' },
+  { category: 'storage', q: 'File System ใดเป็นมาตรฐานยอดนิยมของ Linux Server สมัยใหม่?', options: ['ext4 และ XFS', 'FAT12 และ FAT16', 'exFAT เท่านั้น', 'CDFS'], answer: 0, explain: 'Linux Server นิยมใช้ ext4, XFS และ ZFS ซึ่งรองรับ Journaling และไฟล์ขนาดใหญ่' },
+  { category: 'network', q: 'เหตุใดเครื่องแม่ข่ายจึงควรกำหนดเป็น Static IP แทนที่จะรับ IP แบบสุ่มจาก DHCP?', options: ['เพื่อให้หมายเลข IP คงที่ ไม่เปลี่ยนแปลง ทำให้ Client และ DNS ติดต่อได้เสมอ', 'เพราะ Static IP ไม่ต้องใช้สายแลน', 'เพราะ DHCP ใช้ได้เฉพาะมือถือ', 'เพื่อประหยัดค่าไฟ'], answer: 0, explain: 'เครื่องแม่ข่ายต้องมีที่อยู่ IP คงที่เพื่อให้เครื่องลูกข่ายและบริการอื่นเชื่อมต่อไปยังจุดหมายเดิมได้ตลอดเวลา' },
+  { category: 'network', q: 'ขั้นตอนการขอรับหมายเลข IP อัตโนมัติของ DHCP (DORA) เรียงลำดับอย่างไร?', options: ['Discover → Offer → Request → Acknowledge', 'Delete → Open → Reset → Accept', 'Download → Order → Run → Apply', 'Direct → Output → Route → Address'], answer: 0, explain: 'DHCP ใช้ 4 ขั้นตอน DORA: Discover, Offer, Request, Acknowledge บนพอร์ต UDP 67/68' },
+  { category: 'network', q: 'DNS Record ประเภทใดใช้แปลงชื่อโดเมนเป็น IPv4 และประเภทใดใช้ระบุ Mail Server?', options: ['A Record และ MX Record', 'MX Record และ PTR Record', 'TXT Record และ NS Record', 'CNAME และ DHCP'], answer: 0, explain: 'A Record ชี้ไปยัง IPv4 (AAAA สำหรับ IPv6) ส่วน MX Record ชี้ไปยัง Mail Server ของโดเมน' },
+  { category: 'network', q: 'เครือข่าย 192.168.1.0/24 (Subnet Mask 255.255.255.0) มีหมายเลข IP ที่กำหนดให้เครื่องใช้งานได้จริงกี่หมายเลข?', options: ['254 หมายเลข', '256 หมายเลข', '128 หมายเลข', '100 หมายเลข'], answer: 0, explain: '256 - 2 (หัก Network Address .0 และ Broadcast Address .255) = 254 Usable Hosts' },
+  { category: 'network', q: 'พอร์ตมาตรฐาน 3389, 445 และ 123 ตรงกับบริการใดตามลำดับ?', options: ['RDP, SMB และ NTP', 'HTTP, FTP และ DNS', 'SSH, SMTP และ POP3', 'MySQL, LDAP และ SNMP'], answer: 0, explain: '3389 = RDP (Windows Remote), 445 = SMB (Windows File Share), 123 = NTP (Time Sync)' },
+  { category: 'network', q: 'หากต้องการสืบค้นข้อมูลไดเรกทอรี Active Directory (LDAP) และมอนิเตอร์อุปกรณ์เครือข่าย (SNMP) ใช้พอร์ตใดตามลำดับ?', options: ['389 และ 161', '80 และ 443', '21 และ 22', '25 และ 110'], answer: 0, explain: 'LDAP ใช้พอร์ต 389 (LDAPS 636) และ SNMP ใช้พอร์ต 161' },
+  { category: 'users', q: 'บน Windows Server องค์ประกอบใดใน Active Directory ใช้บังคับนโยบายความปลอดภัยลงเครื่องลูกข่ายทั้งแผนกพร้อมกัน?', options: ['Group Policy Object (GPO)', 'Disk Cleanup', 'Windows Paint', 'Taskbar Settings'], answer: 0, explain: 'GPO ผูกกับ Domain หรือ OU เพื่อกระจายนโยบายความปลอดภัยและการตั้งค่าจากส่วนกลาง' },
+  { category: 'users', q: 'หากโฟลเดอร์แชร์บน Windows Server ตั้ง Share Permission = Full Control แต่ NTFS Permission = Read สิทธิ์จริงเมื่อเข้าผ่านเครือข่ายคือข้อใด?', options: ['Read (ยึดสิทธิ์ที่เข้มงวดที่สุด)', 'Full Control', 'Modify', 'ไม่มีผลใด ๆ'], answer: 0, explain: 'เมื่อ Share กับ NTFS รวมกัน ระบบ Windows จะยึดสิทธิ์ที่เข้มงวดที่สุด (Most Restrictive) เสมอ' },
+  { category: 'users', q: 'บน Linux ไฟล์ใดที่เก็บรหัสผ่านแบบแฮช (Hashed Passwords) ของผู้ใช้และจำกัดให้เฉพาะ root อ่านได้?', options: ['/etc/shadow', '/etc/passwd', '/etc/hosts', '/var/www'], answer: 0, explain: '/etc/shadow แยกเก็บรหัสผ่านที่เข้ารหัสไว้ต่างหากเพื่อป้องกันผู้ใช้ทั่วไปแอบอ่าน' },
+  { category: 'users', q: 'สิทธิ์ไฟล์ Linux "-rwxr-x---" ตรงกับรหัสเลขฐานแปดใด?', options: ['750', '755', '640', '600'], answer: 0, explain: 'rwx = 4+2+1 = 7, r-x = 4+1 = 5, --- = 0 รวมเป็น 750' },
+  { category: 'users', q: 'คำสั่งใดบน Linux ใช้เปลี่ยนเจ้าของไฟล์ (Owner) และกลุ่มเจ้าของ (Group)?', options: ['chown', 'chmod', 'ping', 'df'], answer: 0, explain: 'chown = Change Owner (เปลี่ยนเจ้าของ/กลุ่ม), ส่วน chmod = Change Mode (เปลี่ยนสิทธิ์ rwx)' },
+  { category: 'cli', q: 'คำสั่งใดบน Linux ใช้รีสตาร์ทบริการ Apache (apache2) และดู Log ของบริการนั้น?', options: ['systemctl restart apache2 และ journalctl -u apache2', 'ipconfig /all และ gpupdate', 'mkdir apache2 และ rm apache2', 'whoami และ hostname'], answer: 0, explain: 'systemctl จัดการสถานะบริการ ส่วน journalctl -u ดูบันทึกเหตุการณ์ของบริการใน systemd' },
+  { category: 'cli', q: 'คำสั่งใดใช้ดูพื้นที่ว่างของทุกพาร์ติชัน และคำสั่งใดใช้หาว่าโฟลเดอร์ย่อยใดกินพื้นที่มากที่สุดบน Linux?', options: ['df -h และ du -sh', 'top และ kill', 'chmod และ useradd', 'ping และ traceroute'], answer: 0, explain: 'df -h ดูพื้นที่ว่างทั้งพาร์ติชัน ส่วน du -sh สรุปขนาดของแต่ละโฟลเดอร์/ไฟล์' },
+  { category: 'cli', q: 'คำสั่งใดบน Windows Server PowerShell ใช้บังคับอัปเดต Group Policy ทันที?', options: ['gpupdate /force', 'systemctl reload gpo', 'ufw reload', 'apt update'], answer: 0, explain: 'gpupdate /force ใช้บังคับโหลดนโยบาย GPO ใหม่จาก Domain Controller ทันที' },
+  { category: 'cli', q: 'คำสั่งใดบน Windows PowerShell ใช้ทดสอบการเชื่อมต่อพอร์ต TCP ของเครื่องแม่ข่ายปลายทาง?', options: ['Test-NetConnection <host> -Port <port>', 'chmod 443', 'df -h', 'useradd -p 443'], answer: 0, explain: 'Test-NetConnection (หรือ tnc) ใช้ตรวจสอบว่าพอร์ตปลายทางเปิดและเชื่อมต่อได้หรือไม่' },
+  { category: 'security', q: 'เหตุใดจึงควรวาง Web Server สาธารณะไว้ในโซน DMZ?', options: ['เพื่อแยกเครื่องที่รับทราฟฟิกจากอินเทอร์เน็ตออกจากเครือข่ายภายใน ลดความเสียหายหากถูกเจาะ', 'เพื่อให้ไม่ต้องตั้งรหัสผ่านให้ Web Server', 'เพื่อให้ไม่ต้องใช้ Firewall', 'เพื่อเพิ่มความเร็วฮาร์ดดิสก์ 10 เท่า'], answer: 0, explain: 'DMZ เป็นพื้นที่กันชนป้องกันไม่ให้ผู้บุกรุกที่ยึด Web Server ได้เข้าถึงฐานข้อมูลใน Internal LAN โดยตรง' },
+  { category: 'security', q: 'เหตุใด SSH (พอร์ต 22) จึงปลอดภัยกว่า Telnet (พอร์ต 23)?', options: ['SSH เข้ารหัสข้อมูลและรหัสผ่านทั้งหมดระหว่างรับส่ง ส่วน Telnet ส่งเป็นข้อความธรรมดา', 'Telnet ใช้ไม่ได้กับ Linux', 'SSH ไม่ต้องใช้เครือข่าย', 'Telnet ไม่มีพอร์ตมาตรฐาน'], answer: 0, explain: 'Telnet ส่งข้อมูลแบบ Plaintext เสี่ยงถูกดักจับ (Sniffing) จึงต้องใช้ SSH แทนเสมอ' },
+  { category: 'security', q: 'หลักการ CIA Triad ประกอบด้วย 3 เสาหลักใดบ้าง?', options: ['Confidentiality, Integrity, Availability', 'CPU, IP, Admin', 'Cloud, Internet, App', 'Create, Insert, Alter'], answer: 0, explain: 'CIA Triad = ความลับ (Confidentiality), ความถูกต้องสมบูรณ์ (Integrity), ความพร้อมใช้งาน (Availability)' },
+  { category: 'backup', q: 'ความหมายของ RTO และ RPO ในแผนกู้คืนภัยพิบัติ (Disaster Recovery) คือข้อใด?', options: ['RTO = เวลากู้ระบบสูงสุดที่ยอมได้ • RPO = ช่วงข้อมูลย้อนหลังสูงสุดที่ยอมให้หายได้', 'RTO = ขนาดดิสก์ • RPO = ความเร็วเน็ต', 'RTO = ชื่อผู้ใช้ • RPO = รหัสผ่าน', 'ทั้งสองคำหมายถึงจำนวนดิสก์ใน RAID'], answer: 0, explain: 'RTO (Recovery Time Objective) คือระยะเวลา Downtime ที่รับได้ ส่วน RPO (Recovery Point Objective) คือจุดข้อมูลที่ยอมสูญเสียได้' },
+  { category: 'backup', q: 'หากมี Full Backup วันอาทิตย์ และ Differential Backup ทุกวัน (จันทร์–พุธ) เมื่อเกิดเหตุวันพฤหัสฯ ต้องใช้กี่ชุดในการ Restore?', options: ['2 ชุด (Full วันอาทิตย์ + Differential วันพุธล่าสุด)', '4 ชุดครบทุกวัน', '1 ชุดคือ Differential วันพุธอย่างเดียว', 'กู้คืนไม่ได้เพราะไม่มี Incremental'], answer: 0, explain: 'Differential Backup เก็บข้อมูลที่เปลี่ยนทั้งหมดนับจาก Full ล่าสุด จึงใช้แค่ Full + Differential ล่าสุดเพียง 2 ชุดในการกู้คืน' }
 ];

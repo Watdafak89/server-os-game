@@ -3,504 +3,601 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ServerOps Academy — เกมสื่อการสอนระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น</title>
+  <title>ServerOps: Data Center Defender — เกมสื่อการสอนระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="cyber-bg" aria-hidden="true"></div>
 
-  <!-- Top Navigation Bar -->
-  <header class="topbar no-print">
-    <div class="brand" id="brandHomeBtn" role="button" tabindex="0" title="กลับหน้าหลัก">
-      <div class="brand-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="4" width="18" height="6" rx="1.5" />
-          <rect x="3" y="14" width="18" height="6" rx="1.5" />
-          <circle cx="7" cy="7" r="1" fill="currentColor" />
-          <circle cx="7" cy="17" r="1" fill="currentColor" />
-          <line x1="11" y1="7" x2="17" y2="7" />
-          <line x1="11" y1="17" x2="17" y2="17" />
-        </svg>
+  <!-- ==================== GAME TITLE / START SCREEN ==================== -->
+  <section id="titleScreen" class="title-screen no-print">
+    <div class="title-card">
+      <div class="title-badge">SERVER OS RPG • EDITION 2.0 • 18 STAGES + 14 CLI LABS</div>
+      <h1 class="game-logo">
+        <span class="logo-main">SERVEROPS</span>
+        <span class="logo-sub">DATA CENTER DEFENDER</span>
+      </h1>
+      <p class="title-tagline">
+        เกมผจญภัยสวมบทบาทผู้ดูแลระบบเครื่องแม่ข่าย • รายวิชาระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น<br />
+        พิชิต 6 โซนศูนย์ข้อมูล สู้บอสไซเบอร์ ฝึก Linux &amp; Windows CLI ป้องกันพอร์ต ไขปริศนา CHMOD/RAID และชิงใบรับรอง SysAdmin!
+      </p>
+
+      <div class="profile-setup">
+        <div class="avatar-picker-label">เลือกตัวละคร SysAdmin ของคุณ:</div>
+        <div id="avatarPicker" class="avatar-picker"></div>
+        <div class="callsign-row">
+          <input type="text" id="playerNameInput" class="game-input" placeholder="ตั้งชื่อผู้ดูแลระบบ (เช่น Admin ต้น)" maxlength="32" />
+        </div>
       </div>
-      <div>
-        <div class="brand-title">ServerOps Academy</div>
-        <div class="brand-sub">ระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น</div>
+
+      <div class="save-preview" id="titleSavePreview"></div>
+
+      <div class="title-actions">
+        <button class="btn btn-neon btn-xl" id="enterGameBtn">▶ เข้าสู่ศูนย์ข้อมูล (PLAY GAME)</button>
+      </div>
+
+      <div class="title-footer-bar">
+        <label class="toggle-chip">
+          <input type="checkbox" id="titleFreePlayToggle" />
+          <span>🔓 โหมดอิสระ/ครูผู้สอน (ปลดล็อกทุกด่าน)</span>
+        </label>
+        <div class="title-mini-btns">
+          <button class="icon-btn" id="titleSoundBtn" title="เปิด/ปิดเสียง">🔊</button>
+          <button class="icon-btn" id="titleThemeBtn" title="สลับโหมดมืด/สว่าง">☀️</button>
+        </div>
       </div>
     </div>
+  </section>
 
-    <nav class="nav-tabs" aria-label="เมนูหลัก">
-      <button class="nav-btn active" data-view="dashboard">หน้าหลัก</button>
-      <button class="nav-btn" data-view="missions">ภารกิจจำลอง</button>
-      <button class="nav-btn" data-view="terminal">ห้องแล็บ CLI</button>
-      <button class="nav-btn" data-view="portrush">จับคู่พอร์ต</button>
-      <button class="nav-btn" data-view="codex">คลังความรู้</button>
-      <button class="nav-btn" data-view="exam">สอบวัดผล</button>
+  <!-- ==================== MAIN GAME SHELL ==================== -->
+  <div id="gameShell" class="game-shell hidden">
+    <!-- TOP PERSISTENT GAME HUD -->
+    <header class="game-hud no-print">
+      <div class="hud-player" id="hudProfileBtn" title="กลับหน้า Title / เปลี่ยนตัวละคร">
+        <div class="hud-avatar" id="hudAvatar">👨‍💻</div>
+        <div class="hud-player-info">
+          <div class="hud-name-row">
+            <strong id="hudPlayerName">SysAdmin</strong>
+            <span class="level-tag" id="hudLevel">LV.1</span>
+          </div>
+          <div class="hud-rank" id="hudRank">Rookie Technician</div>
+          <div class="hud-xp-bar"><div class="hud-xp-fill" id="hudXpFill" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="hud-resources">
+        <div class="res-pill star-pill" title="ดาวสะสมจากแคมเปญ">
+          <span>⭐</span><strong id="hudStars">0/54</strong>
+        </div>
+        <div class="res-pill coin-pill" title="เหรียญ Admin Credits (ใช้ซื้อไอเทมในร้านค้า)">
+          <span>💰</span><strong id="hudCoins">100</strong>
+        </div>
+        <div class="res-pill xp-pill-hud" title="XP สะสม">
+          <span>⚡</span><strong id="hudXp">0 XP</strong>
+        </div>
+        <div id="hudBoostBadge" class="res-pill boost-pill hidden" title="XP & Coins x2 กำลังทำงาน">
+          <span>🔥 x2</span>
+        </div>
+      </div>
+
+      <div class="hud-controls">
+        <button class="icon-btn" id="hudSoundBtn" title="เปิด/ปิดเสียง">🔊</button>
+        <button class="icon-btn" id="hudThemeBtn" title="สลับโหมดมืด/สว่าง (โปรเจคเตอร์)">☀️</button>
+        <button class="icon-btn" id="hudHomeBtn" title="กลับหน้าเริ่มต้น">🏠</button>
+      </div>
+    </header>
+
+    <!-- MAIN GAME VIEWPORT -->
+    <main class="game-stage">
+      <!-- ==================== SCREEN 1: CAMPAIGN WORLD MAP ==================== -->
+      <section id="screen-map" class="screen active">
+        <div class="map-banner">
+          <div>
+            <div class="sector-kicker">CAMPAIGN OVERWORLD • 6 SECTORS • 18 STAGES</div>
+            <h2>🗺️ แผนที่ภารกิจศูนย์ข้อมูล (Data Center World Map)</h2>
+            <p class="muted-text">ผ่านด่านแต่ละโซนเพื่อเก็บดาว ⭐⭐⭐ สะสมเหรียญซื้อไอเทมช่วยสู้ และโค่นบอสใหญ่ <strong>Blackout Overlord</strong></p>
+          </div>
+          <div class="map-controls">
+            <label class="toggle-chip">
+              <input type="checkbox" id="mapFreePlayToggle" />
+              <span>🔓 ปลดล็อกทุกด่าน (Free Play)</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="worldMapContainer" class="world-map-grid"></div>
+      </section>
+
+      <!-- ==================== SCREEN 2: RPG BATTLE ARENA ==================== -->
+      <section id="screen-battle" class="screen">
+        <div class="battle-topbar">
+          <button class="btn btn-ghost btn-sm" id="battleRetreatBtn">← หนีกลับแผนที่</button>
+          <div class="battle-stage-meta">
+            <span class="stage-chip" id="battleZoneChip">ZONE 01</span>
+            <strong id="battleStageTitle">1-1</strong>
+            <span class="combo-chip hidden" id="battleComboChip">🔥 x2 COMBO</span>
+          </div>
+          <div class="battle-step-pill" id="battleStepPill">Wave 1 / 2</div>
+        </div>
+
+        <!-- NPC Dialogue Strip -->
+        <div class="dialogue-bar" id="battleDialogueBar">
+          <div class="npc-avatar">🤖</div>
+          <div class="dialogue-text" id="battleDialogueText">...</div>
+        </div>
+
+        <!-- Visual RPG Combat Stage -->
+        <div class="combat-arena" id="combatArena">
+          <div class="fx-layer" id="battleFxLayer"></div>
+
+          <!-- Left: Player Server Core -->
+          <div class="combatant player-side" id="playerCombatant">
+            <div class="combatant-sprite" id="battlePlayerSprite">🖥️</div>
+            <div class="shield-ring hidden" id="battleShieldBadge">🛡️ UPS SHIELD ACTIVE</div>
+            <div class="combatant-name" id="battlePlayerLabel">YOUR SERVER CORE</div>
+            <div class="hp-bar-wrap">
+              <div class="hp-bar-fill player-hp" id="playerHpBar" style="width:100%"></div>
+            </div>
+            <div class="hp-text" id="playerHpText">HP: 3 / 3 💚💚💚</div>
+          </div>
+
+          <div class="vs-badge">VS</div>
+
+          <!-- Right: Threat / Boss -->
+          <div class="combatant enemy-side" id="enemyCombatant">
+            <div class="boss-tag hidden" id="enemyBossTag">⚠️ ZONE BOSS</div>
+            <div class="combatant-sprite enemy-float" id="enemySprite">👾</div>
+            <div class="combatant-name" id="enemyName">Threat</div>
+            <div class="hp-bar-wrap">
+              <div class="hp-bar-fill enemy-hp" id="enemyHpBar" style="width:100%"></div>
+            </div>
+            <div class="hp-text" id="enemyHpText">HP: 100 / 100</div>
+          </div>
+        </div>
+
+        <!-- Power-Up Action Bar -->
+        <div class="battle-toolkit">
+          <span class="toolkit-label">🎒 ไอเทมช่วยสู้:</span>
+          <button class="item-use-btn" id="useShieldBtn" data-item="shield">
+            🛡️ UPS Shield <span class="qty-badge" id="qtyShield">0</span>
+          </button>
+          <button class="item-use-btn" id="useHintBtn" data-item="hint">
+            💡 AI Scan 50/50 <span class="qty-badge" id="qtyHint">0</span>
+          </button>
+          <button class="item-use-btn" id="useHealBtn" data-item="heal">
+            💊 Hot-Swap Repair <span class="qty-badge" id="qtyHeal">0</span>
+          </button>
+        </div>
+
+        <!-- Battle Question Console -->
+        <div class="battle-console" id="battleConsole">
+          <div class="battle-context" id="battleContext"></div>
+          <div class="code-snippet hidden" id="battleCodeBlock"></div>
+          <h3 class="battle-question" id="battleQuestion"></h3>
+          <div class="options-grid" id="battleOptions"></div>
+          <div class="debrief-box hidden" id="battleDebrief"></div>
+          <div class="battle-footer">
+            <button class="btn btn-neon hidden" id="battleNextBtn">โจมตีขั้นถัดไป ⚡</button>
+          </div>
+        </div>
+
+        <!-- Battle Outcome Overlay Card -->
+        <div class="outcome-card hidden" id="battleOutcomeCard">
+          <div class="outcome-emoji" id="outcomeEmoji">🏆</div>
+          <h2 id="outcomeTitle">VICTORY!</h2>
+          <div class="outcome-stars" id="outcomeStars">⭐⭐⭐</div>
+          <p class="muted-text" id="outcomeSub"></p>
+          <div class="outcome-rewards" id="outcomeRewards"></div>
+          <div class="outcome-actions">
+            <button class="btn btn-secondary" id="outcomeMapBtn">🗺️ กลับแผนที่โลก</button>
+            <button class="btn btn-ghost" id="outcomeRetryBtn">🔄 เล่นด่านนี้อีกครั้ง</button>
+            <button class="btn btn-neon hidden" id="outcomeNextStageBtn">ด่านถัดไป ▶</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN 3: CLI HACKER ARENA (LINUX + WINDOWS) ==================== -->
+      <section id="screen-cli" class="screen">
+        <div class="screen-header">
+          <div>
+            <h2>💻 CLI Hacker Arena (Linux Bash &amp; Windows PowerShell)</h2>
+            <p class="muted-text">ฝึกพิมพ์คำสั่งจริงทั้ง 2 ระบบปฏิบัติการ 14 ภารกิจ เพื่อรับ XP และเหรียญสะสม</p>
+          </div>
+          <div class="os-switch-group">
+            <button class="btn btn-neon btn-sm os-tab active" data-os="all">ทั้งหมด (14)</button>
+            <button class="btn btn-ghost btn-sm os-tab" data-os="linux">🐧 Linux (10)</button>
+            <button class="btn btn-ghost btn-sm os-tab" data-os="windows">🪟 Windows (4)</button>
+          </div>
+        </div>
+
+        <div class="cli-layout">
+          <aside class="panel cli-sidebar">
+            <div class="panel-header">
+              <h3>📋 ภารกิจ Terminal</h3>
+              <span class="stage-chip" id="cliProgressChip">0 / 14</span>
+            </div>
+            <div id="cliMissionList" class="cli-mission-list"></div>
+
+            <div class="cli-brief-box">
+              <div class="sector-kicker" id="cliBriefOs">LINUX SERVER</div>
+              <h4 id="cliBriefTitle">-</h4>
+              <p id="cliBriefGoal" class="muted-text">-</p>
+              <div class="cli-brief-btns">
+                <button class="btn btn-ghost btn-sm" id="cliHintBtn">💡 คำใบ้</button>
+                <button class="btn btn-ghost btn-sm" id="cliClearBtn">🔄 ล้างจอ</button>
+              </div>
+              <div id="cliHintBox" class="hint-box hidden"></div>
+            </div>
+          </aside>
+
+          <div class="terminal-shell" id="terminalShell">
+            <div class="terminal-chrome">
+              <div class="term-dots">
+                <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+              </div>
+              <div class="term-title" id="termWindowTitle">root@srv-linux-01:~ (Ubuntu Server 24.04 LTS)</div>
+              <div class="term-status" id="termOsBadge">BASH • SSH 22</div>
+            </div>
+
+            <div id="terminalOutput" class="terminal-output" aria-live="polite"></div>
+
+            <form id="terminalForm" class="terminal-input-row" autocomplete="off">
+              <span class="term-prompt" id="termPromptText">root@srv-linux-01:~#</span>
+              <input type="text" id="terminalInput" class="terminal-input" placeholder="พิมพ์คำสั่ง หรือพิมพ์ help เพื่อดูคำสั่งทั้งหมด..." spellcheck="false" />
+              <button type="submit" class="btn btn-neon btn-sm">Execute</button>
+            </form>
+
+            <div class="quick-cmds">
+              <span class="quick-label">คำสั่งช่วยจำสำหรับภารกิจนี้ (คลิกเพื่อเติม):</span>
+              <div id="quickCmdList" class="quick-cmd-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN 4: PACKET DEFENSE ARCADE ==================== -->
+      <section id="screen-defense" class="screen">
+        <div class="screen-header">
+          <div>
+            <h2>🛡️ Packet Defense Arcade (18 พอร์ตมาตรฐาน)</h2>
+            <p class="muted-text">ป้องกันเกตเวย์จากคลื่นแพ็กเก็ตเครือข่าย เลือกพอร์ตให้ทันก่อนเวลาหมด! ระวัง Boss Packet ให้คะแนน x2!</p>
+          </div>
+          <div class="os-switch-group">
+            <button class="btn btn-neon btn-sm" id="defStartWaveBtn">⚔️ โหมดป้องกันเวฟ (Wave)</button>
+            <button class="btn btn-secondary btn-sm" id="defStartEndlessBtn">🧘 โหมดฝึกซ้อมไม่จำกัดเวลา</button>
+          </div>
+        </div>
+
+        <div class="panel defense-arena">
+          <div class="defense-hud">
+            <div class="hud-box"><span>Wave</span><strong id="defWave">1</strong></div>
+            <div class="hud-box"><span>Firewall HP</span><strong id="defHearts">💚💚💚</strong></div>
+            <div class="hud-box"><span>Score</span><strong id="defScore">0</strong></div>
+            <div class="hud-box"><span>Combo</span><strong id="defCombo">x1</strong></div>
+            <div class="hud-box"><span>High Score</span><strong id="defHigh">0</strong></div>
+          </div>
+
+          <div id="defIntro" class="center-splash">
+            <div class="splash-emoji">🛡️🌐</div>
+            <h3>เกตเวย์ศูนย์ข้อมูลพร้อมรับมือแล้ว!</h3>
+            <p class="muted-text">คัดแยกแพ็กเก็ต 18 พอร์ตมาตรฐาน (SSH, DNS, DHCP, HTTPS, RDP, SMB, LDAP, SNMP, Syslog ฯลฯ) ยิ่งเวฟสูงแพ็กเก็ตยิ่งวิ่งเร็ว!</p>
+            <div class="splash-btns">
+              <button class="btn btn-neon btn-lg" id="defBigWaveBtn">▶ เริ่มโหมด Wave Defense</button>
+              <button class="btn btn-secondary btn-lg" id="defBigPracticeBtn">🧘 โหมดฝึกซ้อม</button>
+            </div>
+          </div>
+
+          <div id="defPlay" class="hidden">
+            <div class="packet-timer-track">
+              <div class="packet-timer-fill" id="defTimerBar" style="width:100%"></div>
+            </div>
+            <div class="packet-card" id="defPacketCard">
+              <div class="packet-top">
+                <span id="defPacketTag">INCOMING PACKET</span>
+                <span class="stage-chip" id="defPacketLayer">Layer</span>
+              </div>
+              <div class="packet-prompt" id="defPacketPrompt">...</div>
+              <div class="packet-sub" id="defPacketSub"></div>
+            </div>
+            <div id="defChoices" class="port-choices-grid"></div>
+            <div id="defFeedback" class="def-feedback"></div>
+          </div>
+
+          <div id="defOver" class="center-splash hidden">
+            <div class="splash-emoji">🏆</div>
+            <h3 id="defOverTitle">จบการป้องกันเกตเวย์!</h3>
+            <div class="outcome-rewards" id="defOverStats"></div>
+            <button class="btn btn-neon" id="defReplayBtn">🔄 ป้องกันอีกครั้ง</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN 5: PUZZLE VAULT (CHMOD + RAID GAMES) ==================== -->
+      <section id="screen-puzzles" class="screen">
+        <div class="screen-header">
+          <div>
+            <h2>🧩 Puzzle Vault — มินิเกมไขรหัสสิทธิ์ &amp; สถาปนิก RAID</h2>
+            <p class="muted-text">ฝึกคำนวณ CHMOD แบบจับมือทำและออกแบบโครงสร้าง RAID พร้อมจำลองสถานการณ์ดิสก์เสียจริง!</p>
+          </div>
+          <div class="os-switch-group">
+            <button class="btn btn-neon btn-sm puzzle-tab active" data-ptab="chmod">🔐 CHMOD Vault Cracker</button>
+            <button class="btn btn-ghost btn-sm puzzle-tab" data-ptab="raid">💾 RAID Architect Lab</button>
+          </div>
+        </div>
+
+        <!-- Puzzle 1: CHMOD Vault Cracker -->
+        <div id="ptab-chmod" class="puzzle-panel">
+          <div class="two-col-grid">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>🔐 ภารกิจไขตู้เซฟ CHMOD</h3>
+                <span class="stage-chip" id="chmodSolvedChip">ผ่านแล้ว 0 / 8</span>
+              </div>
+              <div class="vault-mission-box">
+                <div class="sector-kicker">TARGET FILE: <span id="vaultFileName">id_rsa</span></div>
+                <p id="vaultBrief" class="vault-brief">...</p>
+                <div class="vault-nav-row">
+                  <button class="btn btn-ghost btn-xs" id="vaultPrevBtn">◀ โจทย์ก่อนหน้า</button>
+                  <span class="muted-text" id="vaultIndexText">ด่าน 1 / 8</span>
+                  <button class="btn btn-ghost btn-xs" id="vaultNextBtn">โจทย์ถัดไป ▶</button>
+                </div>
+              </div>
+
+              <div class="chmod-banner">
+                <div>
+                  <span class="muted-text">คำสั่งที่คุณตั้งไว้</span>
+                  <code id="chmodCmdOut" class="chmod-cmd">chmod 755 id_rsa</code>
+                </div>
+                <div>
+                  <span class="muted-text">สัญลักษณ์สิทธิ์</span>
+                  <code id="chmodSymOut" class="chmod-sym">-rwxr-xr-x</code>
+                </div>
+              </div>
+
+              <div class="chmod-grid">
+                <div class="chmod-col">
+                  <h4>Owner (u)</h4>
+                  <label><input type="checkbox" class="chmod-cb" data-role="u" data-val="4" checked /> Read (r=4)</label>
+                  <label><input type="checkbox" class="chmod-cb" data-role="u" data-val="2" checked /> Write (w=2)</label>
+                  <label><input type="checkbox" class="chmod-cb" data-role="u" data-val="1" checked /> Exec (x=1)</label>
+                  <div class="chmod-digit">รวม: <strong id="chmodU">7</strong></div>
+                </div>
+                <div class="chmod-col">
+                  <h4>Group (g)</h4>
+                  <label><input type="checkbox" class="chmod-cb" data-role="g" data-val="4" checked /> Read (r=4)</label>
+                  <label><input type="checkbox" class="chmod-cb" data-role="g" data-val="2" /> Write (w=2)</label>
+                  <label><input type="checkbox" class="chmod-cb" data-role="g" data-val="1" checked /> Exec (x=1)</label>
+                  <div class="chmod-digit">รวม: <strong id="chmodG">5</strong></div>
+                </div>
+                <div class="chmod-col">
+                  <h4>Others (o)</h4>
+                  <label><input type="checkbox" class="chmod-cb" data-role="o" data-val="4" checked /> Read (r=4)</label>
+                  <label><input type="checkbox" class="chmod-cb" data-role="o" data-val="2" /> Write (w=2)</label>
+                  <label><input type="checkbox" class="chmod-cb" data-role="o" data-val="1" checked /> Exec (x=1)</label>
+                  <div class="chmod-digit">รวม: <strong id="chmodO">5</strong></div>
+                </div>
+              </div>
+
+              <div class="vault-submit-row">
+                <button class="btn btn-neon btn-lg" id="vaultCheckBtn" style="width:100%">🔓 ปลดล็อกตู้เซฟ (VERIFY CHMOD)</button>
+              </div>
+              <div id="vaultFeedback" class="debrief-box hidden"></div>
+            </div>
+
+            <div class="panel">
+              <h3>📘 สูตรลัดจำค่าสิทธิ์ Linux</h3>
+              <p class="muted-text" style="margin-bottom:0.85rem;">คลิกปุ่มด้านล่างเพื่อทดลองดูตัวอย่างค่ามาตรฐานบนเครื่อง Server จริง</p>
+              <div class="preset-stack">
+                <button class="btn btn-secondary btn-sm chmod-preset" data-mode="755"><code>755</code> — สคริปต์และโฟลเดอร์เว็บ (-rwxr-xr-x)</button>
+                <button class="btn btn-secondary btn-sm chmod-preset" data-mode="644"><code>644</code> — ไฟล์คอนฟิกและเอกสารทั่วไป (-rw-r--r--)</button>
+                <button class="btn btn-secondary btn-sm chmod-preset" data-mode="600"><code>600</code> — SSH Key / ไฟล์รหัสผ่านลับ (-rw-------)</button>
+                <button class="btn btn-secondary btn-sm chmod-preset" data-mode="750"><code>750</code> — สคริปต์เฉพาะแผนกไอที (-rwxr-x---)</button>
+                <button class="btn btn-secondary btn-sm chmod-preset" data-mode="777"><code>777</code> — ⚠️ อันตราย! ทุกคนแก้และรันได้</button>
+              </div>
+              <div id="chmodNote" class="info-note" style="margin-top:1rem;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Puzzle 2: RAID Architect Challenge -->
+        <div id="ptab-raid" class="puzzle-panel hidden">
+          <div class="two-col-grid">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>💾 ภารกิจออกแบบ RAID Architect</h3>
+                <span class="stage-chip" id="raidSolvedChip">ผ่านแล้ว 0 / 6</span>
+              </div>
+              <div class="vault-mission-box">
+                <div class="sector-kicker">CLIENT: <span id="raidClientName">...</span></div>
+                <p id="raidChallengeBrief" class="vault-brief">...</p>
+                <div class="vault-nav-row">
+                  <button class="btn btn-ghost btn-xs" id="raidPrevBtn">◀ โจทย์ก่อนหน้า</button>
+                  <span class="muted-text" id="raidIndexText">โจทย์ 1 / 6</span>
+                  <button class="btn btn-ghost btn-xs" id="raidNextBtn">โจทย์ถัดไป ▶</button>
+                </div>
+              </div>
+
+              <p class="muted-text" style="margin:0.85rem 0 0.5rem;">เลือกระดับ RAID ที่คุณต้องการออกแบบ:</p>
+              <div class="raid-tabs" id="raidTabs">
+                <button class="btn btn-neon btn-sm raid-tab" data-raid="0">RAID 0</button>
+                <button class="btn btn-ghost btn-sm raid-tab" data-raid="1">RAID 1</button>
+                <button class="btn btn-ghost btn-sm raid-tab" data-raid="5">RAID 5</button>
+                <button class="btn btn-ghost btn-sm raid-tab" data-raid="6">RAID 6</button>
+                <button class="btn btn-ghost btn-sm raid-tab" data-raid="10">RAID 10</button>
+              </div>
+
+              <div style="display:flex;gap:0.65rem;flex-wrap:wrap;margin-top:0.8rem;">
+                <button class="btn btn-neon" id="raidSubmitBtn">✅ ส่งแบบและทดสอบดิสก์พัง!</button>
+                <button class="btn btn-secondary" id="raidSimFailBtn">⚡ ทดลองจำลองดิสก์พัง 1 ลูก</button>
+              </div>
+              <div id="raidFeedback" class="debrief-box hidden"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h3>🖴 แผนผังดิสก์แบบเรียลไทม์</h3>
+                <span class="stage-chip" id="raidStatusChip">HEALTHY</span>
+              </div>
+              <div id="raidVisual" class="raid-visual"></div>
+              <div id="raidDetails" class="raid-details"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN 6: SYSADMIN TOOLKIT SHOP ==================== -->
+      <section id="screen-shop" class="screen">
+        <div class="screen-header">
+          <div>
+            <h2>🛒 SysAdmin Toolkit Shop</h2>
+            <p class="muted-text">นำเหรียญ 💰 ที่ได้จากการพิชิตด่านแคมเปญ, แล็บ CLI และมินิเกม มาซื้อไอเทมตัวช่วยสู้บอส!</p>
+          </div>
+          <div class="res-pill coin-pill" style="font-size:1.05rem;padding:0.5rem 1rem;">
+            <span>ยอดเหรียญคงเหลือ: 💰</span><strong id="shopCoinsDisplay">100</strong>
+          </div>
+        </div>
+
+        <div id="shopGrid" class="shop-grid"></div>
+      </section>
+
+      <!-- ==================== SCREEN 7: CODEX & PLAYER STATS ==================== -->
+      <section id="screen-codex" class="screen">
+        <div class="screen-header">
+          <div>
+            <h2>📖 คัมภีร์ความรู้ (8 บทเรียน) &amp; สถิติผู้เล่น</h2>
+            <p class="muted-text">ทบทวนเนื้อหาครบทุกหัวข้อของรายวิชาระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น พร้อมดูความเชี่ยวชาญรายหมวด</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="resetSaveBtn">🗑️ ล้างเซฟเริ่มใหม่</button>
+        </div>
+
+        <div class="two-col-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>📊 ความเชี่ยวชาญ 8 หมวดวิชา (Skill Mastery)</h3>
+            </div>
+            <div id="analyticsContainer" class="analytics-list"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>🏆 เหรียญตราความสำเร็จ (Achievements)</h3>
+              <span class="stage-chip" id="badgeCountChip">0 / 12</span>
+            </div>
+            <div id="badgesContainer" class="badges-grid"></div>
+          </div>
+        </div>
+
+        <h3 class="section-heading">📚 สรุปตำรา SysAdmin ครบ 8 บทเรียน</h3>
+        <div id="codexChapters" class="codex-grid"></div>
+      </section>
+
+      <!-- ==================== SCREEN 8: GUILD CERTIFICATION EXAM ==================== -->
+      <section id="screen-exam" class="screen">
+        <div class="screen-header no-print">
+          <div>
+            <h2>🎓 Guild Certification Exam (สอบรับใบรับรอง SysAdmin)</h2>
+            <p class="muted-text">สุ่มข้อสอบ 15 ข้อจากคลัง 30 ข้อ ครอบคลุมทั้ง 8 บทเรียน สอบผ่าน 70% ขึ้นไปรับเกียรติบัตรพิมพ์ PDF ได้ทันที!</p>
+          </div>
+        </div>
+
+        <div id="examIntro" class="panel center-splash no-print">
+          <div class="splash-emoji">🎓⚔️</div>
+          <h3>บททดสอบเลื่อนขั้น Certified Server Administrator</h3>
+          <p class="muted-text">ระบุชื่อ-นามสกุล และรหัสนักศึกษาสำหรับพิมพ์ลงบนเกียรติบัตร</p>
+          <div class="student-form">
+            <input type="text" id="studentNameInput" class="game-input" placeholder="ชื่อ-นามสกุล (เช่น นายสมชาย ใจดี)" />
+            <input type="text" id="studentIdInput" class="game-input" placeholder="รหัสนักศึกษา / ห้องเรียน (ไม่บังคับ)" />
+          </div>
+          <button class="btn btn-neon btn-lg" id="startExamBtn">▶ เริ่มทำแบบทดสอบ (15 ข้อ)</button>
+        </div>
+
+        <div id="examRunner" class="panel hidden no-print">
+          <div class="runner-top">
+            <span class="stage-chip" id="examCategory">หมวดวิชา</span>
+            <strong id="examProgressText">ข้อที่ 1 / 15</strong>
+          </div>
+          <div class="hud-xp-bar" style="height:10px;margin:0.65rem 0 1rem;"><div class="hud-xp-fill" id="examProgressBar" style="width:7%"></div></div>
+          <h3 id="examQuestionText" class="battle-question"></h3>
+          <div id="examOptions" class="options-grid"></div>
+          <div class="battle-footer">
+            <button class="btn btn-neon" id="examNextBtn" disabled>ข้อถัดไป →</button>
+          </div>
+        </div>
+
+        <div id="examResult" class="hidden">
+          <div class="panel no-print" style="margin-bottom:1.5rem;">
+            <div class="exam-result-header">
+              <div>
+                <h3 id="examResultHeading">สรุปผลคะแนน</h3>
+                <p id="examResultSub" class="muted-text"></p>
+              </div>
+              <div class="exam-score-circle" id="examScoreCircle">0/15</div>
+            </div>
+            <div id="examReviewList" class="exam-review-list"></div>
+            <div class="exam-actions">
+              <button class="btn btn-neon" id="retakeExamBtn">🔄 สอบใหม่อีกครั้ง</button>
+              <button class="btn btn-secondary hidden" id="printCertBtn">🖨️ พิมพ์ / บันทึกเกียรติบัตร (PDF)</button>
+            </div>
+          </div>
+
+          <!-- Printable Certificate -->
+          <div id="certificateCard" class="certificate hidden">
+            <div class="cert-border">
+              <div class="cert-badge">SERVEROPS: DATA CENTER DEFENDER • CERTIFICATION</div>
+              <h2 class="cert-title">เกียรติบัตรรับรองผลการเรียนรู้</h2>
+              <p class="cert-subtitle">ขอมอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า</p>
+              <div class="cert-name" id="certStudentName">ผู้เรียน</div>
+              <div class="cert-id" id="certStudentId"></div>
+              <p class="cert-body">
+                ได้ผ่านการฝึกปฏิบัติและทดสอบความรู้จากเกมสื่อการสอนเชิงโต้ตอบ<br />
+                <strong>รายวิชาระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น (Introduction to Server Operating Systems)</strong><br />
+                ด้วยผลคะแนน <strong id="certScore">0/15 (0%)</strong> • ระดับ <strong id="certRank">SysAdmin</strong>
+              </p>
+              <div class="cert-footer">
+                <div>
+                  <div class="cert-line"></div>
+                  <div>วันที่ออกเกียรติบัตร: <span id="certDate">-</span></div>
+                </div>
+                <div class="cert-seal">✓ VERIFIED<br />SYSADMIN</div>
+                <div>
+                  <div class="cert-line"></div>
+                  <div>ServerOps Academy Learning System</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- BOTTOM PERSISTENT GAME DOCK -->
+    <nav class="game-dock no-print" aria-label="แถบคำสั่งเกม">
+      <button class="dock-btn active" data-screen="map">
+        <span class="dock-icon">🗺️</span><span class="dock-label">แผนที่โลก</span>
+      </button>
+      <button class="dock-btn" data-screen="cli">
+        <span class="dock-icon">💻</span><span class="dock-label">CLI Arena</span>
+      </button>
+      <button class="dock-btn" data-screen="defense">
+        <span class="dock-icon">🛡️</span><span class="dock-label">ป้องกันพอร์ต</span>
+      </button>
+      <button class="dock-btn" data-screen="puzzles">
+        <span class="dock-icon">🧩</span><span class="dock-label">พัซเซิล</span>
+      </button>
+      <button class="dock-btn" data-screen="shop">
+        <span class="dock-icon">🛒</span><span class="dock-label">ร้านค้า</span>
+      </button>
+      <button class="dock-btn" data-screen="codex">
+        <span class="dock-icon">📖</span><span class="dock-label">คัมภีร์</span>
+      </button>
+      <button class="dock-btn" data-screen="exam">
+        <span class="dock-icon">🎓</span><span class="dock-label">สอบรับรอง</span>
+      </button>
     </nav>
-
-    <div class="topbar-actions">
-      <div class="xp-pill" title="คะแนนประสบการณ์สะสม">
-        <span class="xp-dot"></span>
-        <span id="headerLevel">Lv.1</span>
-        <span class="sep">|</span>
-        <span id="headerXp">0 XP</span>
-      </div>
-      <button class="icon-btn" id="soundToggleBtn" title="เปิด/ปิดเสียง" aria-label="เปิดหรือปิดเสียง">🔊</button>
-      <button class="icon-btn" id="themeToggleBtn" title="สลับโหมดมืด/สว่าง (เหมาะสำหรับโปรเจคเตอร์)" aria-label="สลับโหมดสี">🌙</button>
-    </div>
-  </header>
-
-  <main class="container">
-    <!-- ==================== VIEW 1: DASHBOARD ==================== -->
-    <section id="view-dashboard" class="view active">
-      <div class="hero-card">
-        <div class="hero-content">
-          <span class="badge-chip">สื่อการสอนเชิงโต้ตอบ • Interactive Server OS Lab</span>
-          <h1>ฝึกเป็น <span class="highlight">SysAdmin มืออาชีพ</span><br />ผ่านภารกิจจำลองศูนย์ข้อมูล</h1>
-          <p class="hero-desc">
-            เรียนรู้โครงสร้างเครื่องแม่ข่าย, บริการเครือข่ายและพอร์ตมาตรฐาน, การจัดการสิทธิ์ผู้ใช้ Linux &amp; Active Directory,
-            การใช้คำสั่ง Terminal จริง, Firewall และแผนสำรองข้อมูล ผ่าน 4 โหมดการเรียนรู้พร้อมวิเคราะห์จุดแข็ง-จุดอ่อนรายบทเรียน
-          </p>
-          <div class="hero-actions">
-            <button class="btn btn-primary btn-lg" data-goto="missions">🚀 เริ่มภารกิจผู้ดูแลระบบ</button>
-            <button class="btn btn-secondary btn-lg" data-goto="terminal">💻 ทดลองห้องแล็บ Terminal</button>
-          </div>
-        </div>
-        <div class="server-rack-visual" aria-hidden="true">
-          <div class="rack-header">
-            <span>DC-TH-01 • CORE RACK</span>
-            <span class="status-online">● ONLINE 99.98%</span>
-          </div>
-          <div class="rack-unit">
-            <div class="leds"><span class="led green"></span><span class="led green blink"></span></div>
-            <div class="unit-label">SRV-WEB-01 (Ubuntu 24.04)</div>
-            <div class="unit-bar"><div style="width: 42%"></div></div>
-          </div>
-          <div class="rack-unit">
-            <div class="leds"><span class="led green"></span><span class="led cyan blink"></span></div>
-            <div class="unit-label">SRV-AD-01 (Windows Server)</div>
-            <div class="unit-bar"><div style="width: 58%"></div></div>
-          </div>
-          <div class="rack-unit">
-            <div class="leds"><span class="led green"></span><span class="led amber"></span></div>
-            <div class="unit-label">SRV-DB-01 (RAID 10 • ECC)</div>
-            <div class="unit-bar"><div style="width: 71%"></div></div>
-          </div>
-          <div class="rack-unit">
-            <div class="leds"><span class="led green"></span><span class="led green"></span></div>
-            <div class="unit-label">FW-EDGE-01 (UFW Active)</div>
-            <div class="unit-bar"><div style="width: 28%"></div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Progress & Player Stats -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">ระดับผู้ดูแลระบบ</div>
-          <div class="stat-value" id="dashRank">SysAdmin ฝึกหัด</div>
-          <div class="progress-bar"><div class="progress-fill" id="dashXpBar" style="width: 0%"></div></div>
-          <div class="stat-sub" id="dashXpText">0 / 200 XP สู่ระดับถัดไป</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">ภารกิจจำลองที่ผ่าน</div>
-          <div class="stat-value"><span id="dashMissionsDone">0</span> / <span id="dashMissionsTotal">8</span></div>
-          <div class="stat-sub">แก้ไขเหตุขัดข้องในศูนย์ข้อมูล</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">แล็บคำสั่ง CLI ที่สำเร็จ</div>
-          <div class="stat-value"><span id="dashLabsDone">0</span> / <span id="dashLabsTotal">8</span></div>
-          <div class="stat-sub">ปฏิบัติจริงบน Linux Terminal</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">สถิติ Port Rush สูงสุด</div>
-          <div class="stat-value" id="dashPortHigh">0</div>
-          <div class="stat-sub">คะแนนโหมดจับคู่พอร์ตมาตรฐาน</div>
-        </div>
-      </div>
-
-      <!-- Mode Cards -->
-      <h2 class="section-title">เลือกโหมดการเรียนรู้</h2>
-      <div class="mode-grid">
-        <article class="mode-card" data-goto="missions">
-          <div class="mode-icon icon-blue">🛡️</div>
-          <h3>1. ภารกิจผู้ดูแลระบบ</h3>
-          <p>จำลองเหตุการณ์จริงใน Data Center 8 ด่าน เช่น เว็บล่ม, ตั้งค่า RAID, จัดการสิทธิ์ AD/Linux และรับมือภัยคุกคาม พร้อมคำอธิบายทุกข้อ</p>
-          <span class="mode-link">เข้าสู่ภารกิจ →</span>
-        </article>
-        <article class="mode-card" data-goto="terminal">
-          <div class="mode-icon icon-green">⌨️</div>
-          <h3>2. ห้องปฏิบัติการ CLI</h3>
-          <p>ฝึกพิมพ์คำสั่งดูแล Linux Server จริง เช่น <code>systemctl</code>, <code>chmod</code>, <code>df -h</code>, <code>ufw</code>, <code>useradd</code> มีปุ่มคำสั่งช่วยจำและตรวจผลอัตโนมัติ</p>
-          <span class="mode-link">เปิด Terminal →</span>
-        </article>
-        <article class="mode-card" data-goto="portrush">
-          <div class="mode-icon icon-amber">⚡</div>
-          <h3>3. Port &amp; Service Rush</h3>
-          <p>เกมคัดแยกแพ็กเก็ตเครือข่ายสุดมันส์ จับคู่บริการกับพอร์ตมาตรฐาน (22, 53, 80, 443, 445, 3389 ฯลฯ) สะสม Combo ทำสถิติสูงสุด</p>
-          <span class="mode-link">เริ่มเกมท้าทาย →</span>
-        </article>
-        <article class="mode-card" data-goto="codex">
-          <div class="mode-icon icon-purple">📘</div>
-          <h3>4. คลังความรู้ + เครื่องมือจำลอง</h3>
-          <p>สรุปเนื้อหา 5 บทเรียนหลัก พร้อม<strong>เครื่องคำนวณสิทธิ์ CHMOD แบบโต้ตอบ</strong> และ<strong>จำลองการทำงาน RAID 0/1/5/10</strong></p>
-          <span class="mode-link">เปิดคลังความรู้ →</span>
-        </article>
-      </div>
-
-      <!-- Learning Analytics & Badges -->
-      <div class="two-col-grid">
-        <div class="panel">
-          <div class="panel-header">
-            <h3>📊 วิเคราะห์ผลการเรียนรู้รายหมวดวิชา</h3>
-            <button class="btn btn-ghost btn-sm" id="resetProgressBtn">รีเซ็ตความก้าวหน้า</button>
-          </div>
-          <div id="analyticsContainer" class="analytics-list"></div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-header">
-            <h3>🏆 เหรียญตราความสำเร็จ (Badges)</h3>
-            <span class="muted-text" id="badgeCountText">0 / 6</span>
-          </div>
-          <div id="badgesContainer" class="badges-grid"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== VIEW 2: MISSIONS ==================== -->
-    <section id="view-missions" class="view">
-      <div class="view-header">
-        <div>
-          <h2>🛡️ ภารกิจผู้ดูแลระบบ (Incident Command)</h2>
-          <p class="muted-text">เลือกด่านเพื่อรับมือสถานการณ์จำลองในห้อง Server และรักษาค่า Server Uptime ให้ปลอดภัย</p>
-        </div>
-        <div class="uptime-box">
-          <span>Server Health:</span>
-          <div class="hearts" id="missionHealthDisplay">💚💚💚</div>
-        </div>
-      </div>
-
-      <!-- Mission Selector -->
-      <div id="missionSelector" class="mission-grid"></div>
-
-      <!-- Active Mission Runner -->
-      <div id="missionRunner" class="panel hidden">
-        <div class="runner-top">
-          <button class="btn btn-ghost btn-sm" id="backToMissionsBtn">← กลับหน้ารวมภารกิจ</button>
-          <div class="runner-meta">
-            <span class="badge-chip" id="missionCategoryBadge">หมวดหมู่</span>
-            <span class="muted-text" id="missionStepCounter">ขั้นที่ 1 / 2</span>
-          </div>
-        </div>
-
-        <div class="incident-alert">
-          <div class="incident-badge">🚨 INCIDENT TICKET</div>
-          <h3 id="missionTitle">ชื่อภารกิจ</h3>
-          <p id="missionContext" class="incident-context"></p>
-        </div>
-
-        <div class="question-box">
-          <h4 id="missionQuestion">คำถาม</h4>
-          <div id="missionCodeBlock" class="code-snippet hidden"></div>
-          <div id="missionOptions" class="options-list"></div>
-        </div>
-
-        <div id="missionFeedback" class="feedback-box hidden"></div>
-
-        <div class="runner-footer">
-          <button class="btn btn-primary hidden" id="missionNextBtn">ดำเนินการต่อ →</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== VIEW 3: TERMINAL LAB ==================== -->
-    <section id="view-terminal" class="view">
-      <div class="view-header">
-        <div>
-          <h2>⌨️ ห้องปฏิบัติการ Linux Server CLI</h2>
-          <p class="muted-text">ฝึกใช้คำสั่งดูแลระบบเครื่องแม่ข่ายบน Terminal จำลอง พิมพ์คำสั่งจริงหรือคลิกปุ่มช่วยจำด้านล่าง</p>
-        </div>
-        <div class="lab-progress-badge" id="labProgressBadge">สำเร็จ 0 / 8 แล็บ</div>
-      </div>
-
-      <div class="terminal-layout">
-        <!-- Left: Task list & Guide -->
-        <aside class="lab-sidebar panel">
-          <h3>📋 รายการแล็บปฏิบัติการ</h3>
-          <div id="labTaskList" class="lab-task-list"></div>
-
-          <div class="lab-current-brief">
-            <div class="brief-label">โจทย์ปัจจุบัน</div>
-            <h4 id="labCurrentTitle">-</h4>
-            <p id="labCurrentGoal">-</p>
-            <div class="hint-row">
-              <button class="btn btn-ghost btn-sm" id="labHintBtn">💡 ดูคำใบ้</button>
-              <button class="btn btn-ghost btn-sm" id="labResetBtn">🔄 ล้างหน้าจอ</button>
-            </div>
-            <div id="labHintBox" class="hint-box hidden"></div>
-          </div>
-        </aside>
-
-        <!-- Right: Interactive Terminal -->
-        <div class="terminal-wrapper">
-          <div class="terminal-chrome">
-            <div class="term-dots">
-              <span class="dot red"></span>
-              <span class="dot yellow"></span>
-              <span class="dot green"></span>
-            </div>
-            <div class="term-title">root@srv-lab-01: ~ (Ubuntu Server 24.04 LTS)</div>
-            <div class="term-status">SSH • Port 22</div>
-          </div>
-
-          <div id="terminalOutput" class="terminal-output" aria-live="polite"></div>
-
-          <form id="terminalForm" class="terminal-input-row" autocomplete="off">
-            <span class="term-prompt">root@srv-lab-01:~#</span>
-            <input type="text" id="terminalInput" class="terminal-input" placeholder="พิมพ์คำสั่ง เช่น help, systemctl status nginx, df -h ..." spellcheck="false" />
-            <button type="submit" class="btn btn-primary btn-sm">Run</button>
-          </form>
-
-          <div class="quick-cmds">
-            <span class="quick-label">คำสั่งช่วยจำ (คลิกเพื่อเติม):</span>
-            <div id="quickCmdButtons" class="quick-cmd-list"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== VIEW 4: PORT RUSH ==================== -->
-    <section id="view-portrush" class="view">
-      <div class="view-header">
-        <div>
-          <h2>⚡ Port &amp; Service Rush</h2>
-          <p class="muted-text">คัดแยกทราฟฟิกเครือข่ายให้ตรงกับหมายเลขพอร์ตและโปรโตคอลมาตรฐาน</p>
-        </div>
-        <div class="port-mode-toggle">
-          <button class="btn btn-primary btn-sm" id="portStartTimedBtn">⏱️ โหมดจับเวลา 60 วิ</button>
-          <button class="btn btn-secondary btn-sm" id="portStartPracticeBtn">🧘 โหมดฝึกซ้อม</button>
-        </div>
-      </div>
-
-      <div class="panel port-arena">
-        <div class="port-hud">
-          <div class="hud-item"><span>คะแนน</span><strong id="portScore">0</strong></div>
-          <div class="hud-item"><span>Combo</span><strong id="portCombo">x1</strong></div>
-          <div class="hud-item"><span>เวลาคงเหลือ</span><strong id="portTimer">60s</strong></div>
-          <div class="hud-item"><span>ความแม่นยำ</span><strong id="portAccuracy">100%</strong></div>
-        </div>
-
-        <div id="portIntroState" class="port-center-state">
-          <div class="port-hero-emoji">🌐</div>
-          <h3>พร้อมรับมือทราฟฟิกใน Data Center หรือยัง?</h3>
-          <p class="muted-text">เมื่อแพ็กเก็ตปรากฏขึ้น ให้คลิกเลือกหมายเลขพอร์ตและโปรโตคอลที่ถูกต้องให้เร็วที่สุด ตอบถูกติดกันจะได้ตัวคูณ Combo!</p>
-          <div class="port-start-btns">
-            <button class="btn btn-primary btn-lg" id="portBigStartBtn">เริ่มโหมดจับเวลา (60 วินาที)</button>
-            <button class="btn btn-secondary btn-lg" id="portBigPracticeBtn">โหมดฝึกซ้อม (ไม่จำกัดเวลา)</button>
-          </div>
-        </div>
-
-        <div id="portPlayState" class="hidden">
-          <div class="packet-card" id="packetCard">
-            <div class="packet-header">
-              <span>INCOMING PACKET</span>
-              <span id="packetLayer" class="badge-chip">Application Layer</span>
-            </div>
-            <div id="packetPrompt" class="packet-prompt">กำลังโหลด...</div>
-            <div id="packetSub" class="packet-sub"></div>
-          </div>
-
-          <div id="portChoices" class="port-choices-grid"></div>
-          <div id="portMiniFeedback" class="port-mini-feedback"></div>
-        </div>
-
-        <div id="portResultState" class="port-center-state hidden">
-          <div class="port-hero-emoji">🏆</div>
-          <h3>จบภารกิจคัดแยกทราฟฟิก!</h3>
-          <div class="result-summary-grid">
-            <div class="res-box"><span>คะแนนรวม</span><strong id="portFinalScore">0</strong></div>
-            <div class="res-box"><span>ตอบถูก</span><strong id="portFinalCorrect">0</strong></div>
-            <div class="res-box"><span>Combo สูงสุด</span><strong id="portFinalMaxCombo">0</strong></div>
-            <div class="res-box"><span>XP ที่ได้รับ</span><strong id="portFinalXp">+0 XP</strong></div>
-          </div>
-          <button class="btn btn-primary" id="portPlayAgainBtn">เล่นอีกครั้ง</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== VIEW 5: CODEX & INTERACTIVE TOOLS ==================== -->
-    <section id="view-codex" class="view">
-      <div class="view-header">
-        <div>
-          <h2>📘 คลังความรู้และเครื่องมือจำลอง (Server OS Codex)</h2>
-          <p class="muted-text">ทบทวนเนื้อหาหลักสูตรและทดลองปรับค่าสิทธิ์ Linux CHMOD กับโครงสร้าง RAID แบบเห็นภาพทันที</p>
-        </div>
-      </div>
-
-      <!-- Interactive Tools Row -->
-      <div class="two-col-grid">
-        <!-- CHMOD Calculator -->
-        <div class="panel">
-          <div class="panel-header">
-            <h3>🔐 เครื่องมือจำลองสิทธิ์ Linux (CHMOD)</h3>
-            <span class="badge-chip">โต้ตอบได้</span>
-          </div>
-          <p class="muted-text small-mb">คลิกเลือกสิทธิ์ Read (4), Write (2), Execute (1) เพื่อดูคำสั่งและการแสดงผลจริง</p>
-
-          <div class="chmod-result-banner">
-            <div>
-              <div class="muted-text">คำสั่ง Linux</div>
-              <code id="chmodCmdOutput" class="chmod-cmd">chmod 755 server.sh</code>
-            </div>
-            <div>
-              <div class="muted-text">สัญลักษณ์สิทธิ์</div>
-              <code id="chmodSymOutput" class="chmod-sym">-rwxr-xr-x</code>
-            </div>
-          </div>
-
-          <div class="chmod-grid">
-            <div class="chmod-col">
-              <h4>Owner (เจ้าของ)</h4>
-              <label><input type="checkbox" class="chmod-cb" data-role="u" data-val="4" checked /> Read (r = 4)</label>
-              <label><input type="checkbox" class="chmod-cb" data-role="u" data-val="2" checked /> Write (w = 2)</label>
-              <label><input type="checkbox" class="chmod-cb" data-role="u" data-val="1" checked /> Execute (x = 1)</label>
-              <div class="chmod-digit">ค่า: <strong id="chmodU">7</strong></div>
-            </div>
-            <div class="chmod-col">
-              <h4>Group (กลุ่ม)</h4>
-              <label><input type="checkbox" class="chmod-cb" data-role="g" data-val="4" checked /> Read (r = 4)</label>
-              <label><input type="checkbox" class="chmod-cb" data-role="g" data-val="2" /> Write (w = 2)</label>
-              <label><input type="checkbox" class="chmod-cb" data-role="g" data-val="1" checked /> Execute (x = 1)</label>
-              <div class="chmod-digit">ค่า: <strong id="chmodG">5</strong></div>
-            </div>
-            <div class="chmod-col">
-              <h4>Others (ผู้อื่น)</h4>
-              <label><input type="checkbox" class="chmod-cb" data-role="o" data-val="4" checked /> Read (r = 4)</label>
-              <label><input type="checkbox" class="chmod-cb" data-role="o" data-val="2" /> Write (w = 2)</label>
-              <label><input type="checkbox" class="chmod-cb" data-role="o" data-val="1" checked /> Execute (x = 1)</label>
-              <div class="chmod-digit">ค่า: <strong id="chmodO">5</strong></div>
-            </div>
-          </div>
-
-          <div class="chmod-presets">
-            <span class="muted-text">ค่าที่ใช้บ่อย:</span>
-            <button class="btn btn-ghost btn-xs chmod-preset" data-mode="755">755 (สคริปต์/เว็บ)</button>
-            <button class="btn btn-ghost btn-xs chmod-preset" data-mode="644">644 (ไฟล์ตั้งค่า)</button>
-            <button class="btn btn-ghost btn-xs chmod-preset" data-mode="600">600 (SSH Key ลับ)</button>
-            <button class="btn btn-ghost btn-xs chmod-preset" data-mode="700">700 (โฟลเดอร์ส่วนตัว)</button>
-          </div>
-          <div id="chmodExplain" class="info-note"></div>
-        </div>
-
-        <!-- RAID Simulator -->
-        <div class="panel">
-          <div class="panel-header">
-            <h3>💾 จำลองระบบดิสก์ RAID (Disk Array)</h3>
-            <span class="badge-chip">โต้ตอบได้</span>
-          </div>
-          <p class="muted-text small-mb">เลือกระดับ RAID เพื่อเปรียบเทียบความเร็ว ความจุ และความทนทานต่อดิสก์เสีย (สมมติใช้ดิสก์ลูกละ 1 TB)</p>
-
-          <div class="raid-tabs" id="raidTabs">
-            <button class="btn btn-primary btn-sm raid-tab" data-raid="0">RAID 0</button>
-            <button class="btn btn-ghost btn-sm raid-tab" data-raid="1">RAID 1</button>
-            <button class="btn btn-ghost btn-sm raid-tab" data-raid="5">RAID 5</button>
-            <button class="btn btn-ghost btn-sm raid-tab" data-raid="10">RAID 10</button>
-          </div>
-
-          <div id="raidVisual" class="raid-visual"></div>
-          <div id="raidDetails" class="raid-details"></div>
-        </div>
-      </div>
-
-      <!-- Knowledge Chapters -->
-      <h3 class="section-title">📚 สรุปเนื้อหาบทเรียน 5 หมวดหลัก</h3>
-      <div id="codexChapters" class="codex-grid"></div>
-    </section>
-
-    <!-- ==================== VIEW 6: EXAM & CERTIFICATE ==================== -->
-    <section id="view-exam" class="view">
-      <div class="view-header no-print">
-        <div>
-          <h2>🎓 แบบทดสอบวัดความรู้และเกียรติบัตร</h2>
-          <p class="muted-text">สุ่มข้อสอบ 10 ข้อ ครอบคลุมทั้ง 5 หมวดวิชา ทำคะแนนได้ตั้งแต่ 70% ขึ้นไปเพื่อรับเกียรติบัตร (พิมพ์/บันทึก PDF ได้)</p>
-        </div>
-      </div>
-
-      <!-- Exam Intro -->
-      <div id="examIntro" class="panel exam-center no-print">
-        <div class="port-hero-emoji">📝</div>
-        <h3>พร้อมสอบวัดระดับผู้ดูแลระบบเครื่องแม่ข่ายเบื้องต้นหรือยัง?</h3>
-        <p class="muted-text">กรอกชื่อ-นามสกุล และรหัสนักศึกษา (เพื่อแสดงบนเกียรติบัตรเมื่อสอบผ่าน)</p>
-        <div class="student-form">
-          <input type="text" id="studentNameInput" class="text-input" placeholder="ชื่อ-นามสกุล (เช่น นายสมชาย ใจดี)" />
-          <input type="text" id="studentIdInput" class="text-input" placeholder="รหัสนักศึกษา / ห้องเรียน (ไม่บังคับ)" />
-        </div>
-        <button class="btn btn-primary btn-lg" id="startExamBtn">เริ่มทำแบบทดสอบ (10 ข้อ)</button>
-      </div>
-
-      <!-- Exam Active -->
-      <div id="examRunner" class="panel hidden no-print">
-        <div class="runner-top">
-          <span class="badge-chip" id="examCategory">หมวดวิชา</span>
-          <strong id="examProgressText">ข้อที่ 1 / 10</strong>
-        </div>
-        <div class="progress-bar"><div class="progress-fill" id="examProgressBar" style="width: 10%"></div></div>
-        <h3 id="examQuestionText" class="exam-q-text">คำถาม</h3>
-        <div id="examOptions" class="options-list"></div>
-        <div class="runner-footer">
-          <button class="btn btn-primary" id="examNextBtn" disabled>ข้อถัดไป →</button>
-        </div>
-      </div>
-
-      <!-- Exam Result + Certificate -->
-      <div id="examResult" class="hidden">
-        <div class="panel no-print" style="margin-bottom: 1.5rem;">
-          <div class="exam-result-header">
-            <div>
-              <h3 id="examResultHeading">สรุปผลคะแนน</h3>
-              <p id="examResultSub" class="muted-text"></p>
-            </div>
-            <div class="exam-score-circle" id="examScoreCircle">0/10</div>
-          </div>
-          <div id="examReviewList" class="exam-review-list"></div>
-          <div class="exam-actions">
-            <button class="btn btn-primary" id="retakeExamBtn">ทำแบบทดสอบใหม่</button>
-            <button class="btn btn-secondary hidden" id="printCertBtn">🖨️ พิมพ์ / บันทึกเกียรติบัตร (PDF)</button>
-          </div>
-        </div>
-
-        <!-- Printable Certificate -->
-        <div id="certificateCard" class="certificate hidden">
-          <div class="cert-border">
-            <div class="cert-badge">SERVEROPS ACADEMY • CERTIFICATION</div>
-            <h2 class="cert-title">เกียรติบัตรรับรองผลการเรียนรู้</h2>
-            <p class="cert-subtitle">ขอมอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า</p>
-            <div class="cert-name" id="certStudentName">ผู้เรียน</div>
-            <div class="cert-id" id="certStudentId"></div>
-            <p class="cert-body">
-              ได้ผ่านการทดสอบและปฏิบัติการในสื่อการสอนเกมจำลอง<br />
-              <strong>รายวิชาระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น (Introduction to Server Operating Systems)</strong><br />
-              ด้วยผลคะแนน <strong id="certScore">0/10 (0%)</strong>
-            </p>
-            <div class="cert-footer">
-              <div>
-                <div class="cert-line"></div>
-                <div>วันที่ออกเกียรติบัตร: <span id="certDate">-</span></div>
-              </div>
-              <div class="cert-seal">✓ VERIFIED<br />SYSADMIN</div>
-              <div>
-                <div class="cert-line"></div>
-                <div>ServerOps Academy Learning System</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
+  </div>
 
   <!-- Toast Notification -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>

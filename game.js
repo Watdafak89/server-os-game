@@ -1,28 +1,47 @@
-/* ServerOps Academy — Core Game & Simulation Engine */
+/* ServerOps: Data Center Defender — Complete RPG & Simulation Game Engine */
 (() => {
-  const STORAGE_KEY = 'serverops_academy_v1';
+  const STORAGE_KEY = 'serverops_rpg_v2';
+
+  const ALL_STAGES_FLAT = CAMPAIGN_ZONES.flatMap((zone) =>
+    zone.stages.map((stage) => ({ ...stage, zoneId: zone.id, zoneCode: zone.code, zoneName: zone.name }))
+  );
 
   const defaultState = () => ({
+    playerName: 'SysAdmin',
+    avatar: '👨‍💻',
     xp: 0,
-    completedMissions: [],
+    coins: 100,
+    xpBoostActive: false,
+    freePlay: false,
+    inventory: {
+      shield: 1,
+      hint: 1,
+      heal: 0
+    },
+    stageStars: {}, // stageId -> 1..3
     completedLabs: [],
-    portHighScore: 0,
+    solvedChmod: [],
+    solvedRaid: [],
+    defenseHighScore: 0,
     examBestScore: 0,
     examPassed: false,
     unlockedBadges: [],
     analytics: {
       fundamentals: { correct: 0, total: 0 },
+      hardware: { correct: 0, total: 0 },
+      storage: { correct: 0, total: 0 },
       network: { correct: 0, total: 0 },
       users: { correct: 0, total: 0 },
       cli: { correct: 0, total: 0 },
-      security: { correct: 0, total: 0 }
+      security: { correct: 0, total: 0 },
+      backup: { correct: 0, total: 0 }
     },
     theme: 'dark',
     sound: true
   });
 
   let state = loadState();
-  let portTimerId = null;
+  let defIntervalId = null;
 
   function loadState() {
     try {
@@ -32,6 +51,7 @@
       return {
         ...defaultState(),
         ...parsed,
+        inventory: { ...defaultState().inventory, ...(parsed.inventory || {}) },
         analytics: { ...defaultState().analytics, ...(parsed.analytics || {}) }
       };
     } catch {
@@ -43,11 +63,11 @@
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
-      // ignore storage quota errors
+      // ignore quota errors
     }
   }
 
-  /* ==================== HELPERS ==================== */
+  /* ==================== UTILITIES ==================== */
   const $ = (id) => document.getElementById(id);
   let toastTimer = null;
 
@@ -56,7 +76,7 @@
     el.textContent = msg;
     el.classList.remove('hidden');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
+    toastTimer = setTimeout(() => el.classList.add('hidden'), 3300);
   }
 
   function shuffle(arr) {
@@ -68,39 +88,40 @@
     return copy;
   }
 
+  function getTotalStars() {
+    return Object.values(state.stageStars).reduce((sum, s) => sum + s, 0);
+  }
+
   function getRankInfo(xp) {
     let idx = 0;
     for (let i = 0; i < RANKS.length; i++) {
       if (xp >= RANKS[i].minXp) idx = i;
     }
-    const current = RANKS[idx];
+    const cur = RANKS[idx];
     const next = RANKS[idx + 1] || null;
-    const progressPct = next
-      ? Math.min(100, Math.round(((xp - current.minXp) / (next.minXp - current.minXp)) * 100))
-      : 100;
-    return { level: idx + 1, title: current.title, next, progressPct };
+    const pct = next ? Math.min(100, Math.round(((xp - cur.minXp) / (next.minXp - cur.minXp)) * 100)) : 100;
+    return { level: idx + 1, title: cur.title, next, pct };
   }
 
-  function recordAnalytics(category, isCorrect) {
-    if (!state.analytics[category]) {
-      state.analytics[category] = { correct: 0, total: 0 };
-    }
-    state.analytics[category].total += 1;
-    if (isCorrect) state.analytics[category].correct += 1;
+  function recordAnalytics(cat, isCorrect) {
+    if (!state.analytics[cat]) state.analytics[cat] = { correct: 0, total: 0 };
+    state.analytics[cat].total += 1;
+    if (isCorrect) state.analytics[cat].correct += 1;
     saveState();
   }
 
-  function awardXp(amount) {
-    const oldLevel = getRankInfo(state.xp).level;
-    state.xp += amount;
+  function grantRewards(xp, coins) {
+    const oldLv = getRankInfo(state.xp).level;
+    state.xp += xp;
+    state.coins += coins;
     const newInfo = getRankInfo(state.xp);
-    if (newInfo.level > oldLevel) {
+    if (newInfo.level > oldLv) {
       SoundFX.levelUp();
-      showToast(`🎉 เลื่อนระดับเป็น Lv.${newInfo.level} — ${newInfo.title}!`);
+      showToast(`🎉 LEVEL UP! เลื่อนขั้นเป็น LV.${newInfo.level} — ${newInfo.title}`);
     }
     checkBadges();
     saveState();
-    renderHeaderAndDashboard();
+    renderHud();
   }
 
   function checkBadges() {
@@ -115,87 +136,1329 @@
       }
     };
 
-    if (state.completedMissions.length >= 1) unlock('first_mission');
-    if (state.completedMissions.length >= MISSIONS.length) unlock('all_missions');
-    if (state.completedLabs.length >= 4) unlock('cli_novice');
-    if (state.completedLabs.length >= CLI_LABS.length) unlock('cli_master');
-    if (state.portHighScore >= 1000) unlock('port_ace');
+    if (Object.keys(state.stageStars).length >= 1) unlock('first_blood');
+    if (state.stageStars['z1_boss']) unlock('zone1_clear');
+    if (state.stageStars['z2_boss']) unlock('zone2_clear');
+    if (state.stageStars['z3_boss']) unlock('zone3_clear');
+    if (state.stageStars['z4_boss']) unlock('zone4_clear');
+    if (state.stageStars['z5_boss']) unlock('zone5_clear');
+    if (state.stageStars['z6_boss']) unlock('final_boss');
+    if (state.completedLabs.length >= 7) unlock('cli_hero');
+    if (state.completedLabs.length >= CLI_LABS.length) unlock('cli_god');
+    if (state.defenseHighScore >= 1500) unlock('port_defender');
+    if (state.solvedChmod.length >= 3 && state.solvedRaid.length >= 3) unlock('puzzle_master');
     if (state.examPassed) unlock('certified');
   }
 
-  /* ==================== NAVIGATION & THEME ==================== */
-  function switchView(viewName) {
-    SoundFX.click();
-    if (viewName !== 'portrush') {
-      clearInterval(portTimerId);
-    }
-    document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
-    const target = $(`view-${viewName}`);
-    if (target) target.classList.add('active');
-
-    document.querySelectorAll('.nav-btn').forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.view === viewName);
-    });
-
-    if (viewName === 'dashboard') renderHeaderAndDashboard();
-    if (viewName === 'missions') renderMissionGrid();
-    if (viewName === 'terminal') {
-      renderLabSidebar();
-      setTimeout(() => $('terminalInput')?.focus(), 60);
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
+  /* ==================== THEME & SOUND ==================== */
   function applyTheme() {
     document.documentElement.setAttribute('data-theme', state.theme);
-    $('themeToggleBtn').textContent = state.theme === 'dark' ? '☀️' : '🌙';
+    const icon = state.theme === 'dark' ? '☀️' : '🌙';
+    $('titleThemeBtn').textContent = icon;
+    $('hudThemeBtn').textContent = icon;
   }
 
   function applySound() {
     SoundFX.setEnabled(state.sound);
-    $('soundToggleBtn').textContent = state.sound ? '🔊' : '🔇';
+    const icon = state.sound ? '🔊' : '🔇';
+    $('titleSoundBtn').textContent = icon;
+    $('hudSoundBtn').textContent = icon;
   }
 
-  /* ==================== DASHBOARD RENDERING ==================== */
-  function renderHeaderAndDashboard() {
-    const info = getRankInfo(state.xp);
-    $('headerLevel').textContent = `Lv.${info.level}`;
-    $('headerXp').textContent = `${state.xp} XP`;
+  function toggleTheme() {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    applyTheme();
+    saveState();
+    SoundFX.click();
+  }
 
-    $('dashRank').textContent = info.title;
-    $('dashXpBar').style.width = `${info.progressPct}%`;
-    $('dashXpText').textContent = info.next
-      ? `${state.xp} / ${info.next.minXp} XP สู่ระดับ ${info.next.title}`
-      : `${state.xp} XP • ระดับสูงสุดแล้ว!`;
+  function toggleSound() {
+    state.sound = !state.sound;
+    applySound();
+    saveState();
+    if (state.sound) SoundFX.click();
+  }
 
-    $('dashMissionsDone').textContent = state.completedMissions.length;
-    $('dashMissionsTotal').textContent = MISSIONS.length;
-    $('dashLabsDone').textContent = state.completedLabs.length;
-    $('dashLabsTotal').textContent = CLI_LABS.length;
-    $('dashPortHigh').textContent = state.portHighScore.toLocaleString();
+  /* ==================== TITLE SCREEN & HUD ==================== */
+  function renderTitleScreen() {
+    const picker = $('avatarPicker');
+    picker.innerHTML = '';
+    AVATARS.forEach((av) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `avatar-choice ${state.avatar === av ? 'active' : ''}`;
+      btn.textContent = av;
+      btn.addEventListener('click', () => {
+        SoundFX.click();
+        state.avatar = av;
+        saveState();
+        renderTitleScreen();
+      });
+      picker.appendChild(btn);
+    });
 
-    // Learning Analytics
+    $('playerNameInput').value = state.playerName === 'SysAdmin' ? '' : state.playerName;
+    $('titleFreePlayToggle').checked = state.freePlay;
+
+    const rank = getRankInfo(state.xp);
+    const maxStars = ALL_STAGES_FLAT.length * 3;
+    $('titleSavePreview').innerHTML = `
+      <span class="save-chip">LV.${rank.level} ${rank.title}</span>
+      <span class="save-chip">⭐ ${getTotalStars()}/${maxStars} ดาว</span>
+      <span class="save-chip">💰 ${state.coins} เหรียญ</span>
+      <span class="save-chip">🏆 ${state.unlockedBadges.length}/${BADGES.length} เหรียญตรา</span>
+    `;
+  }
+
+  function renderHud() {
+    const rank = getRankInfo(state.xp);
+    const maxStars = ALL_STAGES_FLAT.length * 3;
+    $('hudAvatar').textContent = state.avatar;
+    $('hudPlayerName').textContent = state.playerName;
+    $('hudLevel').textContent = `LV.${rank.level}`;
+    $('hudRank').textContent = rank.title;
+    $('hudXpFill').style.width = `${rank.pct}%`;
+    $('hudStars').textContent = `${getTotalStars()}/${maxStars}`;
+    $('hudCoins').textContent = state.coins.toLocaleString();
+    $('hudXp').textContent = `${state.xp} XP`;
+    $('hudBoostBadge').classList.toggle('hidden', !state.xpBoostActive);
+    $('shopCoinsDisplay').textContent = state.coins.toLocaleString();
+  }
+
+  function enterGame() {
+    SoundFX.levelUp();
+    const typed = $('playerNameInput').value.trim();
+    if (typed) state.playerName = typed;
+    state.freePlay = $('titleFreePlayToggle').checked;
+    $('mapFreePlayToggle').checked = state.freePlay;
+    saveState();
+
+    $('titleScreen').classList.add('hidden');
+    $('gameShell').classList.remove('hidden');
+    renderHud();
+    switchScreen('map');
+  }
+
+  function returnToTitle() {
+    SoundFX.click();
+    stopDefenseTimer();
+    $('gameShell').classList.add('hidden');
+    $('titleScreen').classList.remove('hidden');
+    renderTitleScreen();
+  }
+
+  function switchScreen(screenName) {
+    SoundFX.click();
+    if (screenName !== 'defense') stopDefenseTimer();
+
+    document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
+    const target = $(`screen-${screenName}`);
+    if (target) target.classList.add('active');
+
+    document.querySelectorAll('.dock-btn').forEach((btn) => {
+      const match = btn.dataset.screen === (screenName === 'battle' ? 'map' : screenName);
+      btn.classList.toggle('active', match);
+    });
+
+    if (screenName === 'map') renderWorldMap();
+    if (screenName === 'cli') {
+      renderCliSidebar();
+      setTimeout(() => $('terminalInput')?.focus(), 60);
+    }
+    if (screenName === 'shop') renderShop();
+    if (screenName === 'codex') renderCodexAndStats();
+    if (screenName === 'puzzles') {
+      renderChmodVault();
+      renderRaidChallenge();
+    }
+    if (screenName === 'defense') {
+      $('defHigh').textContent = state.defenseHighScore.toLocaleString();
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ==================== SCREEN 1: CAMPAIGN WORLD MAP ==================== */
+  function isStageUnlocked(flatIdx) {
+    if (state.freePlay || flatIdx === 0) return true;
+    const prevStage = ALL_STAGES_FLAT[flatIdx - 1];
+    return Boolean(state.stageStars[prevStage.id]);
+  }
+
+  function renderWorldMap() {
+    $('mapFreePlayToggle').checked = state.freePlay;
+    const container = $('worldMapContainer');
+    container.innerHTML = '';
+
+    let globalIdx = 0;
+    CAMPAIGN_ZONES.forEach((zone) => {
+      const zoneEarned = zone.stages.reduce((acc, st) => acc + (state.stageStars[st.id] || 0), 0);
+      const zoneMax = zone.stages.length * 3;
+
+      const card = document.createElement('section');
+      card.className = 'zone-card';
+      card.style.setProperty('--zone-color', zone.themeColor);
+
+      const stagesHtml = zone.stages.map((stage) => {
+        const myFlatIdx = globalIdx++;
+        const unlocked = isStageUnlocked(myFlatIdx);
+        const stars = state.stageStars[stage.id] || 0;
+        const starStr = stars > 0 ? '⭐'.repeat(stars) + '☆'.repeat(3 - stars) : (unlocked ? '☆☆☆' : '🔒 ล็อกอยู่');
+
+        return `
+          <button type="button" class="stage-node ${stars > 0 ? 'cleared' : ''} ${stage.isBoss ? 'boss-node' : ''} ${!unlocked ? 'locked' : ''}"
+            data-stage-id="${stage.id}" ${!unlocked ? 'disabled' : ''}>
+            <div class="node-sprite">${unlocked ? stage.enemy.sprite : '🔒'}</div>
+            <div class="node-name">${stage.title}</div>
+            <div class="node-stars">${starStr}</div>
+            <div class="node-reward">+${stage.xp}XP • 💰${stage.coins}</div>
+          </button>
+        `;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="zone-header">
+          <div class="zone-title-wrap">
+            <div class="zone-icon">${zone.icon}</div>
+            <div>
+              <div class="zone-code">${zone.code}</div>
+              <h3>${zone.name}</h3>
+              <p class="muted-text" style="font-size:0.78rem;">${zone.subtitle}</p>
+            </div>
+          </div>
+          <div class="zone-stars">⭐ ${zoneEarned}/${zoneMax}</div>
+        </div>
+        <div class="stage-path">${stagesHtml}</div>
+      `;
+
+      card.querySelectorAll('.stage-node:not(:disabled)').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const st = ALL_STAGES_FLAT.find((x) => x.id === btn.dataset.stageId);
+          if (st) startBattle(st);
+        });
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  /* ==================== SCREEN 2: RPG BATTLE ENGINE ==================== */
+  let battle = null;
+
+  function spawnFx(text, cls) {
+    const layer = $('battleFxLayer');
+    const el = document.createElement('div');
+    el.className = `float-fx ${cls}`;
+    el.textContent = text;
+    layer.appendChild(el);
+    setTimeout(() => el.remove(), 950);
+  }
+
+  function triggerShake(elId) {
+    const el = $(elId);
+    el.classList.remove('shake-hit');
+    void el.offsetWidth;
+    el.classList.add('shake-hit');
+  }
+
+  function startBattle(stage) {
+    if (stage.isBoss) SoundFX.bossAlert();
+    else SoundFX.click();
+
+    battle = {
+      stage,
+      qIdx: 0,
+      playerHp: 3,
+      maxPlayerHp: 3,
+      enemyHp: stage.enemy.hp,
+      maxEnemyHp: stage.enemy.hp,
+      combo: 0,
+      shieldActive: false,
+      hintUsedThisQ: false,
+      answered: false
+    };
+
+    $('battleConsole').classList.remove('hidden');
+    $('battleOutcomeCard').classList.add('hidden');
+    $('battleZoneChip').textContent = stage.zoneCode;
+    $('battleStageTitle').textContent = stage.title;
+    $('battleDialogueText').textContent = stage.dialogue;
+    $('battlePlayerSprite').textContent = state.avatar;
+    $('battlePlayerLabel').textContent = `${state.playerName}'s Server Core`;
+    $('enemySprite').textContent = stage.enemy.sprite;
+    $('enemyName').textContent = stage.enemy.name;
+    $('enemyBossTag').classList.toggle('hidden', !stage.isBoss);
+
+    switchScreen('battle');
+    updateBattleBars();
+    renderBattleQuestion();
+  }
+
+  function updateBattleBars() {
+    const pPct = Math.round((battle.playerHp / battle.maxPlayerHp) * 100);
+    const ePct = Math.max(0, Math.round((battle.enemyHp / battle.maxEnemyHp) * 100));
+    $('playerHpBar').style.width = `${pPct}%`;
+    $('playerHpText').textContent = `HP: ${battle.playerHp} / ${battle.maxPlayerHp} ${'💚'.repeat(battle.playerHp)}${'🖤'.repeat(battle.maxPlayerHp - battle.playerHp)}`;
+    $('enemyHpBar').style.width = `${ePct}%`;
+    $('enemyHpText').textContent = `HP: ${battle.enemyHp} / ${battle.maxEnemyHp}`;
+    $('battleShieldBadge').classList.toggle('hidden', !battle.shieldActive);
+
+    const comboEl = $('battleComboChip');
+    if (battle.combo >= 2) {
+      comboEl.textContent = `🔥 x${battle.combo} COMBO`;
+      comboEl.classList.remove('hidden');
+    } else {
+      comboEl.classList.add('hidden');
+    }
+
+    // Update Toolkit button quantities
+    $('qtyShield').textContent = state.inventory.shield;
+    $('qtyHint').textContent = state.inventory.hint;
+    $('qtyHeal').textContent = state.inventory.heal;
+    $('useShieldBtn').disabled = state.inventory.shield <= 0 || battle.shieldActive || battle.answered;
+    $('useHintBtn').disabled = state.inventory.hint <= 0 || battle.hintUsedThisQ || battle.answered;
+    $('useHealBtn').disabled = state.inventory.heal <= 0 || battle.playerHp >= battle.maxPlayerHp || battle.answered;
+  }
+
+  function renderBattleQuestion() {
+    battle.answered = false;
+    battle.hintUsedThisQ = false;
+    const q = battle.stage.questions[battle.qIdx];
+    $('battleStepPill').textContent = `Wave ${battle.qIdx + 1} / ${battle.stage.questions.length}`;
+    $('battleContext').textContent = q.context;
+    $('battleQuestion').textContent = q.q;
+
+    const codeEl = $('battleCodeBlock');
+    if (q.code) {
+      codeEl.textContent = q.code;
+      codeEl.classList.remove('hidden');
+    } else {
+      codeEl.classList.add('hidden');
+    }
+
+    $('battleDebrief').classList.add('hidden');
+    $('battleNextBtn').classList.add('hidden');
+
+    const optsEl = $('battleOptions');
+    optsEl.innerHTML = '';
+    const keys = ['A', 'B', 'C', 'D'];
+    q.options.forEach((optText, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.dataset.idx = idx;
+      btn.innerHTML = `<span class="opt-key">${keys[idx]}</span><span>${optText}</span>`;
+      btn.addEventListener('click', () => handleBattleAnswer(idx, btn));
+      optsEl.appendChild(btn);
+    });
+    updateBattleBars();
+  }
+
+  function handleBattleAnswer(selectedIdx, btn) {
+    if (battle.answered) return;
+    battle.answered = true;
+    const q = battle.stage.questions[battle.qIdx];
+    const isCorrect = selectedIdx === q.answer;
+    recordAnalytics(battle.stage.category, isCorrect);
+
+    const allBtns = $('battleOptions').querySelectorAll('.option-btn');
+    allBtns.forEach((b, i) => {
+      b.disabled = true;
+      if (i === q.answer) b.classList.add('correct');
+    });
+
+    const debrief = $('battleDebrief');
+    debrief.classList.remove('hidden', 'ok', 'err');
+
+    const dmgPerHit = Math.ceil(battle.maxEnemyHp / battle.stage.questions.length);
+
+    if (isCorrect) {
+      SoundFX.attack();
+      battle.combo += 1;
+      battle.enemyHp = Math.max(0, battle.enemyHp - dmgPerHit);
+      triggerShake('enemyCombatant');
+      spawnFx(`-${dmgPerHit} CRIT!`, 'dmg');
+      debrief.classList.add('ok');
+      debrief.innerHTML = `<strong>⚡ โจมตีสำเร็จ!</strong> ${q.explain}`;
+    } else {
+      btn.classList.add('wrong');
+      battle.combo = 0;
+      if (battle.shieldActive) {
+        SoundFX.shield();
+        battle.shieldActive = false;
+        spawnFx('🛡️ BLOCKED!', 'shield');
+        debrief.classList.add('err');
+        debrief.innerHTML = `<strong>🛡️ UPS Shield ป้องกันความเสียหายไว้ได้!</strong> — ${q.explain}`;
+      } else {
+        SoundFX.wrong();
+        battle.playerHp = Math.max(0, battle.playerHp - 1);
+        triggerShake('playerCombatant');
+        spawnFx('-1 HP!', 'hit');
+        debrief.classList.add('err');
+        debrief.innerHTML = `<strong>💥 เซิร์ฟเวอร์ได้รับความเสียหาย!</strong> — ${q.explain}`;
+      }
+    }
+
+    updateBattleBars();
+    const nextBtn = $('battleNextBtn');
+    nextBtn.classList.remove('hidden');
+
+    if (battle.playerHp <= 0) {
+      nextBtn.textContent = 'สรุปผลการต่อสู้';
+    } else if (battle.qIdx === battle.stage.questions.length - 1) {
+      nextBtn.textContent = 'ปิดฉากและรับรางวัล 🏆';
+    } else {
+      nextBtn.textContent = 'ลุยเวฟถัดไป ⚡';
+    }
+  }
+
+  function finishBattle() {
+    $('battleConsole').classList.add('hidden');
+    $('battleOutcomeCard').classList.remove('hidden');
+
+    const won = battle.playerHp > 0;
+    const nextBtn = $('outcomeNextStageBtn');
+
+    if (won) {
+      SoundFX.levelUp();
+      const stars = battle.playerHp === 3 ? 3 : battle.playerHp === 2 ? 2 : 1;
+      const prevStars = state.stageStars[battle.stage.id] || 0;
+      const isFirstClear = prevStars === 0;
+      if (stars > prevStars) state.stageStars[battle.stage.id] = stars;
+
+      const mult = state.xpBoostActive ? 2 : 1;
+      const baseXp = isFirstClear ? battle.stage.xp : Math.round(battle.stage.xp * 0.35);
+      const baseCoins = isFirstClear ? battle.stage.coins : Math.round(battle.stage.coins * 0.4);
+      const earnedXp = baseXp * mult;
+      const earnedCoins = baseCoins * mult;
+      if (state.xpBoostActive) state.xpBoostActive = false;
+
+      grantRewards(earnedXp, earnedCoins);
+
+      $('outcomeEmoji').textContent = battle.stage.isBoss ? '👑🏆' : '🏆';
+      $('outcomeTitle').textContent = battle.stage.isBoss ? 'BOSS DEFEATED!' : 'STAGE CLEARED!';
+      $('outcomeStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+      $('outcomeSub').textContent = isFirstClear
+        ? `ยอดเยี่ยมมาก! คุณเอาชนะ ${battle.stage.enemy.name} และปลดล็อกด่านถัดไปเรียบร้อยแล้ว`
+        : `ทบทวนด่านสำเร็จ! (สถิติสูงสุด: ${state.stageStars[battle.stage.id]} ดาว)`;
+      $('outcomeRewards').innerHTML = `
+        <div class="reward-box"><span>XP ที่ได้รับ</span><strong>+${earnedXp} XP</strong></div>
+        <div class="reward-box"><span>เหรียญรางวัล</span><strong>+💰 ${earnedCoins}</strong></div>
+        <div class="reward-box"><span>Server HP คงเหลือ</span><strong>${battle.playerHp}/${battle.maxPlayerHp}</strong></div>
+      `;
+
+      const flatIdx = ALL_STAGES_FLAT.findIndex((s) => s.id === battle.stage.id);
+      const nextStage = ALL_STAGES_FLAT[flatIdx + 1];
+      if (nextStage) {
+        nextBtn.classList.remove('hidden');
+        nextBtn.onclick = () => startBattle(nextStage);
+      } else {
+        nextBtn.classList.add('hidden');
+      }
+    } else {
+      SoundFX.wrong();
+      $('outcomeEmoji').textContent = '💥';
+      $('outcomeTitle').textContent = 'SERVER DOWN! (พ่ายแพ้)';
+      $('outcomeStars').textContent = '☆☆☆';
+      $('outcomeSub').textContent = 'Server HP หมดก่อนพิชิตภัยคุกคาม ลองทบทวนในคัมภีร์หรือซื้อไอเทม UPS Shield / Repair Kit ในร้านค้าแล้วมาสู้ใหม่!';
+      $('outcomeRewards').innerHTML = `
+        <div class="reward-box"><span>ปลอบใจฝึกซ้อม</span><strong>+15 XP</strong></div>
+      `;
+      grantRewards(15, 0);
+      nextBtn.classList.add('hidden');
+    }
+  }
+
+  $('battleNextBtn').addEventListener('click', () => {
+    SoundFX.click();
+    if (battle.playerHp <= 0 || battle.qIdx >= battle.stage.questions.length - 1) {
+      finishBattle();
+    } else {
+      battle.qIdx += 1;
+      renderBattleQuestion();
+    }
+  });
+
+  $('battleRetreatBtn').addEventListener('click', () => switchScreen('map'));
+  $('outcomeMapBtn').addEventListener('click', () => switchScreen('map'));
+  $('outcomeRetryBtn').addEventListener('click', () => startBattle(battle.stage));
+
+  // Toolkit Power-ups inside Battle
+  $('useShieldBtn').addEventListener('click', () => {
+    if (state.inventory.shield <= 0 || battle.shieldActive || battle.answered) return;
+    state.inventory.shield -= 1;
+    battle.shieldActive = true;
+    SoundFX.shield();
+    spawnFx('🛡️ SHIELD ON!', 'shield');
+    saveState();
+    updateBattleBars();
+  });
+
+  $('useHintBtn').addEventListener('click', () => {
+    if (state.inventory.hint <= 0 || battle.hintUsedThisQ || battle.answered) return;
+    state.inventory.hint -= 1;
+    battle.hintUsedThisQ = true;
+    const q = battle.stage.questions[battle.qIdx];
+    const wrongIndices = shuffle([0, 1, 2, 3].filter((i) => i !== q.answer)).slice(0, 2);
+    $('battleOptions').querySelectorAll('.option-btn').forEach((btn) => {
+      if (wrongIndices.includes(Number(btn.dataset.idx))) {
+        btn.disabled = true;
+        btn.classList.add('eliminated');
+      }
+    });
+    SoundFX.correct();
+    showToast('💡 NOVA-OS สแกนตัดตัวเลือกที่ผิดออกให้ 2 ข้อแล้ว!');
+    saveState();
+    updateBattleBars();
+  });
+
+  $('useHealBtn').addEventListener('click', () => {
+    if (state.inventory.heal <= 0 || battle.playerHp >= battle.maxPlayerHp || battle.answered) return;
+    state.inventory.heal -= 1;
+    battle.playerHp = battle.maxPlayerHp;
+    SoundFX.levelUp();
+    spawnFx('💊 FULL HP!', 'shield');
+    saveState();
+    updateBattleBars();
+  });
+
+  /* ==================== SCREEN 3: DUAL-OS CLI HACKER ARENA ==================== */
+  let cliFilterOs = 'all';
+  let activeCliLabId = CLI_LABS[0].id;
+  let cliHistory = [];
+  let cliHistPtr = -1;
+
+  const simEnv = {
+    services: { nginx: 'inactive', ssh: 'active', ufw: 'active', mysql: 'active' },
+    winServices: { DNS: 'Stopped', DHCP: 'Running', NTDS: 'Running', W3SVC: 'Running' },
+    files: {
+      'secret.key': '-rwxrwxrwx',
+      'backup.sh': '-rw-r--r--',
+      'nginx.conf': '-rw-r--r--'
+    },
+    firewall: ['22/tcp (SSH)', '80/tcp (HTTP)'],
+    users: ['root', 'admin', 'www-data']
+  };
+
+  function getActiveCliLab() {
+    return CLI_LABS.find((l) => l.id === activeCliLabId) || CLI_LABS[0];
+  }
+
+  function appendTerm(text, cls = '') {
+    const out = $('terminalOutput');
+    const div = document.createElement('div');
+    if (cls) div.className = cls;
+    div.textContent = text;
+    out.appendChild(div);
+    out.scrollTop = out.scrollHeight;
+  }
+
+  function syncTerminalOsTheme(os) {
+    const shell = $('terminalShell');
+    if (os === 'windows') {
+      shell.classList.add('win-mode');
+      $('termWindowTitle').textContent = 'Administrator: Windows PowerShell (Windows Server 2022 DC-01)';
+      $('termOsBadge').textContent = 'POWERSHELL • RDP 3389';
+      $('termPromptText').textContent = 'PS C:\\ServerAdmin>';
+    } else {
+      shell.classList.remove('win-mode');
+      $('termWindowTitle').textContent = 'root@srv-linux-01:~ (Ubuntu Server 24.04 LTS)';
+      $('termOsBadge').textContent = 'BASH • SSH 22';
+      $('termPromptText').textContent = 'root@srv-linux-01:~#';
+    }
+  }
+
+  function initCliWelcome() {
+    const lab = getActiveCliLab();
+    syncTerminalOsTheme(lab.os);
+    $('terminalOutput').innerHTML = '';
+    if (lab.os === 'windows') {
+      appendTerm('Windows PowerShell — Microsoft Windows Server 2022 Datacenter (DC-01)', 'term-line-muted');
+      appendTerm('พิมพ์ "help" เพื่อดูคำสั่ง Windows Server PowerShell/CMD ที่รองรับ\n', 'term-line-muted');
+    } else {
+      appendTerm('Welcome to Ubuntu 24.04.1 LTS (GNU/Linux 6.8.0-45-generic x86_64)', 'term-line-muted');
+      appendTerm('พิมพ์ "help" เพื่อดูคำสั่ง Linux Server ที่รองรับ\n', 'term-line-muted');
+    }
+  }
+
+  function renderCliSidebar() {
+    $('cliProgressChip').textContent = `${state.completedLabs.length} / ${CLI_LABS.length}`;
+    const list = $('cliMissionList');
+    list.innerHTML = '';
+
+    const visibleLabs = CLI_LABS.filter((l) => cliFilterOs === 'all' || l.os === cliFilterOs);
+    if (!visibleLabs.some((l) => l.id === activeCliLabId) && visibleLabs.length > 0) {
+      activeCliLabId = visibleLabs[0].id;
+    }
+
+    visibleLabs.forEach((lab) => {
+      const done = state.completedLabs.includes(lab.id);
+      const btn = document.createElement('button');
+      btn.className = `cli-item ${lab.id === activeCliLabId ? 'active' : ''} ${done ? 'done' : ''}`;
+      btn.innerHTML = `<span>${lab.os === 'windows' ? '🪟' : '🐧'} ${lab.title}</span><span>${done ? '✅' : '○'}</span>`;
+      btn.addEventListener('click', () => {
+        SoundFX.click();
+        const prevOs = getActiveCliLab().os;
+        activeCliLabId = lab.id;
+        renderCliSidebar();
+        if (prevOs !== lab.os) initCliWelcome();
+      });
+      list.appendChild(btn);
+    });
+
+    const cur = getActiveCliLab();
+    syncTerminalOsTheme(cur.os);
+    $('cliBriefOs').textContent = cur.os === 'windows' ? '🪟 WINDOWS SERVER POWERSHELL' : '🐧 UBUNTU LINUX SERVER';
+    $('cliBriefTitle').textContent = `${cur.title} (+${cur.xp} XP, 💰${cur.coins})`;
+    $('cliBriefGoal').textContent = cur.goal;
+    $('cliHintBox').textContent = `💡 คำใบ้: ${cur.hint}`;
+    $('cliHintBox').classList.add('hidden');
+
+    const qList = $('quickCmdList');
+    qList.innerHTML = '';
+    cur.quickCmds.forEach((c) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'quick-cmd-chip';
+      chip.textContent = c;
+      chip.addEventListener('click', () => {
+        $('terminalInput').value = c;
+        $('terminalInput').focus();
+      });
+      qList.appendChild(chip);
+    });
+  }
+
+  function octalToSym(oct) {
+    if (!/^[0-7]{3}$/.test(oct)) return null;
+    const map = ['---', '--x', '-w-', '-wx', 'r--', 'r-x', 'rw-', 'rwx'];
+    return '-' + map[+oct[0]] + map[+oct[1]] + map[+oct[2]];
+  }
+
+  function executeCli(rawCmd) {
+    const lab = getActiveCliLab();
+    const promptPrefix = lab.os === 'windows' ? 'PS C:\\ServerAdmin> ' : 'root@srv-linux-01:~# ';
+    appendTerm(`${promptPrefix}${rawCmd}`, 'term-line-cmd');
+    const cmd = rawCmd.trim().replace(/^sudo\s+/i, '');
+    if (!cmd) return;
+
+    SoundFX.terminal();
+    const parts = cmd.split(/\s+/);
+    const bin = parts[0].toLowerCase();
+
+    if (bin === 'clear' || bin === 'cls') {
+      initCliWelcome();
+      return;
+    }
+
+    if (bin === 'help') {
+      if (lab.os === 'windows') {
+        appendTerm(
+`คำสั่ง Windows Server PowerShell / CMD ที่รองรับ:
+  ipconfig /all                          ดูข้อมูล IP, Subnet, Gateway, DNS ทั้งหมด
+  nslookup <domain>                      ตรวจสอบการแปลงชื่อ DNS
+  Get-Service [name]                     ดูสถานะ Windows Services (DNS, DHCP, NTDS)
+  Restart-Service <name>                 รีสตาร์ทบริการบน Windows Server
+  gpupdate /force                        บังคับอัปเดต Group Policy (GPO) ทันที
+  Get-ADUser -Filter *                   แสดงรายชื่อผู้ใช้ใน Active Directory
+  Test-NetConnection <host> -Port <p>    ทดสอบการเชื่อมต่อพอร์ต TCP
+  netstat -ano                           ดูพอร์ตที่เปิดและ PID
+  cls                                    ล้างหน้าจอ`, 'term-line-muted');
+      } else {
+        appendTerm(
+`คำสั่ง Linux Server Bash ที่รองรับ:
+  whoami, hostname, uname -a             ข้อมูลผู้ใช้และระบบปฏิบัติการ
+  ip a | ifconfig | ping <host>          ตรวจสอบเครือข่ายและ IP
+  systemctl status|start|restart|enable <svc>
+  journalctl -u <svc>                    ดู Systemd Logs (เช่น nginx)
+  ss -tulnp | netstat -tulnp             ดูพอร์ตที่เปิด Listening อยู่
+  df -h | du -sh /var/* | free -h        ตรวจสอบดิสก์และหน่วยความจำ RAM
+  ls -l | chmod <mode> <file>            จัดการไฟล์และสิทธิ์ rwx
+  ufw status | ufw allow <port>          จัดการ Firewall UFW
+  useradd <name> | id <name> | cat /etc/passwd
+  clear                                  ล้างหน้าจอ`, 'term-line-muted');
+      }
+    }
+    /* Windows Server Commands */
+    else if (bin === 'ipconfig') {
+      appendTerm(
+`Windows IP Configuration
+   Host Name . . . . . . . . . . . . : SRV-DC-01
+   Primary Dns Suffix  . . . . . . . : college.local
+Ethernet adapter Ethernet0:
+   DHCP Enabled. . . . . . . . . . . : No (Static)
+   IPv4 Address. . . . . . . . . . . : 192.168.10.2
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 192.168.10.1
+   DNS Servers . . . . . . . . . . . : 127.0.0.1`, 'term-line-ok');
+    } else if (bin === 'nslookup') {
+      const dom = parts[1] || 'college.ac.th';
+      appendTerm(`Server:  srv-dc-01.college.local\nAddress:  192.168.10.2\n\nName:    ${dom}\nAddress:  203.150.10.25`);
+    } else if (bin === 'get-service') {
+      const target = parts[1];
+      const entries = Object.entries(simEnv.winServices).filter(([k]) => !target || k.toLowerCase() === target.toLowerCase());
+      if (!entries.length) appendTerm(`Get-Service : Cannot find any service with service name '${target}'.`, 'term-line-err');
+      else appendTerm(`Status   Name     DisplayName\n------   ----     -----------\n${entries.map(([k, v]) => `${v.padEnd(9)}${k.padEnd(9)}Windows ${k} Server Service`).join('\n')}`);
+    } else if (bin === 'restart-service' || bin === 'start-service') {
+      const target = parts[1] || '';
+      const key = Object.keys(simEnv.winServices).find((k) => k.toLowerCase() === target.toLowerCase());
+      if (!key) appendTerm(`Restart-Service : Cannot find service '${target}' (ลองใช้ DNS, DHCP, NTDS)`, 'term-line-err');
+      else {
+        simEnv.winServices[key] = 'Running';
+        appendTerm(`Service '${key}' is now Running.`, 'term-line-ok');
+      }
+    } else if (bin === 'gpupdate') {
+      appendTerm('Updating policy...\n\nComputer Policy update has completed successfully.\nUser Policy update has completed successfully.', 'term-line-ok');
+    } else if (bin === 'get-aduser') {
+      appendTerm(`SamAccountName   Enabled   Department\n--------------   -------   ----------\nAdministrator    True      IT-Core\nsomchai.k        True      Accounting\nstudent01        True      Computer-IT`);
+    } else if (bin === 'test-netconnection' || bin === 'tnc') {
+      const host = parts[1] || '192.168.10.10';
+      const portIdx = parts.findIndex((p) => p.toLowerCase() === '-port');
+      const port = portIdx !== -1 ? parts[portIdx + 1] : '80';
+      appendTerm(
+`ComputerName     : ${host}
+RemoteAddress    : ${host}
+RemotePort       : ${port}
+InterfaceAlias   : Ethernet0
+TcpTestSucceeded : True`, 'term-line-ok');
+    }
+    /* Linux Commands */
+    else if (bin === 'whoami') {
+      appendTerm(lab.os === 'windows' ? 'college\\administrator' : 'root');
+    } else if (bin === 'hostname') {
+      appendTerm(lab.os === 'windows' ? 'SRV-DC-01' : 'srv-linux-01');
+    } else if (bin === 'uname') {
+      appendTerm('Linux srv-linux-01 6.8.0-45-generic #45-Ubuntu SMP x86_64 GNU/Linux');
+    } else if (bin === 'ip' && (parts[1] === 'a' || parts[1] === 'addr')) {
+      appendTerm(`1: lo: <LOOPBACK,UP> inet 127.0.0.1/8\n2: eth0: <BROADCAST,MULTICAST,UP> inet 192.168.10.10/24 scope global static eth0`);
+    } else if (bin === 'ifconfig') {
+      appendTerm('eth0: inet 192.168.10.10  netmask 255.255.255.0  broadcast 192.168.10.255');
+    } else if (bin === 'ping') {
+      const t = parts[1] || '8.8.8.8';
+      appendTerm(`PING ${t}: 64 bytes icmp_seq=1 ttl=58 time=11.4 ms\nPING ${t}: 64 bytes icmp_seq=2 ttl=58 time=10.9 ms\n0% packet loss`, 'term-line-ok');
+    } else if (bin === 'systemctl') {
+      const act = parts[1];
+      const svc = parts[2];
+      if (!svc || !(svc in simEnv.services)) {
+        appendTerm(`Unit ${svc || ''}.service could not be found (ลอง nginx, ssh, mysql, ufw)`, 'term-line-err');
+      } else if (act === 'status') {
+        const st = simEnv.services[svc];
+        appendTerm(`● ${svc}.service\n   Loaded: loaded\n   Active: ${st === 'active' ? 'active (running)' : 'inactive (dead)'}`, st === 'active' ? 'term-line-ok' : 'term-line-err');
+      } else if (act === 'start' || act === 'restart') {
+        simEnv.services[svc] = 'active';
+        appendTerm(`Service ${svc}.service is now active (running).`, 'term-line-ok');
+      } else if (act === 'stop') {
+        simEnv.services[svc] = 'inactive';
+        appendTerm(`Service ${svc}.service stopped.`, 'term-line-muted');
+      } else if (act === 'enable') {
+        if (parts.includes('--now')) simEnv.services[svc] = 'active';
+        appendTerm(`Created symlink for ${svc}.service.`, 'term-line-ok');
+      } else {
+        appendTerm(`Unknown systemctl action: ${act}`, 'term-line-err');
+      }
+    } else if (bin === 'journalctl') {
+      appendTerm(
+`Nov 21 15:10:02 srv-linux-01 systemd[1]: Starting A high performance web server...
+Nov 21 15:10:03 srv-linux-01 nginx[1422]: nginx: configuration file /etc/nginx/nginx.conf test is successful
+Nov 21 15:10:03 srv-linux-01 systemd[1]: Started nginx.service.`, 'term-line-ok');
+    } else if (bin === 'ss' || bin === 'netstat') {
+      appendTerm(
+`Proto  Local Address:Port   State       Process/PID
+tcp    0.0.0.0:22           LISTEN      sshd (912)
+tcp    0.0.0.0:80           LISTEN      nginx (1422)
+tcp    0.0.0.0:443          LISTEN      nginx (1422)
+tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
+    } else if (bin === 'df') {
+      appendTerm(`Filesystem      Size  Used Avail Use% Mounted on\n/dev/sda1        50G   19G   29G  40% /\n/dev/sdb1       200G  142G   48G  75% /var/www`);
+    } else if (bin === 'du') {
+      appendTerm(`1.4G\t/var/log\n138G\t/var/www\n420M\t/var/cache`);
+    } else if (bin === 'free') {
+      appendTerm(`               total   used   free   available\nMem:           16Gi    4.2Gi  7.8Gi  11.4Gi`);
+    } else if (bin === 'ls') {
+      if (parts[1] === '/var/log') {
+        appendTerm('auth.log   kern.log   nginx/   syslog   ufw.log');
+      } else if (parts.some((p) => p.startsWith('-') && p.includes('l'))) {
+        appendTerm(Object.entries(simEnv.files).map(([f, p]) => `${p} 1 root admin 2048 Nov 21 15:00 ${f}`).join('\n'));
+      } else {
+        appendTerm(Object.keys(simEnv.files).join('   '));
+      }
+    } else if (bin === 'chmod') {
+      const mode = parts[1];
+      const file = parts[2];
+      const sym = octalToSym(mode);
+      if (!sym) appendTerm('Usage: chmod <3-digit> <file> (เช่น chmod 600 secret.key)', 'term-line-err');
+      else if (!(file in simEnv.files)) appendTerm(`chmod: cannot access '${file}': No such file`, 'term-line-err');
+      else {
+        simEnv.files[file] = sym;
+        appendTerm(`Updated '${file}' -> ${sym} (${mode})`, 'term-line-ok');
+      }
+    } else if (bin === 'ufw') {
+      if (parts[1] === 'status') {
+        appendTerm(`Status: active\n\nTo                     Action   From\n--                     ------   ----\n${simEnv.firewall.map((r) => r.padEnd(23) + 'ALLOW    Anywhere').join('\n')}`);
+      } else if (parts[1] === 'allow') {
+        const t = (parts[2] || '').toLowerCase();
+        let rule = null;
+        if (t === '443' || t === '443/tcp' || t === 'https') rule = '443/tcp (HTTPS)';
+        else if (t === '80' || t === '80/tcp' || t === 'http') rule = '80/tcp (HTTP)';
+        else if (/^\d+$/.test(t)) rule = `${t}/tcp`;
+        if (!rule) appendTerm('Usage: ufw allow <port> (เช่น ufw allow 443)', 'term-line-err');
+        else {
+          if (!simEnv.firewall.includes(rule)) simEnv.firewall.push(rule);
+          appendTerm(`Rule added: ALLOW ${rule}`, 'term-line-ok');
+        }
+      } else {
+        appendTerm('ใช้คำสั่ง ufw status หรือ ufw allow <port>', 'term-line-err');
+      }
+    } else if (bin === 'useradd' || bin === 'adduser') {
+      const u = parts[1];
+      if (!u) appendTerm('Usage: useradd <username>', 'term-line-err');
+      else if (simEnv.users.includes(u)) appendTerm(`useradd: user '${u}' already exists`, 'term-line-err');
+      else {
+        simEnv.users.push(u);
+        appendTerm(`User '${u}' created successfully.`, 'term-line-ok');
+      }
+    } else if (bin === 'id') {
+      const u = parts[1] || 'root';
+      if (simEnv.users.includes(u)) appendTerm(`uid=1002(${u}) gid=1002(${u}) groups=1002(${u}),users`);
+      else appendTerm(`id: '${u}': no such user`, 'term-line-err');
+    } else if (bin === 'cat' && parts[1] === '/etc/passwd') {
+      appendTerm(simEnv.users.map((u, i) => `${u}:x:${i === 0 ? 0 : 1000 + i}:1000::/home/${u}:/bin/bash`).join('\n'));
+    } else {
+      appendTerm(`ไม่พบคำสั่ง '${parts[0]}' — พิมพ์ 'help' เพื่อดูคำสั่งที่รองรับ`, 'term-line-err');
+    }
+
+    // Check lab completions
+    let passedAny = false;
+    CLI_LABS.forEach((item) => {
+      if (!state.completedLabs.includes(item.id) && item.check(cmd, simEnv)) {
+        state.completedLabs.push(item.id);
+        recordAnalytics(item.category, true);
+        grantRewards(item.xp, item.coins);
+        SoundFX.coin();
+        appendTerm(`\n✅ [MISSION COMPLETE] ผ่าน "${item.title}" (+${item.xp} XP, +💰${item.coins})\n`, 'term-line-ok');
+        showToast(`💻 ผ่าน ${item.title} (+${item.xp} XP, +💰${item.coins})`);
+        passedAny = true;
+      }
+    });
+
+    if (passedAny) {
+      const nextTodo = CLI_LABS.find((l) => !state.completedLabs.includes(l.id) && (cliFilterOs === 'all' || l.os === cliFilterOs));
+      if (nextTodo) activeCliLabId = nextTodo.id;
+      renderCliSidebar();
+    }
+  }
+
+  $('terminalForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const inp = $('terminalInput');
+    if (inp.value.trim()) {
+      cliHistory.push(inp.value);
+      cliHistPtr = cliHistory.length;
+    }
+    executeCli(inp.value);
+    inp.value = '';
+  });
+
+  $('terminalInput').addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' && cliHistPtr > 0) {
+      e.preventDefault();
+      cliHistPtr -= 1;
+      $('terminalInput').value = cliHistory[cliHistPtr];
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (cliHistPtr < cliHistory.length - 1) {
+        cliHistPtr += 1;
+        $('terminalInput').value = cliHistory[cliHistPtr];
+      } else {
+        cliHistPtr = cliHistory.length;
+        $('terminalInput').value = '';
+      }
+    }
+  });
+
+  document.querySelectorAll('.os-tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      SoundFX.click();
+      cliFilterOs = btn.dataset.os;
+      document.querySelectorAll('.os-tab').forEach((b) => {
+        const active = b.dataset.os === cliFilterOs;
+        b.className = `btn btn-sm os-tab ${active ? 'btn-neon active' : 'btn-ghost'}`;
+      });
+      renderCliSidebar();
+      initCliWelcome();
+    });
+  });
+
+  $('cliHintBtn').addEventListener('click', () => {
+    SoundFX.click();
+    $('cliHintBox').classList.toggle('hidden');
+  });
+
+  $('cliClearBtn').addEventListener('click', () => {
+    SoundFX.click();
+    initCliWelcome();
+  });
+
+  /* ==================== SCREEN 4: PACKET DEFENSE ARCADE ==================== */
+  let def = {
+    waveMode: true,
+    wave: 1,
+    hearts: 3,
+    score: 0,
+    combo: 1,
+    maxCombo: 1,
+    correctCount: 0,
+    packetCount: 0,
+    isBossPacket: false,
+    timeMs: 9000,
+    maxTimeMs: 9000,
+    card: null,
+    locked: false
+  };
+
+  function stopDefenseTimer() {
+    clearInterval(defIntervalId);
+    defIntervalId = null;
+  }
+
+  function updateDefHud() {
+    $('defWave').textContent = def.waveMode ? def.wave : '∞';
+    $('defHearts').textContent = def.waveMode ? ('💚'.repeat(def.hearts) + '🖤'.repeat(3 - def.hearts)) : '♾️';
+    $('defScore').textContent = def.score.toLocaleString();
+    $('defCombo').textContent = `x${def.combo}`;
+    $('defHigh').textContent = Math.max(state.defenseHighScore, def.score).toLocaleString();
+  }
+
+  function startDefense(waveMode) {
+    SoundFX.click();
+    stopDefenseTimer();
+    def = {
+      waveMode,
+      wave: 1,
+      hearts: 3,
+      score: 0,
+      combo: 1,
+      maxCombo: 1,
+      correctCount: 0,
+      packetCount: 0,
+      isBossPacket: false,
+      timeMs: 9000,
+      maxTimeMs: 9000,
+      card: null,
+      locked: false
+    };
+
+    $('defIntro').classList.add('hidden');
+    $('defOver').classList.add('hidden');
+    $('defPlay').classList.remove('hidden');
+    $('defFeedback').textContent = '';
+
+    updateDefHud();
+    spawnNextPacket();
+  }
+
+  function spawnNextPacket() {
+    stopDefenseTimer();
+    def.locked = false;
+    def.packetCount += 1;
+    def.isBossPacket = def.waveMode && def.packetCount % 5 === 0;
+    def.card = PORT_CARDS[Math.floor(Math.random() * PORT_CARDS.length)];
+
+    const pCard = $('defPacketCard');
+    pCard.classList.toggle('boss-packet', def.isBossPacket);
+    $('defPacketTag').textContent = def.isBossPacket ? '⚠️ BOSS PACKET (x2 POINTS!)' : `INCOMING PACKET #${def.packetCount}`;
+    $('defPacketLayer').textContent = def.card.layer;
+    $('defPacketPrompt').textContent = def.card.prompt;
+    $('defPacketSub').textContent = def.card.sub;
+
+    const distractors = shuffle(PORT_CARDS.filter((c) => c.port !== def.card.port)).slice(0, 3);
+    const choices = shuffle([def.card, ...distractors]);
+
+    const grid = $('defChoices');
+    grid.innerHTML = '';
+    choices.forEach((choice) => {
+      const btn = document.createElement('button');
+      btn.className = 'port-choice-btn';
+      btn.innerHTML = `<span class="port-choice-num">Port ${choice.port}</span><span class="port-choice-proto">${choice.proto}</span>`;
+      btn.addEventListener('click', () => handleDefAnswer(choice, btn));
+      grid.appendChild(btn);
+    });
+
+    if (def.waveMode) {
+      def.maxTimeMs = Math.max(3600, 9500 - (def.wave - 1) * 900 - (def.isBossPacket ? 1000 : 0));
+      def.timeMs = def.maxTimeMs;
+      $('defTimerBar').style.width = '100%';
+      defIntervalId = setInterval(() => {
+        def.timeMs -= 100;
+        const pct = Math.max(0, (def.timeMs / def.maxTimeMs) * 100);
+        $('defTimerBar').style.width = `${pct}%`;
+        if (def.timeMs <= 0) {
+          handleDefTimeout();
+        }
+      }, 100);
+    } else {
+      $('defTimerBar').style.width = '100%';
+    }
+  }
+
+  function handleDefTimeout() {
+    if (def.locked) return;
+    def.locked = true;
+    stopDefenseTimer();
+    SoundFX.wrong();
+    def.combo = 1;
+    def.hearts = Math.max(0, def.hearts - 1);
+    recordAnalytics('network', false);
+    $('defFeedback').style.color = 'var(--danger)';
+    $('defFeedback').textContent = `⏱️ หมดเวลา! แพ็กเก็ตหลุดเข้า Firewall — คำตอบคือ Port ${def.card.port} (${def.card.proto})`;
+    updateDefHud();
+
+    setTimeout(() => {
+      if (def.hearts <= 0) endDefenseGame();
+      else spawnNextPacket();
+    }, 900);
+  }
+
+  function handleDefAnswer(choice, btn) {
+    if (def.locked) return;
+    def.locked = true;
+    stopDefenseTimer();
+
+    const ok = choice.port === def.card.port;
+    recordAnalytics('network', ok);
+    const fb = $('defFeedback');
+
+    if (ok) {
+      SoundFX.attack();
+      const mult = def.isBossPacket ? 2 : 1;
+      const pts = 100 * def.combo * mult;
+      def.score += pts;
+      def.correctCount += 1;
+      def.combo = Math.min(6, def.combo + 1);
+      def.maxCombo = Math.max(def.maxCombo, def.combo);
+      if (def.waveMode && def.correctCount % 5 === 0) {
+        def.wave += 1;
+        SoundFX.levelUp();
+        showToast(`🌊 เข้าสู่ Wave ${def.wave}! แพ็กเก็ตเร็วขึ้นแล้ว!`);
+      }
+      btn.style.borderColor = 'var(--accent)';
+      btn.style.background = 'rgba(52, 211, 153, 0.22)';
+      fb.style.color = 'var(--accent)';
+      fb.textContent = `✅ ป้องกันสำเร็จ! Port ${def.card.port} (${def.card.proto}) +${pts} คะแนน`;
+    } else {
+      SoundFX.wrong();
+      def.combo = 1;
+      if (def.waveMode) def.hearts = Math.max(0, def.hearts - 1);
+      btn.style.borderColor = 'var(--danger)';
+      btn.style.background = 'rgba(248, 113, 113, 0.22)';
+      fb.style.color = 'var(--danger)';
+      fb.textContent = `❌ ผิดพอร์ต! คำตอบคือ Port ${def.card.port} (${def.card.proto})`;
+    }
+
+    updateDefHud();
+    setTimeout(() => {
+      if (def.waveMode && def.hearts <= 0) endDefenseGame();
+      else spawnNextPacket();
+    }, 750);
+  }
+
+  function endDefenseGame() {
+    stopDefenseTimer();
+    $('defPlay').classList.add('hidden');
+    $('defOver').classList.remove('hidden');
+
+    const xp = Math.min(160, Math.round(def.score / 25));
+    const coins = Math.min(130, Math.round(def.score / 30));
+    if (def.score > state.defenseHighScore) state.defenseHighScore = def.score;
+    grantRewards(xp, coins);
+
+    $('defOverStats').innerHTML = `
+      <div class="reward-box"><span>คะแนนรวม</span><strong>${def.score.toLocaleString()}</strong></div>
+      <div class="reward-box"><span>ผ่านถึง Wave</span><strong>${def.wave}</strong></div>
+      <div class="reward-box"><span>Combo สูงสุด</span><strong>x${def.maxCombo}</strong></div>
+      <div class="reward-box"><span>รางวัล</span><strong>+${xp}XP • 💰${coins}</strong></div>
+    `;
+  }
+
+  $('defStartWaveBtn').addEventListener('click', () => startDefense(true));
+  $('defBigWaveBtn').addEventListener('click', () => startDefense(true));
+  $('defStartEndlessBtn').addEventListener('click', () => startDefense(false));
+  $('defBigPracticeBtn').addEventListener('click', () => startDefense(false));
+  $('defReplayBtn').addEventListener('click', () => startDefense(def.waveMode));
+
+  /* ==================== SCREEN 5: PUZZLE VAULT (CHMOD + RAID) ==================== */
+  let vaultIdx = 0;
+  let raidIdx = 0;
+  let selectedRaidLevel = '5';
+
+  function getChmodModeString() {
+    const vals = { u: 0, g: 0, o: 0 };
+    document.querySelectorAll('.chmod-cb').forEach((cb) => {
+      if (cb.checked) vals[cb.dataset.role] += Number(cb.dataset.val);
+    });
+    return { vals, mode: `${vals.u}${vals.g}${vals.o}` };
+  }
+
+  function updateChmodDisplay() {
+    const { vals, mode } = getChmodModeString();
+    const curPuzzle = CHMOD_PUZZLES[vaultIdx];
+    $('chmodU').textContent = vals.u;
+    $('chmodG').textContent = vals.g;
+    $('chmodO').textContent = vals.o;
+    $('chmodCmdOut').textContent = `chmod ${mode} ${curPuzzle.file}`;
+    $('chmodSymOut').textContent = octalToSym(mode);
+
+    const notes = {
+      '755': '755 (-rwxr-xr-x): มาตรฐานสคริปต์และโฟลเดอร์เว็บ ปลอดภัยและรันได้',
+      '644': '644 (-rw-r--r--): มาตรฐานไฟล์ตั้งค่าและไฟล์เอกสารทั่วไป',
+      '600': '600 (-rw-------): ปลอดภัยสูงสุดสำหรับ SSH Private Key และไฟล์รหัสผ่าน',
+      '750': '750 (-rwxr-x---): เฉพาะเจ้าของและคนในกลุ่มใช้งานได้ คนนอกห้ามเข้า',
+      '777': '⚠️ 777 (-rwxrwxrwx): อันตรายมาก! อนุญาตให้ทุกคนแก้ไขและรันไฟล์ได้ ห้ามใช้บน Server จริง'
+    };
+    $('chmodNote').textContent = notes[mode] || `ค่าปัจจุบันคือ ${mode} (${octalToSym(mode)}) — Read=4, Write=2, Execute=1`;
+  }
+
+  function setChmodBoxes(modeStr) {
+    const digits = { u: +modeStr[0], g: +modeStr[1], o: +modeStr[2] };
+    document.querySelectorAll('.chmod-cb').forEach((cb) => {
+      cb.checked = Boolean(digits[cb.dataset.role] & Number(cb.dataset.val));
+    });
+    updateChmodDisplay();
+  }
+
+  function renderChmodVault() {
+    const p = CHMOD_PUZZLES[vaultIdx];
+    const solved = state.solvedChmod.includes(p.id);
+    $('chmodSolvedChip').textContent = `ผ่านแล้ว ${state.solvedChmod.length} / ${CHMOD_PUZZLES.length}`;
+    $('vaultFileName').textContent = `${p.file} ${solved ? '✅ (ปลดล็อกแล้ว)' : ''}`;
+    $('vaultBrief').textContent = p.brief;
+    $('vaultIndexText').textContent = `ด่าน ${vaultIdx + 1} / ${CHMOD_PUZZLES.length}`;
+    $('vaultFeedback').classList.add('hidden');
+    updateChmodDisplay();
+  }
+
+  $('vaultCheckBtn').addEventListener('click', () => {
+    const p = CHMOD_PUZZLES[vaultIdx];
+    const { mode } = getChmodModeString();
+    const fb = $('vaultFeedback');
+    fb.classList.remove('hidden', 'ok', 'err');
+
+    if (mode === p.target) {
+      recordAnalytics('users', true);
+      fb.classList.add('ok');
+      if (!state.solvedChmod.includes(p.id)) {
+        state.solvedChmod.push(p.id);
+        grantRewards(p.rewardXp, p.rewardCoins);
+        SoundFX.coin();
+        fb.innerHTML = `<strong>🔓 ปลดล็อกตู้เซฟสำเร็จ!</strong> <code>chmod ${p.target} ${p.file}</code> (${octalToSym(p.target)}) • รับ +${p.rewardXp} XP และ +💰${p.rewardCoins}`;
+      } else {
+        SoundFX.correct();
+        fb.innerHTML = `<strong>🔓 ถูกต้อง!</strong> <code>chmod ${p.target} ${p.file}</code> (${octalToSym(p.target)})`;
+      }
+      $('chmodSolvedChip').textContent = `ผ่านแล้ว ${state.solvedChmod.length} / ${CHMOD_PUZZLES.length}`;
+      $('vaultFileName').textContent = `${p.file} ✅ (ปลดล็อกแล้ว)`;
+    } else {
+      SoundFX.wrong();
+      recordAnalytics('users', false);
+      fb.classList.add('err');
+      fb.innerHTML = `<strong>❌ รหัสยังไม่ตรง!</strong> ตอนนี้คุณตั้งไว้เป็น <code>${mode}</code> (${octalToSym(mode)}) ลองเช็กสิทธิ์ Owner / Group / Others อีกครั้ง`;
+    }
+  });
+
+  $('vaultPrevBtn').addEventListener('click', () => {
+    SoundFX.click();
+    vaultIdx = (vaultIdx - 1 + CHMOD_PUZZLES.length) % CHMOD_PUZZLES.length;
+    renderChmodVault();
+  });
+
+  $('vaultNextBtn').addEventListener('click', () => {
+    SoundFX.click();
+    vaultIdx = (vaultIdx + 1) % CHMOD_PUZZLES.length;
+    renderChmodVault();
+  });
+
+  document.querySelectorAll('.chmod-cb').forEach((cb) => cb.addEventListener('change', () => {
+    SoundFX.click();
+    updateChmodDisplay();
+  }));
+
+  document.querySelectorAll('.chmod-preset').forEach((btn) => btn.addEventListener('click', () => {
+    SoundFX.click();
+    setChmodBoxes(btn.dataset.mode);
+  }));
+
+  /* RAID Architect */
+  function renderRaidVisual(level, failedDiskCount = 0) {
+    selectedRaidLevel = level;
+    const info = RAID_INFO[level];
+    document.querySelectorAll('.raid-tab').forEach((btn) => {
+      btn.className = `btn btn-sm raid-tab ${btn.dataset.raid === level ? 'btn-neon' : 'btn-ghost'}`;
+    });
+
+    const vis = $('raidVisual');
+    vis.innerHTML = '';
+    info.disks.forEach((d, idx) => {
+      const isFailed = idx < failedDiskCount;
+      const col = document.createElement('div');
+      col.className = `raid-disk ${isFailed ? 'failed' : ''}`;
+      col.innerHTML = `
+        <div class="raid-disk-title">${d.name}</div>
+        ${d.blocks.map((b) => `<div class="raid-block ${b.cls}">${b.label}</div>`).join('')}
+        ${isFailed ? '<div class="raid-fail-tag">💥 DISK FAILED</div>' : ''}
+      `;
+      vis.appendChild(col);
+    });
+
+    const survived = failedDiskCount <= info.faultTolerance;
+    const statusChip = $('raidStatusChip');
+    if (failedDiskCount === 0) {
+      statusChip.textContent = 'HEALTHY';
+      statusChip.style.color = 'var(--accent)';
+    } else if (survived) {
+      statusChip.textContent = `DEGRADED — DATA SAFE ✓ (${failedDiskCount} ดิสก์พัง)`;
+      statusChip.style.color = 'var(--gold)';
+    } else {
+      statusChip.textContent = `CRITICAL — DATA LOST! ✕ (${failedDiskCount} ดิสก์พัง)`;
+      statusChip.style.color = 'var(--danger)';
+    }
+
+    $('raidDetails').innerHTML = `
+      <div><strong>${info.name}</strong> (ขั้นต่ำ ${info.minDisks} ลูก)</div>
+      <div>• <strong>พื้นที่ใช้งานจริง:</strong> ${info.usable}</div>
+      <div>• <strong>ความทนทาน:</strong> ${info.faultText}</div>
+      <div>• <strong>ความเร็ว:</strong> ${info.speed}</div>
+      <div>• <strong>งานที่เหมาะสม:</strong> ${info.useCase}</div>
+    `;
+  }
+
+  function renderRaidChallenge() {
+    const ch = RAID_CHALLENGES[raidIdx];
+    const done = state.solvedRaid.includes(ch.id);
+    $('raidSolvedChip').textContent = `ผ่านแล้ว ${state.solvedRaid.length} / ${RAID_CHALLENGES.length}`;
+    $('raidClientName').textContent = `${ch.client} ${done ? '✅' : ''}`;
+    $('raidChallengeBrief').textContent = ch.brief;
+    $('raidIndexText').textContent = `โจทย์ ${raidIdx + 1} / ${RAID_CHALLENGES.length}`;
+    $('raidFeedback').classList.add('hidden');
+    renderRaidVisual(selectedRaidLevel, 0);
+  }
+
+  $('raidSubmitBtn').addEventListener('click', () => {
+    const ch = RAID_CHALLENGES[raidIdx];
+    renderRaidVisual(selectedRaidLevel, ch.failCount);
+    const fb = $('raidFeedback');
+    fb.classList.remove('hidden', 'ok', 'err');
+
+    if (selectedRaidLevel === ch.answer) {
+      recordAnalytics('storage', true);
+      fb.classList.add('ok');
+      if (!state.solvedRaid.includes(ch.id)) {
+        state.solvedRaid.push(ch.id);
+        grantRewards(55, 45);
+        SoundFX.coin();
+        fb.innerHTML = `<strong>✅ ออกแบบผ่านฉลุย!</strong> ${ch.explain} • รับ +55 XP และ +💰45`;
+      } else {
+        SoundFX.correct();
+        fb.innerHTML = `<strong>✅ ถูกต้อง!</strong> ${ch.explain}`;
+      }
+      $('raidSolvedChip').textContent = `ผ่านแล้ว ${state.solvedRaid.length} / ${RAID_CHALLENGES.length}`;
+      $('raidClientName').textContent = `${ch.client} ✅`;
+    } else {
+      SoundFX.wrong();
+      recordAnalytics('storage', false);
+      fb.classList.add('err');
+      fb.innerHTML = `<strong>❌ ยังไม่เหมาะกับโจทย์นี้</strong> — คุณเลือก RAID ${selectedRaidLevel} ลองพิจารณาเรื่องจำนวนดิสก์ ความจุ และจำนวนดิสก์ที่ทนเสียได้อีกครั้ง!`;
+    }
+  });
+
+  $('raidSimFailBtn').addEventListener('click', () => {
+    SoundFX.bossAlert();
+    renderRaidVisual(selectedRaidLevel, 1);
+  });
+
+  $('raidPrevBtn').addEventListener('click', () => {
+    SoundFX.click();
+    raidIdx = (raidIdx - 1 + RAID_CHALLENGES.length) % RAID_CHALLENGES.length;
+    renderRaidChallenge();
+  });
+
+  $('raidNextBtn').addEventListener('click', () => {
+    SoundFX.click();
+    raidIdx = (raidIdx + 1) % RAID_CHALLENGES.length;
+    renderRaidChallenge();
+  });
+
+  document.querySelectorAll('.raid-tab').forEach((btn) => btn.addEventListener('click', () => {
+    SoundFX.click();
+    renderRaidVisual(btn.dataset.raid, 0);
+  }));
+
+  document.querySelectorAll('.puzzle-tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      SoundFX.click();
+      const target = btn.dataset.ptab;
+      document.querySelectorAll('.puzzle-tab').forEach((b) => {
+        b.className = `btn btn-sm puzzle-tab ${b.dataset.ptab === target ? 'btn-neon active' : 'btn-ghost'}`;
+      });
+      $('ptab-chmod').classList.toggle('hidden', target !== 'chmod');
+      $('ptab-raid').classList.toggle('hidden', target !== 'raid');
+    });
+  });
+
+  /* ==================== SCREEN 6: TOOLKIT SHOP ==================== */
+  function renderShop() {
+    $('shopCoinsDisplay').textContent = state.coins.toLocaleString();
+    const grid = $('shopGrid');
+    grid.innerHTML = '';
+
+    SHOP_ITEMS.forEach((item) => {
+      const ownedText = item.id === 'boost'
+        ? (state.xpBoostActive ? '🔥 กำลังเปิดใช้งาน (x2 ด่านถัดไป)' : 'ยังไม่ได้เปิดใช้งาน')
+        : `มีในกระเป๋า: ${state.inventory[item.id] || 0} ชิ้น`;
+      const canBuy = state.coins >= item.price && !(item.id === 'boost' && state.xpBoostActive);
+
+      const card = document.createElement('article');
+      card.className = 'shop-card';
+      card.innerHTML = `
+        <div class="shop-icon">${item.icon}</div>
+        <h3>${item.name}</h3>
+        <p class="muted-text" style="flex:1">${item.desc}</p>
+        <div class="shop-owned">${ownedText}</div>
+        <button class="btn btn-neon btn-sm" ${!canBuy ? 'disabled' : ''}>ซื้อ 💰 ${item.price}</button>
+      `;
+      card.querySelector('button').addEventListener('click', () => {
+        if (state.coins < item.price) return;
+        state.coins -= item.price;
+        if (item.id === 'boost') state.xpBoostActive = true;
+        else state.inventory[item.id] = (state.inventory[item.id] || 0) + 1;
+        SoundFX.coin();
+        showToast(`🛒 ซื้อ ${item.icon} ${item.name} สำเร็จ!`);
+        saveState();
+        renderHud();
+        renderShop();
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  /* ==================== SCREEN 7: CODEX & STATS ==================== */
+  function renderCodexAndStats() {
     const analyticsEl = $('analyticsContainer');
     analyticsEl.innerHTML = '';
     Object.entries(CATEGORIES).forEach(([key, label]) => {
-      const stat = state.analytics[key] || { correct: 0, total: 0 };
-      const pct = stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : 0;
-      const statusText = stat.total === 0 ? 'ยังไม่เริ่มฝึก' : `${pct}% (${stat.correct}/${stat.total})`;
+      const st = state.analytics[key] || { correct: 0, total: 0 };
+      const pct = st.total > 0 ? Math.round((st.correct / st.total) * 100) : 0;
       const row = document.createElement('div');
       row.innerHTML = `
         <div class="analytics-row-head">
           <span>${label}</span>
-          <strong>${statusText}</strong>
+          <strong>${st.total === 0 ? 'ยังไม่เริ่ม' : `${pct}% (${st.correct}/${st.total})`}</strong>
         </div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="hud-xp-bar" style="height:8px;"><div class="hud-xp-fill" style="width:${pct}%"></div></div>
       `;
       analyticsEl.appendChild(row);
     });
 
-    // Badges
+    $('badgeCountChip').textContent = `${state.unlockedBadges.length} / ${BADGES.length}`;
     const badgesEl = $('badgesContainer');
     badgesEl.innerHTML = '';
-    $('badgeCountText').textContent = `${state.unlockedBadges.length} / ${BADGES.length}`;
     BADGES.forEach((b) => {
       const unlocked = state.unlockedBadges.includes(b.id);
       const card = document.createElement('div');
@@ -207,712 +1470,57 @@
       `;
       badgesEl.appendChild(card);
     });
-  }
 
-  /* ==================== MODE 1: INCIDENT MISSIONS ==================== */
-  let activeMission = null;
-  let missionStepIdx = 0;
-  let missionHearts = 3;
-  let missionAnswered = false;
-
-  function updateMissionHearts() {
-    $('missionHealthDisplay').textContent = '💚'.repeat(missionHearts) + '🖤'.repeat(3 - missionHearts);
-  }
-
-  function renderMissionGrid() {
-    $('missionSelector').classList.remove('hidden');
-    $('missionRunner').classList.add('hidden');
-    const grid = $('missionSelector');
-    grid.innerHTML = '';
-
-    MISSIONS.forEach((m) => {
-      const done = state.completedMissions.includes(m.id);
-      const card = document.createElement('article');
-      card.className = `mission-card ${done ? 'completed' : ''}`;
-      card.innerHTML = `
-        <div class="mission-card-top">
-          <span class="badge-chip">${CATEGORIES[m.category]}</span>
-          <span class="status-pill ${done ? 'done' : 'todo'}">${done ? '✓ ผ่านแล้ว' : m.difficulty}</span>
-        </div>
-        <h3>${m.title}</h3>
-        <p class="muted-text" style="flex:1">${m.summary}</p>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;margin-top:0.35rem;">
-          <span style="color:var(--accent);font-weight:600;">+${m.xp} XP</span>
-          <span style="color:var(--primary);font-weight:600;">${done ? 'เล่นทบทวน →' : 'รับภารกิจ →'}</span>
-        </div>
-      `;
-      card.addEventListener('click', () => startMission(m));
-      grid.appendChild(card);
-    });
-  }
-
-  function startMission(mission) {
-    SoundFX.click();
-    activeMission = mission;
-    missionStepIdx = 0;
-    missionHearts = 3;
-    updateMissionHearts();
-    $('missionSelector').classList.add('hidden');
-    $('missionRunner').classList.remove('hidden');
-    renderMissionStep();
-  }
-
-  function renderMissionStep() {
-    missionAnswered = false;
-    const step = activeMission.steps[missionStepIdx];
-    $('missionCategoryBadge').textContent = CATEGORIES[activeMission.category];
-    $('missionStepCounter').textContent = `ขั้นที่ ${missionStepIdx + 1} / ${activeMission.steps.length}`;
-    $('missionTitle').textContent = activeMission.title;
-    $('missionContext').textContent = step.context;
-    $('missionQuestion').textContent = step.question;
-
-    const codeEl = $('missionCodeBlock');
-    if (step.code) {
-      codeEl.textContent = step.code;
-      codeEl.classList.remove('hidden');
-    } else {
-      codeEl.classList.add('hidden');
-    }
-
-    $('missionFeedback').classList.add('hidden');
-    $('missionNextBtn').classList.add('hidden');
-
-    const optsEl = $('missionOptions');
-    optsEl.innerHTML = '';
-    const letters = ['A', 'B', 'C', 'D'];
-    step.options.forEach((optText, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'option-btn';
-      btn.innerHTML = `<span class="opt-key">${letters[i]}</span><span>${optText}</span>`;
-      btn.addEventListener('click', () => handleMissionAnswer(i, btn));
-      optsEl.appendChild(btn);
-    });
-  }
-
-  function handleMissionAnswer(selectedIdx, clickedBtn) {
-    if (missionAnswered) return;
-    missionAnswered = true;
-    const step = activeMission.steps[missionStepIdx];
-    const isCorrect = selectedIdx === step.answer;
-    recordAnalytics(activeMission.category, isCorrect);
-
-    const allBtns = $('missionOptions').querySelectorAll('.option-btn');
-    allBtns.forEach((b, idx) => {
-      b.disabled = true;
-      if (idx === step.answer) b.classList.add('correct');
-    });
-
-    const fb = $('missionFeedback');
-    fb.classList.remove('hidden', 'ok', 'err');
-
-    if (isCorrect) {
-      SoundFX.correct();
-      fb.classList.add('ok');
-      fb.innerHTML = `<strong>✅ ถูกต้อง!</strong> ${step.explanation}`;
-    } else {
-      SoundFX.wrong();
-      clickedBtn.classList.add('wrong');
-      missionHearts = Math.max(0, missionHearts - 1);
-      updateMissionHearts();
-      fb.classList.add('err');
-      fb.innerHTML = `<strong>❌ ยังไม่ถูกต้อง</strong> — ${step.explanation}`;
-    }
-
-    const nextBtn = $('missionNextBtn');
-    nextBtn.classList.remove('hidden');
-    const isLast = missionStepIdx === activeMission.steps.length - 1;
-    nextBtn.textContent = isLast ? 'สรุปภารกิจ ✓' : 'ขั้นตอนถัดไป →';
-  }
-
-  $('missionNextBtn').addEventListener('click', () => {
-    SoundFX.click();
-    if (missionStepIdx < activeMission.steps.length - 1) {
-      missionStepIdx += 1;
-      renderMissionStep();
-    } else {
-      const alreadyDone = state.completedMissions.includes(activeMission.id);
-      if (!alreadyDone) {
-        state.completedMissions.push(activeMission.id);
-        awardXp(activeMission.xp);
-        showToast(`✅ ปิดเคส "${activeMission.title}" สำเร็จ! (+${activeMission.xp} XP)`);
-      } else {
-        showToast(`✨ ทบทวน "${activeMission.title}" เสร็จเรียบร้อย`);
-      }
-      renderMissionGrid();
-    }
-  });
-
-  $('backToMissionsBtn').addEventListener('click', () => {
-    SoundFX.click();
-    renderMissionGrid();
-  });
-
-  /* ==================== MODE 2: INTERACTIVE LINUX CLI LAB ==================== */
-  let currentLabIdx = 0;
-  let cmdHistory = [];
-  let historyPtr = -1;
-
-  const simServer = {
-    hostname: 'srv-lab-01',
-    user: 'root',
-    ip: '192.168.10.10/24',
-    services: {
-      nginx: 'inactive',
-      ssh: 'active',
-      ufw: 'active',
-      mysql: 'active'
-    },
-    files: {
-      'secret.key': '-rwxrwxrwx',
-      'backup.sh': '-rw-r--r--',
-      'nginx.conf': '-rw-r--r--'
-    },
-    firewall: ['22/tcp (SSH)', '80/tcp (HTTP)'],
-    users: ['root', 'admin', 'www-data']
-  };
-
-  function appendTerm(text, cls = '') {
-    const out = $('terminalOutput');
-    const div = document.createElement('div');
-    if (cls) div.className = cls;
-    div.textContent = text;
-    out.appendChild(div);
-    out.scrollTop = out.scrollHeight;
-  }
-
-  function initTerminalWelcome() {
-    $('terminalOutput').innerHTML = '';
-    appendTerm('Welcome to Ubuntu 24.04.1 LTS (GNU/Linux 6.8.0-45-generic x86_64)', 'term-line-muted');
-    appendTerm('ServerOps Academy Interactive CLI Sandbox — พิมพ์ "help" เพื่อดูคำสั่งที่รองรับ\n', 'term-line-muted');
-  }
-
-  function renderLabSidebar() {
-    $('labProgressBadge').textContent = `สำเร็จ ${state.completedLabs.length} / ${CLI_LABS.length} แล็บ`;
-    const list = $('labTaskList');
-    list.innerHTML = '';
-
-    CLI_LABS.forEach((lab, idx) => {
-      const done = state.completedLabs.includes(lab.id);
-      const btn = document.createElement('button');
-      btn.className = `lab-task-item ${idx === currentLabIdx ? 'active' : ''} ${done ? 'done' : ''}`;
-      btn.innerHTML = `<span>${lab.title}</span><span>${done ? '✅' : '○'}</span>`;
-      btn.addEventListener('click', () => {
-        SoundFX.click();
-        currentLabIdx = idx;
-        renderLabSidebar();
+    const chaptersEl = $('codexChapters');
+    if (!chaptersEl.hasChildNodes()) {
+      CODEX_CHAPTERS.forEach((ch) => {
+        const card = document.createElement('article');
+        card.className = 'codex-card';
+        card.innerHTML = `<h4>${ch.title}</h4><ul>${ch.points.map((p) => `<li>${p}</li>`).join('')}</ul>`;
+        chaptersEl.appendChild(card);
       });
-      list.appendChild(btn);
-    });
-
-    const lab = CLI_LABS[currentLabIdx];
-    $('labCurrentTitle').textContent = lab.title;
-    $('labCurrentGoal').textContent = lab.goal;
-    $('labHintBox').textContent = `💡 คำใบ้: ${lab.hint}`;
-    $('labHintBox').classList.add('hidden');
-
-    const quickEl = $('quickCmdButtons');
-    quickEl.innerHTML = '';
-    lab.quickCmds.forEach((cmd) => {
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'quick-cmd-chip';
-      chip.textContent = cmd;
-      chip.addEventListener('click', () => {
-        $('terminalInput').value = cmd;
-        $('terminalInput').focus();
-      });
-      quickEl.appendChild(chip);
-    });
-  }
-
-  function octalToSym(oct) {
-    if (!/^[0-7]{3}$/.test(oct)) return null;
-    const map = ['---', '--x', '-w-', '-wx', 'r--', 'r-x', 'rw-', 'rwx'];
-    return '-' + map[+oct[0]] + map[+oct[1]] + map[+oct[2]];
-  }
-
-  function executeCliCommand(rawCmd) {
-    const cmd = rawCmd.trim().replace(/^sudo\s+/, '');
-    appendTerm(`root@srv-lab-01:~# ${rawCmd}`, 'term-line-cmd');
-    if (!cmd) return;
-
-    SoundFX.terminal();
-    const parts = cmd.split(/\s+/);
-    const bin = parts[0];
-
-    if (bin === 'clear') {
-      initTerminalWelcome();
-      return;
-    }
-
-    if (bin === 'help') {
-      appendTerm(
-`คำสั่งที่รองรับในห้องแล็บจำลองนี้:
-  whoami, hostname, uname -a       ตรวจสอบข้อมูลผู้ใช้และระบบปฏิบัติการ
-  ip a | ip addr | ifconfig        ตรวจสอบหมายเลข IP และการ์ดเครือข่าย
-  ping <host>                      ทดสอบการเชื่อมต่อเครือข่าย
-  systemctl status|start|stop|restart|enable <service>
-                                   จัดการบริการ (nginx, ssh, mysql, ufw)
-  df -h / free -h                  ตรวจสอบพื้นที่ดิสก์และหน่วยความจำ RAM
-  ls / ls -l / ls -la              แสดงรายชื่อไฟล์และสิทธิ์การเข้าถึง
-  chmod <mode> <file>              เปลี่ยนสิทธิ์ไฟล์ (เช่น chmod 600 secret.key)
-  ufw status / ufw allow <port>    ตรวจสอบและเปิดพอร์ต Firewall
-  useradd <name> / id <name>       สร้างและตรวจสอบบัญชีผู้ใช้
-  ss -tulnp                        ตรวจสอบพอร์ตที่เปิดฟังอยู่
-  clear                            ล้างหน้าจอ Terminal`, 'term-line-muted');
-    } else if (bin === 'whoami') {
-      appendTerm(simServer.user);
-    } else if (bin === 'hostname') {
-      appendTerm(simServer.hostname);
-    } else if (bin === 'uname') {
-      appendTerm('Linux srv-lab-01 6.8.0-45-generic #45-Ubuntu SMP x86_64 GNU/Linux');
-    } else if (bin === 'ip' && (parts[1] === 'a' || parts[1] === 'addr')) {
-      appendTerm(
-`1: lo: <LOOPBACK,UP> mtu 65536
-    inet 127.0.0.1/8 scope host lo
-2: eth0: <BROADCAST,MULTICAST,UP> mtu 1500
-    inet ${simServer.ip} brd 192.168.10.255 scope global static eth0`);
-    } else if (bin === 'ifconfig') {
-      appendTerm(`eth0: flags=4163<UP,BROADCAST,RUNNING>\n        inet 192.168.10.10  netmask 255.255.255.0  broadcast 192.168.10.255`);
-    } else if (bin === 'ping') {
-      const target = parts[1] || '8.8.8.8';
-      appendTerm(
-`PING ${target} (${target}) 56(84) bytes of data.
-64 bytes from ${target}: icmp_seq=1 ttl=58 time=12.4 ms
-64 bytes from ${target}: icmp_seq=2 ttl=58 time=11.9 ms
---- ${target} ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss`, 'term-line-ok');
-    } else if (bin === 'systemctl') {
-      const action = parts[1];
-      const svc = parts[2];
-      if (!svc || !(svc in simServer.services)) {
-        appendTerm(`Unit ${svc || '(none)'}.service could not be found. (ลองใช้ nginx, ssh, mysql, ufw)`, 'term-line-err');
-      } else if (action === 'status') {
-        const st = simServer.services[svc];
-        appendTerm(
-`● ${svc}.service - ${svc.toUpperCase()} Server Daemon
-     Loaded: loaded (/lib/systemd/system/${svc}.service; enabled)
-     Active: ${st === 'active' ? 'active (running)' : 'inactive (dead)'}`, st === 'active' ? 'term-line-ok' : 'term-line-err');
-      } else if (action === 'start' || action === 'restart') {
-        simServer.services[svc] = 'active';
-        appendTerm(`Service ${svc}.service is now active (running).`, 'term-line-ok');
-      } else if (action === 'stop') {
-        simServer.services[svc] = 'inactive';
-        appendTerm(`Service ${svc}.service stopped.`, 'term-line-muted');
-      } else if (action === 'enable') {
-        if (parts.includes('--now')) simServer.services[svc] = 'active';
-        appendTerm(`Created symlink /etc/systemd/system/multi-user.target.wants/${svc}.service.`, 'term-line-ok');
-      } else {
-        appendTerm(`Unknown systemctl action: ${action}`, 'term-line-err');
-      }
-    } else if (bin === 'df') {
-      appendTerm(
-`Filesystem      Size  Used Avail Use% Mounted on
-/dev/sda1        50G   18G   30G  38% /
-/dev/sdb1       200G  142G   48G  75% /var/www
-tmpfs           4.0G   12M  4.0G   1% /run`);
-    } else if (bin === 'free') {
-      appendTerm(
-`               total        used        free      shared  buff/cache   available
-Mem:           8.0Gi       2.1Gi       3.4Gi       120Mi       2.5Gi       5.6Gi
-Swap:          2.0Gi          0B       2.0Gi`);
-    } else if (bin === 'ls') {
-      const longFmt = parts.some((p) => p.startsWith('-') && p.includes('l'));
-      if (longFmt) {
-        const lines = Object.entries(simServer.files).map(
-          ([fname, perm]) => `${perm} 1 root admin 2048 Nov 20 10:00 ${fname}`
-        );
-        appendTerm(`total 12\n${lines.join('\n')}`);
-      } else {
-        appendTerm(Object.keys(simServer.files).join('   '));
-      }
-    } else if (bin === 'chmod') {
-      const mode = parts[1];
-      const file = parts[2];
-      const sym = octalToSym(mode);
-      if (!sym) {
-        appendTerm('Usage: chmod <3-digit-octal> <filename> (เช่น chmod 600 secret.key)', 'term-line-err');
-      } else if (!(file in simServer.files)) {
-        appendTerm(`chmod: cannot access '${file}': No such file or directory`, 'term-line-err');
-      } else {
-        simServer.files[file] = sym;
-        appendTerm(`Updated permissions of '${file}' -> ${sym} (${mode})`, 'term-line-ok');
-      }
-    } else if (bin === 'ufw') {
-      if (parts[1] === 'status') {
-        appendTerm(`Status: active\n\nTo                         Action      From\n--                         ------      ----\n${simServer.firewall.map((r) => r.padEnd(27) + 'ALLOW       Anywhere').join('\n')}`);
-      } else if (parts[1] === 'allow') {
-        const target = (parts[2] || '').toLowerCase();
-        let rule = null;
-        if (target === '443' || target === '443/tcp' || target === 'https') rule = '443/tcp (HTTPS)';
-        else if (target === '80' || target === '80/tcp' || target === 'http') rule = '80/tcp (HTTP)';
-        else if (target === '22' || target === '22/tcp' || target === 'ssh') rule = '22/tcp (SSH)';
-        else if (/^\d+$/.test(target)) rule = `${target}/tcp`;
-
-        if (!rule) {
-          appendTerm('Usage: ufw allow <port/service> (เช่น ufw allow 443)', 'term-line-err');
-        } else {
-          if (!simServer.firewall.includes(rule)) simServer.firewall.push(rule);
-          appendTerm(`Rule added: ALLOW ${rule}`, 'term-line-ok');
-        }
-      } else {
-        appendTerm('รองรับคำสั่ง: ufw status และ ufw allow <port>', 'term-line-err');
-      }
-    } else if (bin === 'useradd' || bin === 'adduser') {
-      const uname = parts[1];
-      if (!uname) {
-        appendTerm('Usage: useradd <username> (เช่น useradd student01)', 'term-line-err');
-      } else if (simServer.users.includes(uname)) {
-        appendTerm(`useradd: user '${uname}' already exists`, 'term-line-err');
-      } else {
-        simServer.users.push(uname);
-        appendTerm(`User '${uname}' created successfully (uid=1002, gid=1002).`, 'term-line-ok');
-      }
-    } else if (bin === 'id') {
-      const uname = parts[1] || 'root';
-      if (simServer.users.includes(uname)) {
-        appendTerm(`uid=1002(${uname}) gid=1002(${uname}) groups=1002(${uname}),users`);
-      } else {
-        appendTerm(`id: '${uname}': no such user`, 'term-line-err');
-      }
-    } else if (bin === 'cat' && parts[1] === '/etc/passwd') {
-      appendTerm(simServer.users.map((u, i) => `${u}:x:${i === 0 ? 0 : 1000 + i}:1000::/home/${u}:/bin/bash`).join('\n'));
-    } else if (bin === 'ss' || bin === 'netstat') {
-      appendTerm(
-`Netid  State   Local Address:Port   Process
-tcp    LISTEN  0.0.0.0:22           users:(("sshd"))
-tcp    LISTEN  0.0.0.0:80           users:(("nginx"))
-tcp    LISTEN  127.0.0.1:3306       users:(("mysqld"))`);
-    } else {
-      appendTerm(`bash: ${bin}: command not found — พิมพ์ 'help' เพื่อดูรายการคำสั่งที่รองรับ`, 'term-line-err');
-    }
-
-    // Check lab completion (current lab or any uncompleted lab satisfied by this command)
-    let passedAny = false;
-    CLI_LABS.forEach((lab) => {
-      if (!state.completedLabs.includes(lab.id) && lab.check(cmd, simServer)) {
-        state.completedLabs.push(lab.id);
-        recordAnalytics(lab.category, true);
-        awardXp(lab.xp);
-        appendTerm(`\n✅ [LAB PASSED] ยินดีด้วย! คุณผ่าน "${lab.title}" (+${lab.xp} XP)\n`, 'term-line-ok');
-        showToast(`💻 ผ่าน ${lab.title} (+${lab.xp} XP)`);
-        passedAny = true;
-      }
-    });
-
-    if (passedAny) {
-      const nextIdx = CLI_LABS.findIndex((l) => !state.completedLabs.includes(l.id));
-      if (nextIdx !== -1) currentLabIdx = nextIdx;
-      renderLabSidebar();
-    } else {
-      const activeLab = CLI_LABS[currentLabIdx];
-      if (activeLab && state.completedLabs.includes(activeLab.id) && activeLab.check(cmd, simServer)) {
-        appendTerm(`✓ คำสั่งถูกต้องตามโจทย์ ${activeLab.title}`, 'term-line-ok');
-      }
     }
   }
 
-  $('terminalForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const input = $('terminalInput');
-    const val = input.value;
-    if (val.trim()) {
-      cmdHistory.push(val);
-      historyPtr = cmdHistory.length;
-    }
-    executeCliCommand(val);
-    input.value = '';
-  });
-
-  $('terminalInput').addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp' && historyPtr > 0) {
-      e.preventDefault();
-      historyPtr -= 1;
-      $('terminalInput').value = cmdHistory[historyPtr];
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (historyPtr < cmdHistory.length - 1) {
-        historyPtr += 1;
-        $('terminalInput').value = cmdHistory[historyPtr];
-      } else {
-        historyPtr = cmdHistory.length;
-        $('terminalInput').value = '';
-      }
-    }
-  });
-
-  $('labHintBtn').addEventListener('click', () => {
-    SoundFX.click();
-    $('labHintBox').classList.toggle('hidden');
-  });
-
-  $('labResetBtn').addEventListener('click', () => {
-    SoundFX.click();
-    initTerminalWelcome();
-  });
-
-  /* ==================== MODE 3: PORT & SERVICE RUSH ==================== */
-  let portIsTimed = true;
-  let portTimeLeft = 60;
-  let portScore = 0;
-  let portCombo = 1;
-  let portMaxCombo = 1;
-  let portCorrect = 0;
-  let portAttempts = 0;
-  let currentPortCard = null;
-  let portLock = false;
-
-  function updatePortHud() {
-    $('portScore').textContent = portScore.toLocaleString();
-    $('portCombo').textContent = `x${portCombo}`;
-    $('portTimer').textContent = portIsTimed ? `${portTimeLeft}s` : '∞';
-    const acc = portAttempts === 0 ? 100 : Math.round((portCorrect / portAttempts) * 100);
-    $('portAccuracy').textContent = `${acc}%`;
-  }
-
-  function startPortRush(timed) {
-    SoundFX.click();
-    clearInterval(portTimerId);
-    portIsTimed = timed;
-    portTimeLeft = 60;
-    portScore = 0;
-    portCombo = 1;
-    portMaxCombo = 1;
-    portCorrect = 0;
-    portAttempts = 0;
-    portLock = false;
-
-    $('portIntroState').classList.add('hidden');
-    $('portResultState').classList.add('hidden');
-    $('portPlayState').classList.remove('hidden');
-    $('portMiniFeedback').textContent = '';
-
-    updatePortHud();
-    nextPortQuestion();
-
-    if (timed) {
-      portTimerId = setInterval(() => {
-        portTimeLeft -= 1;
-        updatePortHud();
-        if (portTimeLeft <= 0) {
-          finishPortRush();
-        }
-      }, 1000);
-    }
-  }
-
-  function nextPortQuestion() {
-    portLock = false;
-    currentPortCard = PORT_CARDS[Math.floor(Math.random() * PORT_CARDS.length)];
-    $('packetLayer').textContent = currentPortCard.layer;
-    $('packetPrompt').textContent = currentPortCard.prompt;
-    $('packetSub').textContent = currentPortCard.sub;
-
-    const distractors = shuffle(PORT_CARDS.filter((c) => c.port !== currentPortCard.port)).slice(0, 3);
-    const choices = shuffle([currentPortCard, ...distractors]);
-
-    const grid = $('portChoices');
-    grid.innerHTML = '';
-    choices.forEach((choice) => {
-      const btn = document.createElement('button');
-      btn.className = 'port-choice-btn';
-      btn.innerHTML = `
-        <span class="port-choice-num">Port ${choice.port}</span>
-        <span class="port-choice-proto">${choice.proto}</span>
-      `;
-      btn.addEventListener('click', () => handlePortChoice(choice, btn));
-      grid.appendChild(btn);
-    });
-  }
-
-  function handlePortChoice(choice, btn) {
-    if (portLock) return;
-    portLock = true;
-    portAttempts += 1;
-
-    const isCorrect = choice.port === currentPortCard.port;
-    recordAnalytics('network', isCorrect);
-    const fb = $('portMiniFeedback');
-
-    if (isCorrect) {
-      SoundFX.correct();
-      const gained = 100 * portCombo;
-      portScore += gained;
-      portCorrect += 1;
-      portCombo = Math.min(5, portCombo + 1);
-      portMaxCombo = Math.max(portMaxCombo, portCombo);
-      btn.style.borderColor = 'var(--accent)';
-      btn.style.background = 'rgba(52, 211, 153, 0.2)';
-      fb.style.color = 'var(--accent)';
-      fb.textContent = `✅ ถูกต้อง! Port ${currentPortCard.port} (${currentPortCard.proto}) +${gained} คะแนน`;
-    } else {
-      SoundFX.wrong();
-      portCombo = 1;
-      btn.style.borderColor = 'var(--danger)';
-      btn.style.background = 'rgba(248, 113, 113, 0.2)';
-      fb.style.color = 'var(--danger)';
-      fb.textContent = `❌ คำตอบที่ถูกคือ Port ${currentPortCard.port} (${currentPortCard.proto})`;
-    }
-
-    updatePortHud();
-    setTimeout(() => {
-      if (!portIsTimed || portTimeLeft > 0) nextPortQuestion();
-    }, 650);
-  }
-
-  function finishPortRush() {
-    clearInterval(portTimerId);
-    $('portPlayState').classList.add('hidden');
-    $('portResultState').classList.remove('hidden');
-
-    const xpEarned = Math.min(120, Math.round(portScore / 20));
-    if (portScore > state.portHighScore) {
-      state.portHighScore = portScore;
-    }
-    if (xpEarned > 0) awardXp(xpEarned);
-    else saveState();
-
-    $('portFinalScore').textContent = portScore.toLocaleString();
-    $('portFinalCorrect').textContent = `${portCorrect} / ${portAttempts}`;
-    $('portFinalMaxCombo').textContent = `x${portMaxCombo}`;
-    $('portFinalXp').textContent = `+${xpEarned} XP`;
-    SoundFX.levelUp();
-  }
-
-  $('portStartTimedBtn').addEventListener('click', () => startPortRush(true));
-  $('portBigStartBtn').addEventListener('click', () => startPortRush(true));
-  $('portStartPracticeBtn').addEventListener('click', () => startPortRush(false));
-  $('portBigPracticeBtn').addEventListener('click', () => startPortRush(false));
-  $('portPlayAgainBtn').addEventListener('click', () => startPortRush(portIsTimed));
-
-  /* ==================== MODE 4: CODEX (CHMOD & RAID TOOLS) ==================== */
-  function updateChmodTool() {
-    const vals = { u: 0, g: 0, o: 0 };
-    document.querySelectorAll('.chmod-cb').forEach((cb) => {
-      if (cb.checked) vals[cb.dataset.role] += Number(cb.dataset.val);
-    });
-    const mode = `${vals.u}${vals.g}${vals.o}`;
-    $('chmodU').textContent = vals.u;
-    $('chmodG').textContent = vals.g;
-    $('chmodO').textContent = vals.o;
-    $('chmodCmdOutput').textContent = `chmod ${mode} server.sh`;
-    $('chmodSymOutput').textContent = octalToSym(mode);
-
-    const tips = {
-      '755': 'เหมาะสำหรับสคริปต์และโฟลเดอร์เว็บ: เจ้าของแก้ไขได้เต็มที่ ส่วนกลุ่มและผู้อื่นอ่านและรันได้อย่างปลอดภัย',
-      '644': 'เหมาะสำหรับไฟล์เอกสารและไฟล์ตั้งค่า (เช่น .conf, .html): เจ้าของแก้ไขได้ คนอื่นอ่านได้อย่างเดียว',
-      '600': 'ปลอดภัยสูงสุดสำหรับไฟล์ความลับ เช่น SSH Private Key และไฟล์เก็บรหัสผ่านฐานข้อมูล',
-      '700': 'เหมาะสำหรับโฟลเดอร์ส่วนตัวของผู้ดูแลระบบ ห้ามกลุ่มและคนอื่นเข้ามายุ่ง',
-      '777': '⚠️ อันตรายมาก! อนุญาตให้ทุกคนแก้ไขและรันไฟล์ได้ ไม่ควรใช้บน Server จริงเด็ดขาด'
-    };
-    $('chmodExplain').textContent =
-      tips[mode] || `Owner=${vals.u}, Group=${vals.g}, Others=${vals.o} (Read=4, Write=2, Execute=1)`;
-  }
-
-  function setChmodMode(modeStr) {
-    const digits = { u: +modeStr[0], g: +modeStr[1], o: +modeStr[2] };
-    document.querySelectorAll('.chmod-cb').forEach((cb) => {
-      const d = digits[cb.dataset.role];
-      const v = Number(cb.dataset.val);
-      cb.checked = Boolean(d & v);
-    });
-    updateChmodTool();
-  }
-
-  function renderRaidTool(level) {
-    const info = RAID_INFO[level];
-    document.querySelectorAll('.raid-tab').forEach((btn) => {
-      const active = btn.dataset.raid === level;
-      btn.className = `btn btn-sm raid-tab ${active ? 'btn-primary' : 'btn-ghost'}`;
-    });
-
-    const vis = $('raidVisual');
-    vis.innerHTML = '';
-    info.disks.forEach((d) => {
-      const col = document.createElement('div');
-      col.className = 'raid-disk';
-      col.innerHTML = `<div class="raid-disk-title">${d.name}</div>` +
-        d.blocks.map((b) => `<div class="raid-block ${b.cls}">${b.label}</div>`).join('');
-      vis.appendChild(col);
-    });
-
-    $('raidDetails').innerHTML = `
-      <div><strong>${info.name}</strong> (ใช้ดิสก์อย่างน้อย ${info.minDisks} ลูก)</div>
-      <div>• <strong>พื้นที่ใช้งานได้:</strong> ${info.usable}</div>
-      <div>• <strong>ความทนทานต่อดิสก์เสีย:</strong> ${info.faultTolerance}</div>
-      <div>• <strong>ประสิทธิภาพความเร็ว:</strong> ${info.speed}</div>
-      <div>• <strong>งานที่เหมาะสม:</strong> ${info.useCase}</div>
-    `;
-  }
-
-  function renderCodexChapters() {
-    const wrap = $('codexChapters');
-    wrap.innerHTML = '';
-    CODEX_CHAPTERS.forEach((ch) => {
-      const card = document.createElement('article');
-      card.className = 'codex-card';
-      card.innerHTML = `
-        <h4>${ch.title}</h4>
-        <ul>${ch.points.map((p) => `<li>${p}</li>`).join('')}</ul>
-      `;
-      wrap.appendChild(card);
-    });
-  }
-
-  document.querySelectorAll('.chmod-cb').forEach((cb) => cb.addEventListener('change', () => {
-    SoundFX.click();
-    updateChmodTool();
-  }));
-
-  document.querySelectorAll('.chmod-preset').forEach((btn) => btn.addEventListener('click', () => {
-    SoundFX.click();
-    setChmodMode(btn.dataset.mode);
-  }));
-
-  document.querySelectorAll('.raid-tab').forEach((btn) => btn.addEventListener('click', () => {
-    SoundFX.click();
-    renderRaidTool(btn.dataset.raid);
-  }));
-
-  /* ==================== MODE 5: CERTIFICATION EXAM & CERTIFICATE ==================== */
-  let examQuestions = [];
+  /* ==================== SCREEN 8: GUILD CERTIFICATION EXAM ==================== */
+  let examQs = [];
   let examIdx = 0;
-  let examAnswers = [];
-  let examSelected = null;
+  let examAns = [];
+  let examPick = null;
 
   function startExam() {
-    SoundFX.click();
-    examQuestions = shuffle(EXAM_BANK).slice(0, 10);
+    SoundFX.bossAlert();
+    examQs = shuffle(EXAM_BANK).slice(0, 15);
     examIdx = 0;
-    examAnswers = [];
-    examSelected = null;
+    examAns = [];
+    examPick = null;
 
     $('examIntro').classList.add('hidden');
     $('examResult').classList.add('hidden');
     $('examRunner').classList.remove('hidden');
-    renderExamQuestion();
+    renderExamQ();
   }
 
-  function renderExamQuestion() {
-    examSelected = null;
+  function renderExamQ() {
+    examPick = null;
     $('examNextBtn').disabled = true;
-    const q = examQuestions[examIdx];
+    const q = examQs[examIdx];
     $('examCategory').textContent = CATEGORIES[q.category];
-    $('examProgressText').textContent = `ข้อที่ ${examIdx + 1} / ${examQuestions.length}`;
-    $('examProgressBar').style.width = `${((examIdx + 1) / examQuestions.length) * 100}%`;
+    $('examProgressText').textContent = `ข้อที่ ${examIdx + 1} / ${examQs.length}`;
+    $('examProgressBar').style.width = `${((examIdx + 1) / examQs.length) * 100}%`;
     $('examQuestionText').textContent = `${examIdx + 1}. ${q.q}`;
-    $('examNextBtn').textContent = examIdx === examQuestions.length - 1 ? 'ส่งข้อสอบ ✓' : 'ข้อถัดไป →';
+    $('examNextBtn').textContent = examIdx === examQs.length - 1 ? 'ส่งข้อสอบ ✓' : 'ข้อถัดไป →';
 
     const opts = $('examOptions');
     opts.innerHTML = '';
-    const letters = ['ก', 'ข', 'ค', 'ง'];
+    const keys = ['ก', 'ข', 'ค', 'ง'];
     q.options.forEach((opt, i) => {
       const btn = document.createElement('button');
       btn.className = 'option-btn';
-      btn.innerHTML = `<span class="opt-key">${letters[i]}</span><span>${opt}</span>`;
+      btn.innerHTML = `<span class="opt-key">${keys[i]}</span><span>${opt}</span>`;
       btn.addEventListener('click', () => {
         SoundFX.click();
-        examSelected = i;
+        examPick = i;
         opts.querySelectorAll('.option-btn').forEach((b) => b.classList.remove('selected'));
         btn.classList.add('selected');
         $('examNextBtn').disabled = false;
@@ -926,69 +1534,62 @@ tcp    LISTEN  127.0.0.1:3306       users:(("mysqld"))`);
     $('examResult').classList.remove('hidden');
 
     let score = 0;
-    const reviewEl = $('examReviewList');
-    reviewEl.innerHTML = '';
+    const rev = $('examReviewList');
+    rev.innerHTML = '';
 
-    examQuestions.forEach((q, idx) => {
-      const userAns = examAnswers[idx];
-      const ok = userAns === q.answer;
+    examQs.forEach((q, idx) => {
+      const ok = examAns[idx] === q.answer;
       recordAnalytics(q.category, ok);
       if (ok) score += 1;
-
       const item = document.createElement('div');
       item.className = `review-item ${ok ? 'ok' : 'err'}`;
       item.innerHTML = `
         <div><strong>${ok ? '✅' : '❌'} ข้อ ${idx + 1}:</strong> ${q.q}</div>
-        <div class="muted-text" style="margin-top:0.25rem;">
-          คำตอบที่ถูกต้อง: <strong>${q.options[q.answer]}</strong> — ${q.explain}
-        </div>
+        <div class="muted-text" style="margin-top:0.2rem;">คำตอบที่ถูก: <strong>${q.options[q.answer]}</strong> — ${q.explain}</div>
       `;
-      reviewEl.appendChild(item);
+      rev.appendChild(item);
     });
 
-    const pct = Math.round((score / examQuestions.length) * 100);
+    const pct = Math.round((score / examQs.length) * 100);
     const passed = pct >= 70;
-    $('examScoreCircle').textContent = `${score}/${examQuestions.length}`;
+    $('examScoreCircle').textContent = `${score}/${examQs.length}`;
     $('examScoreCircle').style.borderColor = passed ? 'var(--accent)' : 'var(--danger)';
     $('examScoreCircle').style.color = passed ? 'var(--accent)' : 'var(--danger)';
 
     if (score > state.examBestScore) state.examBestScore = score;
     if (passed) {
       state.examPassed = true;
-      awardXp(150);
+      grantRewards(220, 150);
       SoundFX.levelUp();
-      $('examResultHeading').textContent = '🎉 ยินดีด้วย! คุณสอบผ่านเกณฑ์รับเกียรติบัตร';
-      $('examResultSub').textContent = `คะแนน ${score}/${examQuestions.length} (${pct}%) — สามารถพิมพ์หรือบันทึกเกียรติบัตรเป็น PDF ได้ทันที`;
+      $('examResultHeading').textContent = '🎉 ยินดีด้วย! คุณสอบผ่านรับเกียรติบัตร Certified SysAdmin';
+      $('examResultSub').textContent = `คะแนน ${score}/${examQs.length} (${pct}%) • รับ +220 XP และ +💰150`;
       $('printCertBtn').classList.remove('hidden');
       $('certificateCard').classList.remove('hidden');
 
-      const name = $('studentNameInput').value.trim() || 'ผู้เรียน ServerOps Academy';
-      const sid = $('studentIdInput').value.trim();
-      $('certStudentName').textContent = name;
-      $('certStudentId').textContent = sid ? `รหัสนักศึกษา / ห้องเรียน: ${sid}` : '';
-      $('certScore').textContent = `${score}/${examQuestions.length} (${pct}%)`;
-      $('certDate').textContent = new Date().toLocaleDateString('th-TH', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      const sName = $('studentNameInput').value.trim() || state.playerName;
+      const sId = $('studentIdInput').value.trim();
+      $('certStudentName').textContent = sName;
+      $('certStudentId').textContent = sId ? `รหัสนักศึกษา / ห้องเรียน: ${sId}` : '';
+      $('certScore').textContent = `${score}/${examQs.length} (${pct}%)`;
+      $('certRank').textContent = getRankInfo(state.xp).title;
+      $('certDate').textContent = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
     } else {
       saveState();
       SoundFX.wrong();
-      $('examResultHeading').textContent = 'ยังไม่ผ่านเกณฑ์ (ต้องได้ 70% ขึ้นไป)';
-      $('examResultSub').textContent = `คะแนน ${score}/${examQuestions.length} (${pct}%) — ลองทบทวนในคลังความรู้แล้วสอบใหม่อีกครั้ง!`;
+      $('examResultHeading').textContent = 'ยังไม่ผ่านเกณฑ์ 70%';
+      $('examResultSub').textContent = `คะแนน ${score}/${examQs.length} (${pct}%) — ทบทวนในคัมภีร์แล้วมาท้าสอบใหม่ได้เลย!`;
       $('printCertBtn').classList.add('hidden');
       $('certificateCard').classList.add('hidden');
     }
-    renderHeaderAndDashboard();
+    renderHud();
   }
 
   $('startExamBtn').addEventListener('click', startExam);
   $('examNextBtn').addEventListener('click', () => {
-    examAnswers.push(examSelected);
-    if (examIdx < examQuestions.length - 1) {
+    examAns.push(examPick);
+    if (examIdx < examQs.length - 1) {
       examIdx += 1;
-      renderExamQuestion();
+      renderExamQ();
     } else {
       finishExam();
     }
@@ -1001,56 +1602,49 @@ tcp    LISTEN  127.0.0.1:3306       users:(("mysqld"))`);
   $('printCertBtn').addEventListener('click', () => window.print());
 
   /* ==================== GLOBAL BINDINGS & INIT ==================== */
-  document.querySelectorAll('.nav-btn').forEach((btn) => {
-    btn.addEventListener('click', () => switchView(btn.dataset.view));
-  });
+  $('enterGameBtn').addEventListener('click', enterGame);
+  $('hudHomeBtn').addEventListener('click', returnToTitle);
+  $('hudProfileBtn').addEventListener('click', returnToTitle);
+  $('titleThemeBtn').addEventListener('click', toggleTheme);
+  $('hudThemeBtn').addEventListener('click', toggleTheme);
+  $('titleSoundBtn').addEventListener('click', toggleSound);
+  $('hudSoundBtn').addEventListener('click', toggleSound);
 
-  document.querySelectorAll('[data-goto]').forEach((el) => {
-    el.addEventListener('click', () => switchView(el.dataset.goto));
-  });
-
-  $('brandHomeBtn').addEventListener('click', () => switchView('dashboard'));
-  $('brandHomeBtn').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') switchView('dashboard');
-  });
-
-  $('themeToggleBtn').addEventListener('click', () => {
-    state.theme = state.theme === 'dark' ? 'light' : 'dark';
-    applyTheme();
-    saveState();
+  $('mapFreePlayToggle').addEventListener('change', (e) => {
     SoundFX.click();
-  });
-
-  $('soundToggleBtn').addEventListener('click', () => {
-    state.sound = !state.sound;
-    applySound();
+    state.freePlay = e.target.checked;
+    $('titleFreePlayToggle').checked = state.freePlay;
     saveState();
-    if (state.sound) SoundFX.click();
+    renderWorldMap();
+    showToast(state.freePlay ? '🔓 เปิดโหมดอิสระ: ปลดล็อกครบทุกด่านแล้ว!' : '🔒 กลับสู่โหมดเนื้อเรื่องตามลำดับ');
   });
 
-  $('resetProgressBtn').addEventListener('click', () => {
-    if (confirm('ต้องการล้างข้อมูลคะแนน XP ความก้าวหน้า และเหรียญตราทั้งหมดใช่หรือไม่?')) {
+  document.querySelectorAll('.dock-btn').forEach((btn) => {
+    btn.addEventListener('click', () => switchScreen(btn.dataset.screen));
+  });
+
+  $('resetSaveBtn').addEventListener('click', () => {
+    if (confirm('ต้องการล้างข้อมูลเซฟ เลเวล ดาว เหรียญ และเหรียญตราทั้งหมดใช่หรือไม่?')) {
       const keepTheme = state.theme;
       const keepSound = state.sound;
       state = defaultState();
       state.theme = keepTheme;
       state.sound = keepSound;
       saveState();
-      renderHeaderAndDashboard();
-      renderMissionGrid();
-      renderLabSidebar();
-      showToast('รีเซ็ตความก้าวหน้าเรียบร้อยแล้ว');
+      renderHud();
+      renderWorldMap();
+      renderCliSidebar();
+      renderCodexAndStats();
+      showToast('ล้างเซฟเริ่มต้นใหม่เรียบร้อยแล้ว');
     }
   });
 
-  // Boot up
+  // Boot
   applyTheme();
   applySound();
-  initTerminalWelcome();
-  renderCodexChapters();
-  updateChmodTool();
-  renderRaidTool('5');
-  renderHeaderAndDashboard();
-  renderMissionGrid();
-  renderLabSidebar();
+  renderTitleScreen();
+  renderHud();
+  initCliWelcome();
+  renderChmodVault();
+  renderRaidVisual('5', 0);
 })();
