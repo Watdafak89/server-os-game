@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=4.4" />
+  <link rel="stylesheet" href="styles.css?v=4.5" />
 </head>
 <body>
   <div class="cyber-bg" aria-hidden="true"></div>
@@ -151,9 +151,9 @@
 
       <div class="title-footer-bar">
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
-          <label class="toggle-chip">
+          <label class="toggle-chip hidden" id="titleFreePlayWrap">
             <input type="checkbox" id="titleFreePlayToggle" />
-            <span>🔓 โหมดอิสระ (ปลดล็อกทุกด่าน)</span>
+            <span>🔓 โหมดครู: ปลดล็อกทุกด่าน</span>
           </label>
           <span class="stage-chip" id="titleCloudStatus">💾 Local Mode</span>
         </div>
@@ -225,9 +225,9 @@
           <div class="map-controls" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
             <button class="btn btn-neon btn-sm" id="mapViewRoBtn">🗺️ แผนที่ Ragnarok</button>
             <button class="btn btn-ghost btn-sm" id="mapViewListBtn">📋 มุมมองรายการ</button>
-            <label class="toggle-chip">
+            <label class="toggle-chip hidden" id="mapFreePlayWrap">
               <input type="checkbox" id="mapFreePlayToggle" />
-              <span>🔓 ปลดล็อกทุกแมพ</span>
+              <span>🔓 โหมดครู: ปลดล็อกทุกแมพ</span>
             </label>
           </div>
         </div>
@@ -1388,14 +1388,14 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="cloud-config.js?v=4.4"></script>
-  <script src="audio.js?v=4.4"></script>
-  <script src="data.js?v=4.4"></script>
-  <script src="zones-expansion.js?v=4.4"></script>
-  <script src="codex-data.js?v=4.4"></script>
-  <script src="auth.js?v=4.4"></script>
-  <script src="vbox-sim.js?v=4.4"></script>
-  <script src="anime-sprites.js?v=4.4"></script>
-  <script src="game.js?v=4.4"></script>
+  <script src="cloud-config.js?v=4.5"></script>
+  <script src="audio.js?v=4.5"></script>
+  <script src="data.js?v=4.5"></script>
+  <script src="zones-expansion.js?v=4.5"></script>
+  <script src="codex-data.js?v=4.5"></script>
+  <script src="auth.js?v=4.5"></script>
+  <script src="vbox-sim.js?v=4.5"></script>
+  <script src="anime-sprites.js?v=4.5"></script>
+  <script src="game.js?v=4.5"></script>
 </body>
 </html>

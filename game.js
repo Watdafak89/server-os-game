@@ -57,8 +57,17 @@
       blitzHighScore: saved.blitzHighScore || 0,
       dailyQuests: { ...base.dailyQuests, ...(saved.dailyQuests || {}) }
     };
+    if (currentAccount.role !== 'teacher') state.freePlay = false;
     ensureTodayQuests();
     return true;
+  }
+
+  function isTeacherAccount() {
+    return currentAccount?.role === 'teacher';
+  }
+
+  function canUseFreePlay() {
+    return isTeacherAccount() && Boolean(state.freePlay);
   }
 
   function getTodayKey() {
@@ -336,7 +345,9 @@
     resetStudentFormExtras();
     updateCloudBadges();
     const loggedIn = hydrateFromCurrentAccount();
-    $('titleFreePlayToggle').checked = state.freePlay;
+    const allowFreePlay = isTeacherAccount();
+    $('titleFreePlayWrap').classList.toggle('hidden', !allowFreePlay);
+    $('titleFreePlayToggle').checked = allowFreePlay && state.freePlay;
 
     if (loggedIn && currentAccount) {
       $('authGate').classList.add('hidden');
@@ -398,8 +409,10 @@
       return;
     }
     SoundFX.levelUp();
-    state.freePlay = $('titleFreePlayToggle').checked || state.freePlay;
-    $('mapFreePlayToggle').checked = state.freePlay;
+    const allowFreePlay = isTeacherAccount();
+    state.freePlay = allowFreePlay ? ($('titleFreePlayToggle').checked || state.freePlay) : false;
+    $('mapFreePlayWrap').classList.toggle('hidden', !allowFreePlay);
+    $('mapFreePlayToggle').checked = allowFreePlay && state.freePlay;
     saveState();
 
     $('titleScreen').classList.add('hidden');
@@ -585,13 +598,13 @@
   }
 
   function isStageUnlocked(flatIdx) {
-    if (state.freePlay || flatIdx === 0) return true;
+    if (canUseFreePlay() || flatIdx === 0) return true;
     const prevStage = ALL_STAGES_FLAT[flatIdx - 1];
     return Boolean(state.stageStars[prevStage.id]);
   }
 
   function isZoneUnlocked(zoneIdx) {
-    if (state.freePlay || zoneIdx === 0) return true;
+    if (canUseFreePlay() || zoneIdx === 0) return true;
     const prevZone = CAMPAIGN_ZONES[zoneIdx - 1];
     const prevBoss = prevZone.stages[prevZone.stages.length - 1];
     return Boolean(state.stageStars[prevBoss.id]);
@@ -681,7 +694,7 @@
         $('roPreviewTitle').textContent = `[${zone.code} • ${zone.roCode}] ${zone.roName} — ${zone.name} (${zone.lvRange})`;
         $('roPreviewDesc').textContent = unlocked
           ? `${zone.subtitle} • 👑 MVP: ${bossStage.enemy.name} • คลิกเพื่อวาร์ปเข้าแมพ!`
-          : `🔒 ล็อกอยู่ — ปราบ MVP ของโซนก่อนหน้าให้สำเร็จ (หรือเปิดโหมด 🔓 ปลดล็อกทุกแมพ)`;
+          : `🔒 ล็อกอยู่ — ปราบ MVP Boss ของโซนก่อนหน้าให้สำเร็จเพื่อปลดล็อก!`;
       };
 
       pin.addEventListener('mouseenter', updatePreview);
@@ -797,7 +810,9 @@
   function renderWorldMap() {
     renderDailyQuests();
     renderContinentBar();
-    $('mapFreePlayToggle').checked = state.freePlay;
+    const allowFreePlay = isTeacherAccount();
+    $('mapFreePlayWrap').classList.toggle('hidden', !allowFreePlay);
+    $('mapFreePlayToggle').checked = allowFreePlay && state.freePlay;
 
     $('mapViewRoBtn').className = `btn btn-sm ${mapViewMode === 'ro' ? 'btn-neon' : 'btn-ghost'}`;
     $('mapViewListBtn').className = `btn btn-sm ${mapViewMode === 'list' ? 'btn-neon' : 'btn-ghost'}`;
@@ -3500,12 +3515,19 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
   $('hudBgmBtn').addEventListener('click', toggleBgm);
 
   $('mapFreePlayToggle').addEventListener('change', (e) => {
+    if (!isTeacherAccount()) {
+      e.target.checked = false;
+      state.freePlay = false;
+      SoundFX.wrong();
+      showToast('🔒 สงวนสิทธิ์เฉพาะครูผู้สอนเท่านั้น — นักศึกษาต้องผ่านด่านตามลำดับ');
+      return;
+    }
     SoundFX.click();
     state.freePlay = e.target.checked;
     $('titleFreePlayToggle').checked = state.freePlay;
     saveState();
     renderWorldMap();
-    showToast(state.freePlay ? '🔓 เปิดโหมดอิสระ: ปลดล็อกครบทุกด่านแล้ว!' : '🔒 กลับสู่โหมดเนื้อเรื่องตามลำดับ');
+    showToast(state.freePlay ? '🔓 โหมดครูผู้สอน: ปลดล็อกครบทุกด่านแล้ว!' : '🔒 กลับสู่โหมดเนื้อเรื่องตามลำดับ');
   });
 
   document.querySelectorAll('.dock-btn').forEach((btn) => {
