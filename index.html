@@ -44,84 +44,108 @@
         </div>
       </div>
 
-      <!-- Auth Gate (Login / Register Tabs) -->
+      <!-- Auth Gate (Student ID Login / Teacher Login) -->
       <div id="authGate" class="auth-panel">
         <div class="auth-tabs">
-          <button type="button" class="auth-tab active" id="tabLoginBtn" data-auth-tab="login">🔑 เข้าสู่ระบบ (Login)</button>
-          <button type="button" class="auth-tab" id="tabRegisterBtn" data-auth-tab="register">📝 สมัครสมาชิก (Register)</button>
+          <button type="button" class="auth-tab active" id="tabStudentBtn" data-auth-tab="student">🎓 นักศึกษา (รหัสนักศึกษา)</button>
+          <button type="button" class="auth-tab" id="tabTeacherBtn" data-auth-tab="teacher">👨‍🏫 ครูผู้สอน (Teacher)</button>
         </div>
 
         <div id="authErrorBox" class="auth-error hidden"></div>
+        <div id="authInfoBox" class="info-note hidden" style="margin-bottom:0.85rem;"></div>
 
-        <!-- Login Form -->
-        <form id="loginForm" class="auth-form">
+        <!-- TAB 1: Student ID Login (Primary Classroom Flow) -->
+        <form id="studentLoginForm" class="auth-form">
           <div class="form-field">
-            <label for="loginUsername">รหัสนักศึกษา / ชื่อผู้ใช้ (Username)</label>
-            <input type="text" id="loginUsername" class="game-input left-input" placeholder="เช่น 6701001 หรือ student01" required autocomplete="username" />
+            <label for="stuIdInput">รหัสนักศึกษา (Student ID)</label>
+            <input type="text" id="stuIdInput" class="game-input left-input" placeholder="กรอกรหัสนักศึกษา เช่น 67010001 หรือ student01" required autocomplete="username" />
           </div>
-          <div class="form-field">
-            <label for="loginPassword">รหัสผ่าน (Password)</label>
-            <input type="password" id="loginPassword" class="game-input left-input" placeholder="กรอกรหัสผ่าน" required autocomplete="current-password" />
+
+          <!-- Shown automatically if this Student ID has a password set -->
+          <div class="form-field hidden" id="stuPasswordField">
+            <label for="stuPasswordInput">รหัสผ่านของบัญชีนี้</label>
+            <input type="password" id="stuPasswordInput" class="game-input left-input" placeholder="กรอกรหัสผ่าน" autocomplete="current-password" />
           </div>
-          <button type="submit" class="btn btn-neon btn-lg" style="width:100%;">🔓 เข้าสู่ระบบและเริ่มเกม</button>
+
+          <!-- Shown automatically for first-time Student ID -->
+          <div id="stuFirstTimeFields" class="hidden" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <div class="avatar-picker-label" style="margin-bottom:0;">เลือกตัวละคร Avatar ของคุณ:</div>
+            <div id="avatarPicker" class="avatar-picker" style="margin-bottom:0;"></div>
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label for="stuFullNameInput">ชื่อ-นามสกุล (ใช้แสดงบนเกียรติบัตร) *</label>
+                <input type="text" id="stuFullNameInput" class="game-input left-input" placeholder="เช่น นายสมชาย ใจดี" />
+              </div>
+              <div class="form-field">
+                <label for="stuClassInput">ห้องเรียน / กลุ่มเรียน</label>
+                <input type="text" id="stuClassInput" class="game-input left-input" placeholder="เช่น ปวส.1/1" />
+              </div>
+            </div>
+            <div class="form-field">
+              <label for="stuOptPassInput">รหัสผ่านเสริม (ไม่บังคับ — เว้นว่างเพื่อเข้าด้วยรหัสนักศึกษาอย่างเดียว)</label>
+              <input type="password" id="stuOptPassInput" class="game-input left-input" placeholder="เว้นว่างได้ หรือตั้งอย่างน้อย 4 ตัว" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-neon btn-lg" id="stuSubmitBtn" style="width:100%;">🚀 เข้าสู่ระบบด้วยรหัสนักศึกษา</button>
 
           <div class="demo-login-bar">
-            <span class="muted-text">ทดลองใช้งานทันที (รหัส 123456):</span>
+            <span class="muted-text">หรือทดลองใช้งานด่วน:</span>
             <div class="demo-btns">
-              <button type="button" class="btn btn-secondary btn-xs" id="demoStudentBtn">🎓 เข้าเป็นนักศึกษา (student01)</button>
-              <button type="button" class="btn btn-secondary btn-xs" id="demoTeacherBtn">👨‍🏫 เข้าเป็นครูผู้สอน (teacher)</button>
+              <button type="button" class="btn btn-secondary btn-xs" id="demoStudentBtn">🎓 ทดลองเข้าเป็น student01</button>
+              <button type="button" class="btn btn-secondary btn-xs" id="demoTeacherBtn">👨‍🏫 ทดลองเข้าเป็นครูผู้สอน</button>
             </div>
           </div>
         </form>
 
-        <!-- Register Form -->
-        <form id="registerForm" class="auth-form hidden">
-          <div class="avatar-picker-label">เลือกตัวละคร Avatar:</div>
-          <div id="avatarPicker" class="avatar-picker"></div>
-
-          <div class="form-grid-2">
+        <!-- TAB 2: Teacher Login & Teacher Registration -->
+        <div id="teacherAuthWrap" class="hidden">
+          <form id="loginForm" class="auth-form">
             <div class="form-field">
-              <label for="regUsername">รหัสนักศึกษา / Username *</label>
-              <input type="text" id="regUsername" class="game-input left-input" placeholder="เช่น 6701005 (อังกฤษ/ตัวเลข)" required />
+              <label for="loginUsername">ชื่อผู้ใช้ครูผู้สอน (Username)</label>
+              <input type="text" id="loginUsername" class="game-input left-input" placeholder="เช่น teacher" required autocomplete="username" />
             </div>
             <div class="form-field">
-              <label for="regClassroom">ห้องเรียน / กลุ่มเรียน</label>
-              <input type="text" id="regClassroom" class="game-input left-input" placeholder="เช่น ปวส.1/1 หรือ IT-A" />
+              <label for="loginPassword">รหัสผ่าน (Password)</label>
+              <input type="password" id="loginPassword" class="game-input left-input" placeholder="กรอกรหัสผ่าน" required autocomplete="current-password" />
             </div>
-          </div>
+            <button type="submit" class="btn btn-neon btn-lg" style="width:100%;">🔓 เข้าสู่ระบบครูผู้สอน</button>
+            <div style="text-align:center;margin-top:0.3rem;">
+              <button type="button" class="btn btn-ghost btn-xs" id="showTeacherRegBtn">📝 สมัครบัญชีครูผู้สอนใหม่ (ต้องใช้รหัสครู)</button>
+            </div>
+          </form>
 
-          <div class="form-field">
-            <label for="regFullName">ชื่อ-นามสกุล (ใช้แสดงบนเกียรติบัตร) *</label>
-            <input type="text" id="regFullName" class="game-input left-input" placeholder="เช่น นางสาวสุดา เรียนดี" required />
-          </div>
-
-          <div class="form-grid-2">
+          <form id="registerForm" class="auth-form hidden">
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label for="regUsername">ชื่อผู้ใช้ครู (Username) *</label>
+                <input type="text" id="regUsername" class="game-input left-input" placeholder="เช่น kru_somchai" required />
+              </div>
+              <div class="form-field">
+                <label for="regTeacherCode">รหัสยืนยันครูผู้สอน *</label>
+                <input type="text" id="regTeacherCode" class="game-input left-input" placeholder="TEACHER2026" required />
+              </div>
+            </div>
             <div class="form-field">
-              <label for="regPassword">รหัสผ่าน (อย่างน้อย 4 ตัว) *</label>
-              <input type="password" id="regPassword" class="game-input left-input" placeholder="ตั้งรหัสผ่าน" required />
+              <label for="regFullName">ชื่อ-นามสกุลอาจารย์ผู้สอน *</label>
+              <input type="text" id="regFullName" class="game-input left-input" placeholder="เช่น อ.สมศักดิ์ วิชาการ" required />
             </div>
-            <div class="form-field">
-              <label for="regConfirm">ยืนยันรหัสผ่าน *</label>
-              <input type="password" id="regConfirm" class="game-input left-input" placeholder="พิมพ์รหัสผ่านอีกครั้ง" required />
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label for="regPassword">รหัสผ่าน (อย่างน้อย 4 ตัว) *</label>
+                <input type="password" id="regPassword" class="game-input left-input" placeholder="ตั้งรหัสผ่าน" required />
+              </div>
+              <div class="form-field">
+                <label for="regConfirm">ยืนยันรหัสผ่าน *</label>
+                <input type="password" id="regConfirm" class="game-input left-input" placeholder="พิมพ์รหัสผ่านอีกครั้ง" required />
+              </div>
             </div>
-          </div>
-
-          <div class="form-grid-2">
-            <div class="form-field">
-              <label for="regRole">บทบาทผู้ใช้ (Role)</label>
-              <select id="regRole" class="game-input left-input">
-                <option value="student">🎓 นักศึกษา (Student)</option>
-                <option value="teacher">👨‍🏫 ครูผู้สอน (Teacher)</option>
-              </select>
+            <button type="submit" class="btn btn-neon btn-lg" style="width:100%;">✨ สมัครบัญชีครูผู้สอน</button>
+            <div style="text-align:center;margin-top:0.3rem;">
+              <button type="button" class="btn btn-ghost btn-xs" id="backTeacherLoginBtn">← กลับหน้าเข้าสู่ระบบครู</button>
             </div>
-            <div class="form-field hidden" id="teacherCodeField">
-              <label for="regTeacherCode">รหัสยืนยันครูผู้สอน *</label>
-              <input type="text" id="regTeacherCode" class="game-input left-input" placeholder="รหัส: TEACHER2026" />
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-neon btn-lg" style="width:100%;">✨ สมัครสมาชิกและเข้าสู่ระบบ</button>
-        </form>
+          </form>
+        </div>
       </div>
 
       <div class="title-footer-bar">
@@ -735,6 +759,24 @@
 
         <!-- Class KPIs -->
         <div class="teacher-kpi-grid" id="teacherKpis"></div>
+
+        <!-- Bulk Student Roster Import (Excel/CSV paste) -->
+        <div class="panel" style="margin-bottom:1.25rem;">
+          <div class="panel-header">
+            <h3>📋 เพิ่มรายชื่อนักศึกษาทั้งห้องล่วงหน้า (Bulk Student ID Import)</h3>
+            <span class="stage-chip">ก๊อปวางจาก Excel ได้ทันที</span>
+          </div>
+          <p class="muted-text" style="margin-bottom:0.6rem;">
+            วางรายชื่อนักศึกษา บรรทัดละ 1 คน รูปแบบ: <code>รหัสนักศึกษา, ชื่อ-นามสกุล, ห้องเรียน</code> (หรือคัดลอก 3 คอลัมน์จาก Excel มาวางตรง ๆ ได้เลย!) นักศึกษาจะพิมพ์รหัสนักศึกษาเข้าเล่นได้ทันทีโดยไม่ต้องสมัครเอง
+          </p>
+          <textarea id="bulkRosterInput" class="code-textarea" rows="3" placeholder="ตัวอย่าง:
+67010001, นายสมชาย ใจดี, ปวส.1/1
+67010002, นางสาวสุดา เรียนเก่ง, ปวส.1/1"></textarea>
+          <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-top:0.6rem;">
+            <button class="btn btn-neon btn-sm" id="bulkRosterImportBtn">➕ เพิ่มรายชื่อนักศึกษาและซิงค์ขึ้น Cloud</button>
+            <span id="bulkRosterStatus" class="muted-text"></span>
+          </div>
+        </div>
 
         <!-- Student Roster Table -->
         <div class="panel" style="margin-bottom:1.25rem;">

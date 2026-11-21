@@ -177,6 +177,7 @@ const AuthSystem = (() => {
         classroom: 'ปวส.1/1',
         role: 'student',
         passwordHash: hash,
+        passwordRequired: false,
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
         gameData: createEmptyGameData('นายสมชาย ใจดี', '👨‍💻')
@@ -348,6 +349,7 @@ const AuthSystem = (() => {
       classroom: cleanClass,
       role: role === 'teacher' ? 'teacher' : 'student',
       passwordHash,
+      passwordRequired: true,
       createdAt: now,
       updatedAt: now,
       lastLogin: now,
@@ -453,10 +455,166 @@ const AuthSystem = (() => {
     return true;
   }
 
+  async function lookupStudent(studentId) {
+    const cleanId = (studentId || '').trim().toLowerCase();
+    if (!/^[a-z0-9._-]{3,24}$/.test(cleanId)) {
+      return { ok: false, error: 'รหัสนักศึกษาต้องเป็นตัวเลขหรือตัวอักษรภาษาอังกฤษ 3–24 ตัว (ห้ามเว้นวรรค)' };
+    }
+
+    const accounts = await ensureSeedAccounts();
+    if (getCloudUrl()) {
+      const cloudAcc = await fetchSingleCloudAccount(cleanId);
+      if (cloudAcc) {
+        const localAcc = accounts[cleanId];
+        const localXp = localAcc?.gameData?.xp || 0;
+        const cloudXp = cloudAcc?.gameData?.xp || 0;
+        if (!localAcc || cloudXp >= localXp) {
+          accounts[cleanId] = cloudAcc;
+          saveAccounts(accounts);
+        }
+      }
+    }
+
+    const acc = loadAccounts()[cleanId] || null;
+    if (!acc) return { ok: true, exists: false, studentId: cleanId };
+    if (acc.role === 'teacher') {
+      return { ok: false, error: 'บัญชีนี้เป็นบัญชีครูผู้สอน กรุณาเข้าสู่ระบบที่แท็บ "👨‍🏫 ครูผู้สอน"' };
+    }
+    return {
+      ok: true,
+      exists: true,
+      studentId: cleanId,
+      account: acc,
+      requiresPassword: Boolean(acc.passwordRequired)
+    };
+  }
+
+  async function studentQuickLogin({ studentId, fullName, classroom, password, avatar }) {
+    const check = await lookupStudent(studentId);
+    if (!check.ok) return check;
+
+    const cleanId = check.studentId;
+    const accounts = loadAccounts();
+
+    if (check.exists) {
+      const acc = check.account;
+      if (acc.passwordRequired) {
+        if (!password) {
+          return { ok: false, needPassword: true, account: acc, error: 'บัญชีนี้ตั้งรหัสผ่านไว้ กรุณากรอกรหัสผ่าน' };
+        }
+        const hash = await hashPassword(password, cleanId);
+        if (acc.passwordHash !== hash) {
+          return { ok: false, needPassword: true, account: acc, error: 'รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่' };
+        }
+      }
+      acc.lastLogin = new Date().toISOString();
+      accounts[cleanId] = acc;
+      saveAccounts(accounts);
+      setSession(cleanId);
+      return { ok: true, account: acc, isNew: false };
+    }
+
+    // First-time student: create account immediately
+    const cleanName = (fullName || '').trim();
+    const cleanClass = (classroom || '').trim() || '-';
+    if (!cleanName || cleanName.length < 2) {
+      return { ok: false, needRegister: true, error: 'ไม่พบรหัสนักศึกษานี้ในระบบ กรุณากรอกชื่อ-นามสกุลเพื่อลงทะเบียนครั้งแรก' };
+    }
+    if (password && password.length < 4) {
+      return { ok: false, needRegister: true, error: 'หากต้องการตั้งรหัสผ่านเสริม ต้องมีอย่างน้อย 4 ตัวอักษร (หรือเว้นว่างไว้ได้)' };
+    }
+
+    const hasPw = Boolean(password && password.length >= 4);
+    const passwordHash = await hashPassword(hasPw ? password : ('sid:' + cleanId), cleanId);
+    const now = new Date().toISOString();
+    const newAcc = {
+      username: cleanId,
+      fullName: cleanName,
+      classroom: cleanClass,
+      role: 'student',
+      passwordHash,
+      passwordRequired: hasPw,
+      createdAt: now,
+      updatedAt: now,
+      lastLogin: now,
+      gameData: createEmptyGameData(cleanName, avatar || '👨‍💻')
+    };
+
+    accounts[cleanId] = newAcc;
+    saveAccounts(accounts);
+    setSession(cleanId);
+    await syncAccountToCloud(newAcc);
+    return { ok: true, account: newAcc, isNew: true };
+  }
+
+  async function bulkImportStudents(rawText) {
+    const lines = (rawText || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (!lines.length) return { ok: false, error: 'กรุณาวางรายชื่อนักศึกษาอย่างน้อย 1 บรรทัด' };
+
+    const accounts = await ensureSeedAccounts();
+    let added = 0;
+    let updated = 0;
+    let skipped = 0;
+    const now = new Date().toISOString();
+
+    for (const line of lines) {
+      // Support Tab (copy directly from Excel) or Comma
+      const cols = line.includes('\t')
+        ? line.split('\t').map((c) => c.trim())
+        : line.split(',').map((c) => c.trim());
+
+      const rawId = (cols[0] || '').toLowerCase().replace(/\s+/g, '');
+      const fullName = cols[1] || '';
+      const classroom = cols[2] || '-';
+
+      // Skip header row like "รหัสนักศึกษา, ชื่อ-นามสกุล"
+      if (!/^[a-z0-9._-]{3,24}$/.test(rawId) || !fullName) {
+        skipped += 1;
+        continue;
+      }
+
+      if (accounts[rawId]) {
+        if (accounts[rawId].role !== 'teacher') {
+          accounts[rawId].fullName = fullName;
+          if (classroom && classroom !== '-') accounts[rawId].classroom = classroom;
+          accounts[rawId].gameData.playerName = fullName;
+          accounts[rawId].updatedAt = now;
+          await syncAccountToCloud(accounts[rawId]);
+          updated += 1;
+        } else {
+          skipped += 1;
+        }
+      } else {
+        const pwHash = await hashPassword('sid:' + rawId, rawId);
+        accounts[rawId] = {
+          username: rawId,
+          fullName,
+          classroom,
+          role: 'student',
+          passwordHash: pwHash,
+          passwordRequired: false,
+          createdAt: now,
+          updatedAt: now,
+          lastLogin: now,
+          gameData: createEmptyGameData(fullName, '👨‍💻')
+        };
+        await syncAccountToCloud(accounts[rawId]);
+        added += 1;
+      }
+    }
+
+    saveAccounts(accounts);
+    if (added + updated === 0) {
+      return { ok: false, error: 'ไม่พบบรรทัดที่รูปแบบถูกต้อง (รูปแบบ: รหัสนักศึกษา, ชื่อ-นามสกุล, ห้องเรียน)' };
+    }
+    return { ok: true, added, updated, skipped };
+  }
+
   async function resetUserPassword(username, newPassword) {
     const accounts = loadAccounts();
     if (!accounts[username]) return false;
     accounts[username].passwordHash = await hashPassword(newPassword, username);
+    accounts[username].passwordRequired = Boolean(newPassword);
     accounts[username].updatedAt = new Date().toISOString();
     saveAccounts(accounts);
     await syncAccountToCloud(accounts[username]);
@@ -591,6 +749,9 @@ const AuthSystem = (() => {
     TEACHER_SIGNUP_CODE,
     ensureSeedAccounts,
     createEmptyGameData,
+    lookupStudent,
+    studentQuickLogin,
+    bulkImportStudents,
     register,
     login,
     logout,

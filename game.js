@@ -179,13 +179,36 @@
     }
   }
 
+  function showAuthInfo(msg) {
+    const box = $('authInfoBox');
+    if (!msg) {
+      box.classList.add('hidden');
+      box.textContent = '';
+    } else {
+      box.textContent = msg;
+      box.classList.remove('hidden');
+    }
+  }
+
+  function resetStudentFormExtras() {
+    $('stuFirstTimeFields').classList.add('hidden');
+    $('stuPasswordField').classList.add('hidden');
+    $('stuPasswordInput').value = '';
+    $('stuSubmitBtn').textContent = '🚀 เข้าสู่ระบบด้วยรหัสนักศึกษา';
+  }
+
   function switchAuthTab(tab) {
     SoundFX.click();
     showAuthError('');
-    $('tabLoginBtn').classList.toggle('active', tab === 'login');
-    $('tabRegisterBtn').classList.toggle('active', tab === 'register');
-    $('loginForm').classList.toggle('hidden', tab !== 'login');
-    $('registerForm').classList.toggle('hidden', tab !== 'register');
+    showAuthInfo('');
+    $('tabStudentBtn').classList.toggle('active', tab === 'student');
+    $('tabTeacherBtn').classList.toggle('active', tab === 'teacher');
+    $('studentLoginForm').classList.toggle('hidden', tab !== 'student');
+    $('teacherAuthWrap').classList.toggle('hidden', tab !== 'teacher');
+    if (tab === 'teacher') {
+      $('loginForm').classList.remove('hidden');
+      $('registerForm').classList.add('hidden');
+    }
   }
 
   function renderAvatarPicker() {
@@ -221,6 +244,8 @@
   function renderTitleScreen() {
     renderAvatarPicker();
     showAuthError('');
+    showAuthInfo('');
+    resetStudentFormExtras();
     updateCloudBadges();
     const loggedIn = hydrateFromCurrentAccount();
     $('titleFreePlayToggle').checked = state.freePlay;
@@ -1999,12 +2024,109 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
     }
   });
 
-  /* ==================== AUTH FORM BINDINGS ==================== */
-  $('tabLoginBtn').addEventListener('click', () => switchAuthTab('login'));
-  $('tabRegisterBtn').addEventListener('click', () => switchAuthTab('register'));
+  $('bulkRosterImportBtn').addEventListener('click', async () => {
+    SoundFX.click();
+    const text = $('bulkRosterInput').value.trim();
+    if (!text) {
+      showToast('⚠️ กรุณาวางรายชื่อนักศึกษาก่อนกดนำเข้า');
+      return;
+    }
+    $('bulkRosterStatus').textContent = '⏳ กำลังนำเข้าและซิงค์ขึ้น Cloud...';
+    const res = await AuthSystem.bulkImportStudents(text);
+    if (!res.ok) {
+      SoundFX.wrong();
+      $('bulkRosterStatus').textContent = `❌ ${res.error}`;
+      showToast(`❌ ${res.error}`);
+      return;
+    }
+    SoundFX.levelUp();
+    $('bulkRosterInput').value = '';
+    $('bulkRosterStatus').textContent = `✅ เพิ่มใหม่ ${res.added} คน, อัปเดต ${res.updated} คน` + (res.skipped ? ` (ข้าม ${res.skipped} บรรทัด)` : '');
+    renderTeacherDashboard();
+    showToast(`📋 นำเข้ารายชื่อนักศึกษาสำเร็จ ${res.added + res.updated} คน!`);
+  });
 
-  $('regRole').addEventListener('change', (e) => {
-    $('teacherCodeField').classList.toggle('hidden', e.target.value !== 'teacher');
+  /* ==================== AUTH FORM BINDINGS ==================== */
+  $('tabStudentBtn').addEventListener('click', () => switchAuthTab('student'));
+  $('tabTeacherBtn').addEventListener('click', () => switchAuthTab('teacher'));
+
+  $('showTeacherRegBtn').addEventListener('click', () => {
+    SoundFX.click();
+    showAuthError('');
+    $('loginForm').classList.add('hidden');
+    $('registerForm').classList.remove('hidden');
+  });
+
+  $('backTeacherLoginBtn').addEventListener('click', () => {
+    SoundFX.click();
+    showAuthError('');
+    $('registerForm').classList.add('hidden');
+    $('loginForm').classList.remove('hidden');
+  });
+
+  $('stuIdInput').addEventListener('input', () => {
+    showAuthError('');
+    showAuthInfo('');
+    resetStudentFormExtras();
+  });
+
+  $('studentLoginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showAuthError('');
+    showAuthInfo('');
+    const sid = $('stuIdInput').value.trim();
+    const isFirstTimeVisible = !$('stuFirstTimeFields').classList.contains('hidden');
+    const isPwVisible = !$('stuPasswordField').classList.contains('hidden');
+
+    $('stuSubmitBtn').disabled = true;
+    $('stuSubmitBtn').textContent = '⏳ กำลังตรวจสอบรหัสนักศึกษา...';
+
+    try {
+      const res = await AuthSystem.studentQuickLogin({
+        studentId: sid,
+        fullName: isFirstTimeVisible ? $('stuFullNameInput').value : '',
+        classroom: isFirstTimeVisible ? $('stuClassInput').value : '',
+        password: isPwVisible ? $('stuPasswordInput').value : (isFirstTimeVisible ? $('stuOptPassInput').value : ''),
+        avatar: selectedRegAvatar
+      });
+
+      if (res.ok) {
+        $('studentLoginForm').reset();
+        resetStudentFormExtras();
+        showToast(res.isNew
+          ? `🎉 ลงทะเบียนรหัส ${res.account.username} สำเร็จ ยินดีต้อนรับ ${res.account.fullName}!`
+          : `👋 ยินดีต้อนรับกลับมา ${res.account.fullName}!`);
+        enterGame();
+        return;
+      }
+
+      if (res.needRegister) {
+        SoundFX.click();
+        $('stuFirstTimeFields').classList.remove('hidden');
+        $('stuPasswordField').classList.add('hidden');
+        showAuthInfo(`✨ พบรหัสนักศึกษาใหม่ "${sid}"! กรอกชื่อ-นามสกุลและห้องเรียนครั้งแรก (ครั้งต่อไปพิมพ์แค่รหัสนักศึกษาเข้าได้เลย)`);
+        $('stuSubmitBtn').textContent = '✨ ยืนยันลงทะเบียนและเข้าเล่นเกม';
+        $('stuFullNameInput').focus();
+        return;
+      }
+
+      if (res.needPassword) {
+        SoundFX.click();
+        $('stuPasswordField').classList.remove('hidden');
+        $('stuFirstTimeFields').classList.add('hidden');
+        if (isPwVisible) showAuthError(res.error);
+        else showAuthInfo(`🔒 บัญชี ${res.account.fullName} (@${res.account.username}) ตั้งรหัสผ่านไว้ กรุณากรอกรหัสผ่าน`);
+        $('stuSubmitBtn').textContent = '🔓 ยืนยันรหัสผ่านและเข้าเกม';
+        $('stuPasswordInput').focus();
+        return;
+      }
+
+      SoundFX.wrong();
+      showAuthError(res.error);
+      $('stuSubmitBtn').textContent = '🚀 เข้าสู่ระบบด้วยรหัสนักศึกษา';
+    } finally {
+      $('stuSubmitBtn').disabled = false;
+    }
   });
 
   $('loginForm').addEventListener('submit', async (e) => {
@@ -2033,11 +2155,11 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
     const res = await AuthSystem.register({
       username: $('regUsername').value,
       fullName: $('regFullName').value,
-      classroom: $('regClassroom').value,
+      classroom: 'ผู้ดูแลรายวิชา',
       password: pw,
-      role: $('regRole').value,
+      role: 'teacher',
       teacherCode: $('regTeacherCode').value,
-      avatar: selectedRegAvatar
+      avatar: '🛡️'
     });
     if (!res.ok) {
       SoundFX.wrong();
@@ -2045,14 +2167,13 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
       return;
     }
     $('registerForm').reset();
-    $('teacherCodeField').classList.add('hidden');
-    showToast(`🎉 สมัครสมาชิกสำเร็จ ยินดีต้อนรับ ${res.account.fullName}!`);
+    showToast(`🎉 สมัครบัญชีครูผู้สอนสำเร็จ ยินดีต้อนรับ ${res.account.fullName}!`);
     enterGame();
   });
 
   $('demoStudentBtn').addEventListener('click', async () => {
     SoundFX.click();
-    const res = await AuthSystem.login('student01', '123456');
+    const res = await AuthSystem.studentQuickLogin({ studentId: 'student01' });
     if (res.ok) enterGame();
   });
 
