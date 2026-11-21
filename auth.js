@@ -98,7 +98,7 @@ const AuthSystem = (() => {
   function createEmptyGameData(fullName, avatar) {
     return {
       playerName: fullName || 'SysAdmin',
-      avatar: avatar || '👨‍💻',
+      avatar: avatar || 'avatar1',
       xp: 0,
       coins: 100,
       xpBoostActive: false,
@@ -174,7 +174,7 @@ const AuthSystem = (() => {
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
         gameData: {
-          ...createEmptyGameData('อาจารย์ผู้สอน', '🛡️'),
+          ...createEmptyGameData('อาจารย์ผู้สอน', 'avatar6'),
           freePlay: true,
           coins: 999
         }
@@ -193,7 +193,7 @@ const AuthSystem = (() => {
         passwordRequired: false,
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString(),
-        gameData: createEmptyGameData('นายสมชาย ใจดี', '👨‍💻')
+        gameData: createEmptyGameData('นายสมชาย ใจดี', 'avatar1')
       };
       changed = true;
     }

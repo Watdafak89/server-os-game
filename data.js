@@ -13,7 +13,28 @@ const CATEGORIES = {
   forensics: 'วิเคราะห์ Log, สมรรถนะ & รับมือเหตุการณ์'
 };
 
-const AVATARS = ['👨‍💻', '👩‍💻', '🤖', '🦊', '🛡️', '⚡'];
+const AVATARS = [
+  { id: 'avatar1', name: 'Kai', role: 'Net-Runner', src: 'assets/avatars/avatar1.jpg' },
+  { id: 'avatar2', name: 'Hana', role: 'Cloud Dev', src: 'assets/avatars/avatar2.jpg' },
+  { id: 'avatar3', name: 'NOVA-09', role: 'AI Core', src: 'assets/avatars/avatar3.jpg' },
+  { id: 'avatar4', name: 'Ren', role: 'Kitsune Ops', src: 'assets/avatars/avatar4.jpg' },
+  { id: 'avatar5', name: 'Sora', role: 'Sec Paladin', src: 'assets/avatars/avatar5.jpg' },
+  { id: 'avatar6', name: 'Sensei Ken', role: 'Architect', src: 'assets/avatars/avatar6.jpg' }
+];
+
+const LEGACY_AVATAR_MAP = {
+  '👨‍💻': 'avatar1',
+  '👩‍💻': 'avatar2',
+  '🤖': 'avatar3',
+  '🦊': 'avatar4',
+  '🛡️': 'avatar5',
+  '⚡': 'avatar6'
+};
+
+function resolveAvatar(val) {
+  const mappedId = LEGACY_AVATAR_MAP[val] || val;
+  return AVATARS.find((a) => a.id === mappedId) || AVATARS[0];
+}
 
 const RANKS = [
   { minXp: 0, title: 'Rookie Technician' },

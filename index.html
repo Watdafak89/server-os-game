@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=3.7" />
+  <link rel="stylesheet" href="styles.css?v=3.8" />
 </head>
 <body>
   <div class="cyber-bg" aria-hidden="true"></div>
@@ -40,7 +40,8 @@
         <div class="save-preview" id="titleSavePreview"></div>
         <div class="title-actions" style="display:flex;justify-content:center;gap:0.75rem;flex-wrap:wrap;">
           <button class="btn btn-neon btn-xl" id="enterGameBtn">▶ เข้าสู่ศูนย์ข้อมูล (PLAY GAME)</button>
-          <button class="btn btn-secondary btn-lg" id="titleLogoutBtn">🚪 สลับบัญชี / ออกจากระบบ</button>
+          <button class="btn btn-secondary btn-lg" id="titleChangeAvatarBtn">🎨 เปลี่ยน Avatar</button>
+          <button class="btn btn-ghost btn-lg" id="titleLogoutBtn">🚪 สลับบัญชี</button>
         </div>
       </div>
 
@@ -171,8 +172,8 @@
   <div id="gameShell" class="game-shell hidden">
     <!-- TOP PERSISTENT GAME HUD -->
     <header class="game-hud no-print">
-      <div class="hud-player" id="hudProfileBtn" title="กลับหน้า Title / เปลี่ยนตัวละคร">
-        <div class="hud-avatar" id="hudAvatar">👨‍💻</div>
+      <div class="hud-player" id="hudProfileBtn" title="คลิกเพื่อเปลี่ยน Avatar อนิเมะ">
+        <div class="hud-avatar" id="hudAvatar"></div>
         <div class="hud-player-info">
           <div class="hud-name-row">
             <strong id="hudPlayerName">SysAdmin</strong>
@@ -399,7 +400,7 @@
 
         <!-- NPC Dialogue Strip -->
         <div class="dialogue-bar" id="battleDialogueBar">
-          <div class="npc-avatar">🤖</div>
+          <div class="npc-avatar"><img src="assets/avatars/avatar3.jpg" alt="NOVA-09" class="avatar-img sm" /></div>
           <div class="dialogue-text" id="battleDialogueText">...</div>
         </div>
 
@@ -1187,14 +1188,26 @@
     </nav>
   </div>
 
+  <!-- Anime Avatar Picker Modal -->
+  <div id="avatarModal" class="modal-backdrop hidden no-print" role="dialog" aria-modal="true" aria-labelledby="avatarModalTitle">
+    <div class="avatar-modal-card">
+      <div class="panel-header">
+        <h3 id="avatarModalTitle">🎨 เลือกตัวละคร Avatar แนวอนิเมะ</h3>
+        <button type="button" class="icon-btn" id="closeAvatarModalBtn" aria-label="ปิด">✕</button>
+      </div>
+      <p class="muted-text" style="margin-bottom:1rem;">คลิกเลือกตัวละครที่คุณชื่นชอบ ระบบจะบันทึกและอัปเดตบนแผนที่โลก ฉากต่อสู้ และ Leaderboard ทันที!</p>
+      <div id="modalAvatarGrid" class="modal-avatar-grid"></div>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="cloud-config.js?v=3.7"></script>
-  <script src="audio.js?v=3.7"></script>
-  <script src="data.js?v=3.7"></script>
-  <script src="codex-data.js?v=3.7"></script>
-  <script src="auth.js?v=3.7"></script>
-  <script src="game.js?v=3.7"></script>
+  <script src="cloud-config.js?v=3.8"></script>
+  <script src="audio.js?v=3.8"></script>
+  <script src="data.js?v=3.8"></script>
+  <script src="codex-data.js?v=3.8"></script>
+  <script src="auth.js?v=3.8"></script>
+  <script src="game.js?v=3.8"></script>
 </body>
 </html>

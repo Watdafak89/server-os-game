@@ -8,11 +8,16 @@
 
   let prefs = loadPrefs();
   let currentAccount = null;
-  let state = AuthSystem.createEmptyGameData('SysAdmin', '👨‍💻');
-  let selectedRegAvatar = '👨‍💻';
+  let state = AuthSystem.createEmptyGameData('SysAdmin', 'avatar1');
+  let selectedRegAvatar = 'avatar1';
   let lbSortBy = 'xp';
   let defIntervalId = null;
   let blitzIntervalId = null;
+
+  function avatarHtml(val, sizeCls = 'hud-fit') {
+    const av = resolveAvatar(val);
+    return `<img src="${av.src}" alt="${av.name}" class="avatar-img ${sizeCls}" />`;
+  }
 
   function loadPrefs() {
     try {
@@ -260,15 +265,53 @@
     AVATARS.forEach((av) => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = `avatar-choice ${selectedRegAvatar === av ? 'active' : ''}`;
-      btn.textContent = av;
+      btn.className = `avatar-choice ${selectedRegAvatar === av.id ? 'active' : ''}`;
+      btn.innerHTML = `
+        <img src="${av.src}" alt="${av.name}" />
+        <span class="avatar-choice-name">${av.name}</span>
+        <span class="avatar-choice-role">${av.role}</span>
+      `;
       btn.addEventListener('click', () => {
         SoundFX.click();
-        selectedRegAvatar = av;
+        selectedRegAvatar = av.id;
         renderAvatarPicker();
       });
       picker.appendChild(btn);
     });
+  }
+
+  function openAvatarModal() {
+    SoundFX.click();
+    const grid = $('modalAvatarGrid');
+    grid.innerHTML = '';
+    const currentId = resolveAvatar(state.avatar).id;
+    AVATARS.forEach((av) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `modal-avatar-card ${currentId === av.id ? 'active' : ''}`;
+      btn.innerHTML = `
+        <img src="${av.src}" alt="${av.name}" />
+        <strong>${av.name}</strong>
+        <span class="muted-text" style="font-size:0.74rem;">${av.role}</span>
+      `;
+      btn.addEventListener('click', () => {
+        SoundFX.coin();
+        state.avatar = av.id;
+        saveState();
+        renderHud();
+        renderTitleScreen();
+        if (activeRoZoneId) openRoFieldMap(activeRoZoneId);
+        else renderRoWorldMap();
+        closeAvatarModal();
+        showToast(`🎨 เปลี่ยน Avatar เป็น ${av.name} (${av.role}) เรียบร้อย!`);
+      });
+      grid.appendChild(btn);
+    });
+    $('avatarModal').classList.remove('hidden');
+  }
+
+  function closeAvatarModal() {
+    $('avatarModal').classList.add('hidden');
   }
 
   function updateCloudBadges() {
@@ -296,7 +339,7 @@
     if (loggedIn && currentAccount) {
       $('authGate').classList.add('hidden');
       $('loggedInGate').classList.remove('hidden');
-      $('resumeAvatar').textContent = state.avatar;
+      $('resumeAvatar').innerHTML = avatarHtml(state.avatar, 'hud-fit');
       $('resumeFullName').textContent = currentAccount.fullName;
       const rBadge = $('resumeRoleBadge');
       rBadge.textContent = currentAccount.role === 'teacher' ? '👨‍🏫 ครูผู้สอน' : '🎓 นักศึกษา';
@@ -322,7 +365,7 @@
     const maxStars = ALL_STAGES_FLAT.length * 3;
     const isTeacher = currentAccount?.role === 'teacher';
 
-    $('hudAvatar').textContent = state.avatar;
+    $('hudAvatar').innerHTML = avatarHtml(state.avatar, 'hud-fit');
     $('hudPlayerName').textContent = currentAccount ? currentAccount.fullName : state.playerName;
     $('hudLevel').textContent = `LV.${rank.level}`;
     const hudRole = $('hudRoleBadge');
@@ -568,7 +611,7 @@
       pin.disabled = !unlocked;
       pin.innerHTML = `
         <div class="ro-pin-orb">
-          ${isCurrent ? `<span class="ro-pin-player">${state.avatar}</span>` : ''}
+          ${isCurrent ? `<span class="ro-pin-player">${avatarHtml(state.avatar, 'map-pin')}</span>` : ''}
           <span>${unlocked ? zone.icon : '🔒'}</span>
         </div>
         <div class="ro-pin-plate">
@@ -621,7 +664,7 @@
 
     const ground = $('roFieldGround');
     ground.className = `ro-field-ground ${zone.biome}`;
-    $('roFieldPlayerSprite').textContent = state.avatar;
+    $('roFieldPlayerSprite').innerHTML = avatarHtml(state.avatar, 'walker');
     $('roFieldPlayerName').textContent = state.playerName;
     $('roFieldPlayer').classList.remove('dash-attack');
 
@@ -914,7 +957,7 @@
     $('battleZoneChip').textContent = stage.zoneCode;
     $('battleStageTitle').textContent = stage.title;
     $('battleDialogueText').textContent = stage.dialogue;
-    $('battlePlayerSprite').textContent = state.avatar;
+    $('battlePlayerSprite').innerHTML = avatarHtml(state.avatar, 'battle');
     $('battlePlayerLabel').textContent = `${state.playerName}'s Server Core`;
     $('enemySprite').textContent = stage.enemy.sprite;
     $('enemyName').textContent = stage.enemy.name;
@@ -2814,7 +2857,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       card.className = `podium-card rank-${idx + 1}`;
       card.innerHTML = `
         <div class="podium-medal">${medals[idx]}</div>
-        <div class="podium-avatar">${entry.m.avatar}</div>
+        <div class="podium-avatar">${avatarHtml(entry.m.avatar, 'podium')}</div>
         <strong>${entry.acc.fullName}</strong>
         <span class="muted-text" style="font-size:0.76rem;">@${entry.acc.username} • ${entry.acc.classroom || '-'}</span>
         <div class="podium-score">${metricStr}</div>
@@ -2832,7 +2875,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       if (isMe) tr.className = 'me-row';
       tr.innerHTML = `
         <td><strong>#${idx + 1}</strong></td>
-        <td>${entry.m.avatar} <strong>${entry.acc.fullName}</strong> ${isMe ? '<span class="stage-chip">คุณ</span>' : ''}</td>
+        <td>${avatarHtml(entry.m.avatar, 'xs')} <strong>${entry.acc.fullName}</strong> ${isMe ? '<span class="stage-chip">คุณ</span>' : ''}</td>
         <td>${entry.acc.classroom || '-'}</td>
         <td><strong>${entry.m.xp.toLocaleString()} XP</strong> <span class="muted-text">(LV.${entry.m.rank.level})</span></td>
         <td>⭐ ${entry.m.stars}/${maxStars}</td>
@@ -2929,7 +2972,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><code>${acc.username}</code></td>
-          <td>${m.avatar} <strong>${acc.fullName}</strong></td>
+          <td>${avatarHtml(m.avatar, 'xs')} <strong>${acc.fullName}</strong></td>
           <td>${acc.classroom || '-'}</td>
           <td><strong>${m.xp.toLocaleString()}</strong></td>
           <td>⭐ ${m.stars}/${maxStars}</td>
@@ -3252,7 +3295,12 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
   /* ==================== GLOBAL BINDINGS & INIT ==================== */
   $('enterGameBtn').addEventListener('click', enterGame);
   $('hudHomeBtn').addEventListener('click', returnToTitle);
-  $('hudProfileBtn').addEventListener('click', returnToTitle);
+  $('hudProfileBtn').addEventListener('click', openAvatarModal);
+  $('titleChangeAvatarBtn').addEventListener('click', openAvatarModal);
+  $('closeAvatarModalBtn').addEventListener('click', closeAvatarModal);
+  $('avatarModal').addEventListener('click', (e) => {
+    if (e.target === $('avatarModal')) closeAvatarModal();
+  });
   $('hudLogoutBtn').addEventListener('click', handleLogout);
   $('titleLogoutBtn').addEventListener('click', handleLogout);
   $('titleThemeBtn').addEventListener('click', toggleTheme);

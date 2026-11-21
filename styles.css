@@ -3101,6 +3101,166 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   flex-wrap: wrap;
 }
 
+/* ==================== MODERN JAPANESE ANIME AVATARS & MODAL ==================== */
+.avatar-img {
+  display: inline-block;
+  object-fit: cover;
+  border-radius: 50%;
+  vertical-align: middle;
+  background: #0f172a;
+}
+
+.avatar-img.xs {
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--border-neon);
+  margin-right: 0.35rem;
+}
+
+.avatar-img.sm {
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--border-neon);
+}
+
+.avatar-img.hud-fit {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.avatar-img.map-pin {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #fde047;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.75);
+}
+
+.avatar-img.walker {
+  width: 66px;
+  height: 66px;
+  border: 3px solid #38bdf8;
+  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.45);
+}
+
+.avatar-img.podium {
+  width: 68px;
+  height: 68px;
+  border: 3px solid var(--gold);
+  box-shadow: 0 6px 18px rgba(251, 191, 36, 0.35);
+}
+
+.avatar-img.battle {
+  width: 96px;
+  height: 96px;
+  border-radius: 18px;
+  border: 3px solid #38bdf8;
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.55);
+}
+
+.hud-avatar,
+.resume-avatar {
+  padding: 0;
+  overflow: hidden;
+}
+
+.avatar-choice {
+  width: 78px;
+  height: auto;
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.avatar-choice img {
+  width: 58px;
+  height: 58px;
+  border-radius: 12px;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-choice-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.avatar-choice-role {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  line-height: 1.1;
+}
+
+.ro-pin-player {
+  top: -38px;
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgba(2, 6, 23, 0.76);
+  backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.avatar-modal-card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-neon);
+  border-radius: 18px;
+  padding: 1.4rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+}
+
+.modal-avatar-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.7rem 0.5rem;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.modal-avatar-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary);
+}
+
+.modal-avatar-card.active {
+  border-color: var(--accent);
+  background: rgba(52, 211, 153, 0.14);
+  box-shadow: 0 0 18px rgba(52, 211, 153, 0.35);
+}
+
+.modal-avatar-card img {
+  width: 92px;
+  height: 92px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
 .developer-credit {
   margin-top: 1rem;
   padding-top: 0.75rem;
