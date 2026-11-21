@@ -837,7 +837,34 @@
       routesLayer.appendChild(line);
     }
 
-    // 2. Render clickable RO Region Pins (10 per continent) + Live Other Players' Avatars
+    function shortPeerName(name) {
+      const cleaned = String(name || 'ผู้เล่น').replace(/^(นาย|นางสาว|นาง|เด็กชาย|เด็กหญิง)\s*/u, '').trim();
+      const first = cleaned.split(/\s+/)[0] || cleaned;
+      return first.length > 11 ? first.slice(0, 10) + '…' : first;
+    }
+
+    function renderPreviewPeers(peersList) {
+      const box = $('roPreviewPeers');
+      if (!box) return;
+      if (!peersList || !peersList.length) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+        return;
+      }
+      box.classList.remove('hidden');
+      box.innerHTML = `
+        <span class="zone-peers-lbl">👥 เพื่อนในโซนนี้ (${peersList.length} คน):</span>
+        ${peersList.map((p) => `
+          <span class="zone-peer-chip">
+            ${avatarHtml(p.avatar, 'hud-fit')}
+            <span class="peer-chip-name">${p.acc.fullName}</span>
+            <span class="peer-chip-star">⭐${p.totalStars}</span>
+          </span>
+        `).join('')}
+      `;
+    }
+
+    // 2. Render clickable RO Region Pins (10 per continent) + Organized Classmate Avatars & Names
     const hasWarpPass = (state.inventory?.warp_pass || 0) > 0;
     continentEntries.forEach(({ zone, zIdx }) => {
       const unlocked = isZoneUnlocked(zIdx);
@@ -848,43 +875,73 @@
       const isCurrent = zone.id === currentTargetZoneId;
       const bossStage = zone.stages[zone.stages.length - 1];
       const peersHere = peerMap.othersByZone[zone.id] || [];
-      const peerStackHtml = peersHere.length
-        ? `<div class="ro-pin-peers" title="เพื่อนในโซนนี้: ${peersHere.map((p) => p.acc.fullName).join(', ')}">
-            ${peersHere.slice(0, 3).map((p) => `<span class="peer-mini-av">${avatarHtml(p.avatar, 'hud-fit')}</span>`).join('')}
-            ${peersHere.length > 3 ? `<span class="peer-more-pill">+${peersHere.length - 3}</span>` : ''}
-          </div>`
-        : '';
+
+      let peerLabelHtml = '';
+      let peerPopoverHtml = '';
+      if (peersHere.length === 1) {
+        const p = peersHere[0];
+        peerLabelHtml = `
+          <div class="ro-pin-peer-tag">
+            <span class="peer-mini-av">${avatarHtml(p.avatar, 'hud-fit')}</span>
+            <span class="ro-peer-tag-name">${shortPeerName(p.acc.fullName)}</span>
+          </div>
+        `;
+      } else if (peersHere.length > 1) {
+        const firstP = peersHere[0];
+        const popPos = zone.mapY < 34 ? 'pop-bottom' : 'pop-top';
+        peerLabelHtml = `
+          <div class="ro-pin-peer-tag multi">
+            <span class="ro-pin-peer-stack">
+              ${peersHere.slice(0, 3).map((p) => `<span class="peer-mini-av">${avatarHtml(p.avatar, 'hud-fit')}</span>`).join('')}
+            </span>
+            <span class="ro-peer-tag-name">${shortPeerName(firstP.acc.fullName)} +${peersHere.length - 1}</span>
+          </div>
+        `;
+        peerPopoverHtml = `
+          <div class="ro-pin-peer-popover ${popPos}">
+            <div class="pop-head">👥 เพื่อนในโซนนี้ (${peersHere.length} คน)</div>
+            <div class="pop-grid">
+              ${peersHere.slice(0, 8).map((p) => `
+                <div class="pop-row">
+                  <span class="pop-av">${avatarHtml(p.avatar, 'hud-fit')}</span>
+                  <span class="pop-name">${p.acc.fullName}</span>
+                  <span class="pop-star">⭐${p.totalStars}</span>
+                </div>
+              `).join('')}
+              ${peersHere.length > 8 ? `<div class="pop-more">และเพื่อนอีก ${peersHere.length - 8} คน...</div>` : ''}
+            </div>
+          </div>
+        `;
+      }
 
       const pin = document.createElement('button');
       pin.type = 'button';
-      pin.className = `ro-pin ${cleared ? 'cleared' : ''} ${isCurrent ? 'current-target' : ''} ${canWarpHere ? 'can-warp' : ''}`;
+      pin.className = `ro-pin ${cleared ? 'cleared' : ''} ${isCurrent ? 'current-target' : ''} ${canWarpHere ? 'can-warp' : ''} ${peersHere.length ? 'has-peers' : ''}`;
       pin.style.left = `${zone.mapX}%`;
       pin.style.top = `${zone.mapY}%`;
       pin.style.setProperty('--zone-color', zone.themeColor);
       pin.disabled = !unlocked && !canWarpHere;
       pin.innerHTML = `
+        ${peerPopoverHtml}
         <div class="ro-pin-orb">
           ${isCurrent ? `<span class="ro-pin-player">${avatarHtml(state.avatar, 'map-pin')}</span>` : ''}
           <span class="ro-pin-art">${unlocked ? AnimeSprites.getZoneIcon(zone.id, zone.tag) : (canWarpHere ? '🌀' : '🔒')}</span>
-          ${peerStackHtml}
         </div>
         <div class="ro-pin-plate">
           <span class="ro-pin-name">${zone.code}: ${zone.roName}</span>
           <span class="ro-pin-meta">${canWarpHere ? '🌀 คลิกใช้ตั๋ววาร์ป!' : `${zone.lvRange} • ⭐${earned}/${maxS}`}</span>
         </div>
+        ${peerLabelHtml}
       `;
-
-      const peerSummary = peersHere.length
-        ? ` • 👥 เพื่อนในโซนนี้ (${peersHere.length} คน): ${peersHere.slice(0, 4).map((p) => p.acc.fullName).join(', ')}${peersHere.length > 4 ? '...' : ''}`
-        : '';
 
       const updatePreview = () => {
         $('roPreviewTitle').textContent = `[${zone.code} • ${zone.roCode}] ${zone.roName} — ${zone.name} (${zone.lvRange})`;
-        $('roPreviewDesc').textContent = (unlocked
+        $('roPreviewDesc').textContent = unlocked
           ? `${zone.subtitle} • 👑 MVP: ${bossStage.enemy.name}`
           : (canWarpHere
             ? `🌀 คลิกเพื่อใช้ Dimensional Zone Warp Pass ปลดล็อกข้ามโซนทันที! • 👑 MVP: ${bossStage.enemy.name}`
-            : `🔒 ล็อกอยู่ — ปราบ MVP Boss ของโซนก่อนหน้าให้สำเร็จเพื่อปลดล็อก!`)) + peerSummary;
+            : `🔒 ล็อกอยู่ — ปราบ MVP Boss ของโซนก่อนหน้าให้สำเร็จเพื่อปลดล็อก!`);
+        renderPreviewPeers(peersHere);
       };
 
       pin.addEventListener('mouseenter', updatePreview);
@@ -908,6 +965,7 @@
       const defBoss = defZone.stages[defZone.stages.length - 1];
       $('roPreviewTitle').textContent = `[${defZone.code} • ${defZone.roCode}] ${defZone.roName} — ${defZone.name} (${defZone.lvRange})`;
       $('roPreviewDesc').textContent = `${defZone.subtitle} • 👑 MVP: ${defBoss.enemy.name} • คลิกที่ไอคอนเมืองบนแผนที่เพื่อเข้าไปตะลุยด่าน!`;
+      renderPreviewPeers(peerMap.othersByZone[defZone.id] || []);
     }
   }
 
@@ -1072,11 +1130,25 @@
       }).join('');
 
       const zonePeers = peerSnap.othersByZone[zone.id] || [];
+      const visiblePeers = zonePeers.slice(0, 6);
+      const hiddenPeers = zonePeers.slice(6);
+      const renderPeerChip = (p) => `
+        <span class="zone-peer-chip">
+          ${avatarHtml(p.avatar, 'hud-fit')}
+          <span class="peer-chip-name">${p.acc.fullName}</span>
+          <span class="peer-chip-star">⭐${p.totalStars}</span>
+        </span>
+      `;
       const zonePeersHtml = zonePeers.length
         ? `<div class="zone-peers-strip">
-            <span class="zone-peers-lbl">👥 เพื่อนที่อยู่โซนนี้ (${zonePeers.length}):</span>
-            ${zonePeers.slice(0, 6).map((p) => `<span class="zone-peer-chip">${avatarHtml(p.avatar, 'hud-fit')}<span>${p.acc.fullName}</span></span>`).join('')}
-            ${zonePeers.length > 6 ? `<span class="zone-peer-chip">+${zonePeers.length - 6} คน</span>` : ''}
+            <div class="zone-peers-head">
+              <span class="zone-peers-lbl">👥 เพื่อนที่อยู่โซนนี้ (${zonePeers.length} คน)</span>
+              ${hiddenPeers.length ? `<button type="button" class="btn btn-ghost btn-xs toggle-extra-peers-btn">ดูทั้งหมด (+${hiddenPeers.length} คน) ▾</button>` : ''}
+            </div>
+            <div class="zone-peers-chips">
+              ${visiblePeers.map(renderPeerChip).join('')}
+              ${hiddenPeers.length ? `<span class="extra-peers-wrap hidden">${hiddenPeers.map(renderPeerChip).join('')}</span>` : ''}
+            </div>
           </div>`
         : '';
 
@@ -1100,6 +1172,12 @@
       `;
 
       card.querySelector('.list-warp-btn')?.addEventListener('click', () => useWarpPassOnZone(zone));
+      card.querySelector('.toggle-extra-peers-btn')?.addEventListener('click', (ev) => {
+        const extra = card.querySelector('.extra-peers-wrap');
+        if (!extra) return;
+        const open = extra.classList.toggle('hidden');
+        ev.currentTarget.textContent = open ? `ดูทั้งหมด (+${hiddenPeers.length} คน) ▾` : 'ซ่อนบางส่วน ▴';
+      });
 
       card.querySelectorAll('.stage-node:not(:disabled)').forEach((btn) => {
         btn.addEventListener('click', () => {
