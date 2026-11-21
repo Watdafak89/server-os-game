@@ -257,6 +257,8 @@
 
         <!-- Visual RPG Combat Stage -->
         <div class="combat-arena" id="combatArena">
+          <div class="arena-scanlines" aria-hidden="true"></div>
+          <div class="battle-intro-banner hidden" id="battleIntroBanner">⚔️ BATTLE START!</div>
           <div class="fx-layer" id="battleFxLayer"></div>
 
           <!-- Left: Player Server Core -->
@@ -312,6 +314,7 @@
 
         <!-- Battle Outcome Overlay Card -->
         <div class="outcome-card hidden" id="battleOutcomeCard">
+          <div class="confetti-layer" id="victoryConfettiLayer" aria-hidden="true"></div>
           <div class="outcome-emoji" id="outcomeEmoji">🏆</div>
           <h2 id="outcomeTitle">VICTORY!</h2>
           <div class="outcome-stars" id="outcomeStars">⭐⭐⭐</div>

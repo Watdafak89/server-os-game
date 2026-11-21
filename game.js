@@ -481,6 +481,9 @@
     const container = $('worldMapContainer');
     container.innerHTML = '';
 
+    const nextTargetStage = ALL_STAGES_FLAT.find((s, i) => isStageUnlocked(i) && !state.stageStars[s.id]);
+    const nextTargetId = nextTargetStage ? nextTargetStage.id : null;
+
     let globalIdx = 0;
     CAMPAIGN_ZONES.forEach((zone) => {
       const zoneEarned = zone.stages.reduce((acc, st) => acc + (state.stageStars[st.id] || 0), 0);
@@ -494,11 +497,13 @@
         const myFlatIdx = globalIdx++;
         const unlocked = isStageUnlocked(myFlatIdx);
         const stars = state.stageStars[stage.id] || 0;
+        const isNext = stage.id === nextTargetId;
         const starStr = stars > 0 ? '⭐'.repeat(stars) + '☆'.repeat(3 - stars) : (unlocked ? '☆☆☆' : '🔒 ล็อกอยู่');
 
         return `
-          <button type="button" class="stage-node ${stars > 0 ? 'cleared' : ''} ${stage.isBoss ? 'boss-node' : ''} ${!unlocked ? 'locked' : ''}"
+          <button type="button" class="stage-node ${stars > 0 ? 'cleared' : ''} ${stage.isBoss ? 'boss-node' : ''} ${isNext ? 'next-target-node' : ''} ${!unlocked ? 'locked' : ''}"
             data-stage-id="${stage.id}" ${!unlocked ? 'disabled' : ''}>
+            ${isNext ? '<span class="next-badge">▶ NEXT</span>' : ''}
             <div class="node-sprite">${unlocked ? stage.enemy.sprite : '🔒'}</div>
             <div class="node-name">${stage.title}</div>
             <div class="node-stars">${starStr}</div>
@@ -533,8 +538,19 @@
     });
   }
 
-  /* ==================== SCREEN 2: RPG BATTLE ENGINE ==================== */
+  /* ==================== SCREEN 2: RPG BATTLE ENGINE + VFX ==================== */
   let battle = null;
+
+  function animateClass(elOrId, cls, durationMs = 600) {
+    const el = typeof elOrId === 'string' ? $(elOrId) : elOrId;
+    if (!el) return;
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+    if (durationMs > 0) {
+      setTimeout(() => el.classList.remove(cls), durationMs);
+    }
+  }
 
   function spawnFx(text, cls) {
     const layer = $('battleFxLayer');
@@ -542,14 +558,84 @@
     el.className = `float-fx ${cls}`;
     el.textContent = text;
     layer.appendChild(el);
-    setTimeout(() => el.remove(), 950);
+    setTimeout(() => el.remove(), 980);
+  }
+
+  function spawnBeam(cls) {
+    const layer = $('battleFxLayer');
+    const beam = document.createElement('div');
+    beam.className = `energy-beam ${cls}`;
+    layer.appendChild(beam);
+    setTimeout(() => beam.remove(), 380);
+  }
+
+  function spawnShockwave(posCls) {
+    const layer = $('battleFxLayer');
+    const ring = document.createElement('div');
+    ring.className = `impact-ring ${posCls}`;
+    layer.appendChild(ring);
+    setTimeout(() => ring.remove(), 520);
+  }
+
+  function spawnParticles(leftPct, colors, count = 12) {
+    const layer = $('battleFxLayer');
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'vfx-particle';
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+      const dist = 38 + Math.random() * 68;
+      p.style.left = `${leftPct}%`;
+      p.style.top = '45%';
+      p.style.background = colors[i % colors.length];
+      p.style.setProperty('--dx', `${Math.round(Math.cos(angle) * dist)}px`);
+      p.style.setProperty('--dy', `${Math.round(Math.sin(angle) * dist)}px`);
+      layer.appendChild(p);
+      setTimeout(() => p.remove(), 650);
+    }
+  }
+
+  function playIntroBanner(text, isBoss) {
+    const banner = $('battleIntroBanner');
+    banner.textContent = text;
+    banner.className = `battle-intro-banner ${isBoss ? 'boss-banner' : ''}`;
+    void banner.offsetWidth;
+    setTimeout(() => banner.classList.add('hidden'), 1380);
+  }
+
+  function spawnVictoryConfetti() {
+    const layer = $('victoryConfettiLayer');
+    layer.innerHTML = '';
+    const colors = ['#38bdf8', '#34d399', '#fbbf24', '#f472b6', '#a78bfa', '#ffffff'];
+    for (let i = 0; i < 38; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = `${Math.random() * 100}%`;
+      piece.style.background = colors[i % colors.length];
+      piece.style.animationDelay = `${(Math.random() * 0.45).toFixed(2)}s`;
+      piece.style.setProperty('--dur', `${(1.4 + Math.random() * 1.1).toFixed(2)}s`);
+      piece.style.setProperty('--drift', `${Math.round((Math.random() - 0.5) * 140)}px`);
+      piece.style.setProperty('--rot', `${Math.round(360 + Math.random() * 540)}deg`);
+      layer.appendChild(piece);
+    }
+  }
+
+  function renderAnimatedStars(earnedStars) {
+    const wrap = $('outcomeStars');
+    wrap.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+      const span = document.createElement('span');
+      span.className = 'star-pop';
+      span.style.animationDelay = `${0.14 + i * 0.22}s`;
+      span.textContent = i < earnedStars ? '⭐' : '☆';
+      wrap.appendChild(span);
+      if (i < earnedStars) {
+        setTimeout(() => SoundFX.coin(), 160 + i * 220);
+      }
+    }
   }
 
   function triggerShake(elId) {
-    const el = $(elId);
-    el.classList.remove('shake-hit');
-    void el.offsetWidth;
-    el.classList.add('shake-hit');
+    animateClass(elId, 'shake-hit', 420);
   }
 
   function startBattle(stage) {
@@ -571,6 +657,8 @@
 
     $('battleConsole').classList.remove('hidden');
     $('battleOutcomeCard').classList.add('hidden');
+    $('combatArena').classList.toggle('boss-arena', Boolean(stage.isBoss));
+    $('enemySprite').classList.remove('enemy-ko');
     $('battleZoneChip').textContent = stage.zoneCode;
     $('battleStageTitle').textContent = stage.title;
     $('battleDialogueText').textContent = stage.dialogue;
@@ -581,6 +669,12 @@
     $('enemyBossTag').classList.toggle('hidden', !stage.isBoss);
 
     switchScreen('battle');
+    animateClass('playerCombatant', 'enter-left', 600);
+    animateClass('enemyCombatant', 'enter-right', 600);
+    playIntroBanner(
+      stage.isBoss ? `🚨 WARNING! BOSS: ${stage.enemy.name} 🚨` : `⚔️ ${stage.title} — FIGHT!`,
+      stage.isBoss
+    );
     updateBattleBars();
     renderBattleQuestion();
   }
@@ -635,7 +729,8 @@
     const keys = ['A', 'B', 'C', 'D'];
     q.options.forEach((optText, idx) => {
       const btn = document.createElement('button');
-      btn.className = 'option-btn';
+      btn.className = 'option-btn option-pop';
+      btn.style.animationDelay = `${idx * 0.06}s`;
       btn.dataset.idx = idx;
       btn.innerHTML = `<span class="opt-key">${keys[idx]}</span><span>${optText}</span>`;
       btn.addEventListener('click', () => handleBattleAnswer(idx, btn));
@@ -666,24 +761,56 @@
       SoundFX.attack();
       battle.combo += 1;
       battle.enemyHp = Math.max(0, battle.enemyHp - dmgPerHit);
-      triggerShake('enemyCombatant');
-      spawnFx(`-${dmgPerHit} CRIT!`, 'dmg');
+
+      // Player lunge + Plasma beam -> Enemy impact VFX!
+      animateClass('battlePlayerSprite', 'lunge-right', 380);
+      spawnBeam('player-beam');
+      setTimeout(() => {
+        triggerShake('enemyCombatant');
+        animateClass('combatArena', 'arena-flash-ok', 460);
+        spawnShockwave('enemy-pos');
+        spawnParticles(78, ['#34d399', '#38bdf8', '#fde047'], battle.combo >= 2 ? 16 : 11);
+        if (battle.combo >= 2) {
+          spawnFx(`🔥 x${battle.combo} -${dmgPerHit} CRIT!`, 'super-crit');
+        } else {
+          spawnFx(`-${dmgPerHit} DMG!`, 'dmg');
+        }
+        if (battle.enemyHp <= 0) {
+          $('enemySprite').classList.add('enemy-ko');
+          spawnParticles(78, ['#fbbf24', '#ffffff', '#34d399'], 22);
+        }
+      }, 170);
+
       debrief.classList.add('ok');
       debrief.innerHTML = `<strong>⚡ โจมตีสำเร็จ!</strong> ${q.explain}`;
     } else {
       btn.classList.add('wrong');
       battle.combo = 0;
+
+      // Enemy counter-lunge + Red beam!
+      animateClass('enemySprite', 'lunge-left', 380);
+      spawnBeam('enemy-beam');
+
       if (battle.shieldActive) {
         SoundFX.shield();
         battle.shieldActive = false;
-        spawnFx('🛡️ BLOCKED!', 'shield');
+        setTimeout(() => {
+          spawnShockwave('shield-pos');
+          spawnParticles(22, ['#38bdf8', '#7dd3fc', '#ffffff'], 14);
+          spawnFx('🛡️ BLOCKED!', 'shield');
+        }, 170);
         debrief.classList.add('err');
         debrief.innerHTML = `<strong>🛡️ UPS Shield ป้องกันความเสียหายไว้ได้!</strong> — ${q.explain}`;
       } else {
         SoundFX.wrong();
         battle.playerHp = Math.max(0, battle.playerHp - 1);
-        triggerShake('playerCombatant');
-        spawnFx('-1 HP!', 'hit');
+        setTimeout(() => {
+          triggerShake('playerCombatant');
+          animateClass('combatArena', 'arena-shake-heavy', 480);
+          spawnShockwave('player-pos');
+          spawnParticles(22, ['#ef4444', '#f97316', '#fde047'], 14);
+          spawnFx('-1 HP!', 'hit');
+        }, 170);
         debrief.classList.add('err');
         debrief.innerHTML = `<strong>💥 เซิร์ฟเวอร์ได้รับความเสียหาย!</strong> — ${q.explain}`;
       }
@@ -705,6 +832,7 @@
   function finishBattle() {
     $('battleConsole').classList.add('hidden');
     $('battleOutcomeCard').classList.remove('hidden');
+    $('victoryConfettiLayer').innerHTML = '';
 
     const won = battle.playerHp > 0;
     const nextBtn = $('outcomeNextStageBtn');
@@ -728,7 +856,8 @@
 
       $('outcomeEmoji').textContent = battle.stage.isBoss ? '👑🏆' : '🏆';
       $('outcomeTitle').textContent = battle.stage.isBoss ? 'BOSS DEFEATED!' : 'STAGE CLEARED!';
-      $('outcomeStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+      renderAnimatedStars(stars);
+      spawnVictoryConfetti();
       $('outcomeSub').textContent = isFirstClear
         ? `ยอดเยี่ยมมาก! คุณเอาชนะ ${battle.stage.enemy.name} และปลดล็อกด่านถัดไปเรียบร้อยแล้ว`
         : `ทบทวนด่านสำเร็จ! (สถิติสูงสุด: ${state.stageStars[battle.stage.id]} ดาว)`;
@@ -780,6 +909,8 @@
     state.inventory.shield -= 1;
     battle.shieldActive = true;
     SoundFX.shield();
+    spawnShockwave('shield-pos');
+    spawnParticles(22, ['#38bdf8', '#7dd3fc', '#ffffff'], 12);
     spawnFx('🛡️ SHIELD ON!', 'shield');
     saveState();
     updateBattleBars();
@@ -808,6 +939,8 @@
     state.inventory.heal -= 1;
     battle.playerHp = battle.maxPlayerHp;
     SoundFX.levelUp();
+    spawnShockwave('heal-pos');
+    spawnParticles(22, ['#34d399', '#6ee7b7', '#ffffff'], 16);
     spawnFx('💊 FULL HP!', 'shield');
     saveState();
     updateBattleBars();
