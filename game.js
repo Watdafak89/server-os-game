@@ -479,7 +479,10 @@
       btn.classList.toggle('active', match);
     });
 
-    if (screenName === 'map') renderWorldMap();
+    if (screenName === 'map') {
+      renderWorldMap();
+      maybePullPeersForMap(false);
+    }
     if (screenName === 'cli') {
       renderCliSidebar();
       setTimeout(() => $('terminalInput')?.focus(), 60);
@@ -565,10 +568,145 @@
   let mapViewMode = 'ro'; // 'ro' | 'list'
   let activeRoZoneId = null;
   let activeContinentId = 1;
+  let mapPeerFilter = 'all'; // 'all' | 'class'
+  let lastMapCloudPull = 0;
 
-  function renderContinentBar() {
+  function maybePullPeersForMap(force = false) {
+    if (!AuthSystem.getCloudUrl()) return;
+    const now = Date.now();
+    if (!force && now - lastMapCloudPull < 20000) return;
+    lastMapCloudPull = now;
+    AuthSystem.pullAllFromCloud().then((res) => {
+      if (res.ok && $('screen-map')?.classList.contains('active')) {
+        renderWorldMap();
+        if (force) showToast('☁️ อัปเดตตำแหน่งผู้เล่นอื่นล่าสุดจาก Cloud แล้ว!');
+      }
+    });
+  }
+
+  function getAccountFrontierInfo(acc) {
+    const g = acc.gameData || {};
+    const starsMap = g.stageStars || {};
+    let frontierIdx = 0;
+    let clearedZones = 0;
+    let highestStarZoneIdx = 0;
+
+    CAMPAIGN_ZONES.forEach((z, idx) => {
+      const hasAnyStar = z.stages.some((st) => (starsMap[st.id] || 0) > 0);
+      if (hasAnyStar) highestStarZoneIdx = Math.max(highestStarZoneIdx, idx);
+      const boss = z.stages[z.stages.length - 1];
+      if ((starsMap[boss.id] || 0) > 0) {
+        clearedZones += 1;
+        if (idx + 1 < CAMPAIGN_ZONES.length) frontierIdx = Math.max(frontierIdx, idx + 1);
+        else frontierIdx = idx;
+      }
+    });
+
+    const targetIdx = Math.max(frontierIdx, highestStarZoneIdx);
+    const zone = CAMPAIGN_ZONES[targetIdx] || CAMPAIGN_ZONES[0];
+    const totalStars = Math.max(
+      Object.values(starsMap).reduce((s, x) => s + x, 0),
+      g.importedStars || 0
+    );
+    return {
+      acc,
+      isMe: Boolean(currentAccount && acc.username === currentAccount.username),
+      zone,
+      zoneIdx: targetIdx,
+      zoneNum: targetIdx + 1,
+      continent: zone.continent || 1,
+      clearedZones,
+      totalStars,
+      xp: g.xp || 0,
+      avatar: g.avatar || 'avatar1',
+      pct: Math.round((clearedZones / CAMPAIGN_ZONES.length) * 100)
+    };
+  }
+
+  function getMapPeersSnapshot() {
+    const myClass = (currentAccount?.classroom || '').trim();
+    const all = AuthSystem.getAllAccountsList()
+      .filter((a) => a.role !== 'teacher' || (currentAccount && a.username === currentAccount.username))
+      .map(getAccountFrontierInfo)
+      .filter((info) => {
+        if (mapPeerFilter === 'class' && myClass && myClass !== '-') {
+          return (info.acc.classroom || '').trim() === myClass || info.isMe;
+        }
+        return true;
+      })
+      .sort((a, b) => b.clearedZones - a.clearedZones || b.totalStars - a.totalStars || b.xp - a.xp);
+
+    const othersByZone = {};
+    const othersByContinent = {};
+    all.forEach((p) => {
+      if (p.isMe) return;
+      if (!othersByZone[p.zone.id]) othersByZone[p.zone.id] = [];
+      othersByZone[p.zone.id].push(p);
+      othersByContinent[p.continent] = (othersByContinent[p.continent] || 0) + 1;
+    });
+
+    return { all, othersByZone, othersByContinent };
+  }
+
+  function renderMapPeersPanel(snap) {
+    const grid = $('mapPeersGrid');
+    if (!grid) return;
+
+    const myClass = (currentAccount?.classroom || '').trim();
+    $('mapPeerClassBtn').classList.toggle('hidden', !myClass || myClass === '-');
+    $('mapPeerAllBtn').className = `btn btn-xs ${mapPeerFilter === 'all' ? 'btn-neon' : 'btn-ghost'}`;
+    $('mapPeerClassBtn').className = `btn btn-xs ${mapPeerFilter === 'class' ? 'btn-neon' : 'btn-ghost'}`;
+    $('mapSyncPeersBtn').classList.toggle('hidden', !AuthSystem.getCloudUrl());
+
+    const maxStars = ALL_STAGES_FLAT.length * 3;
+    const otherCount = snap.all.filter((p) => !p.isMe).length;
+    $('mapPeersCountChip').textContent = `${otherCount} เพื่อน • รวม ${snap.all.length} คน`;
+
+    if (!snap.all.length) {
+      grid.innerHTML = '<div class="muted-text" style="grid-column:1/-1;text-align:center;padding:1rem;">ยังไม่มีข้อมูลผู้เล่นอื่นบนแผนที่</div>';
+      return;
+    }
+
+    grid.innerHTML = '';
+    snap.all.slice(0, 24).forEach((p, idx) => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = `map-peer-card ${p.isMe ? 'is-me' : ''}`;
+      card.innerHTML = `
+        <div class="peer-rank-num">#${idx + 1}</div>
+        <div class="peer-av-wrap">${avatarHtml(p.avatar, 'hud-fit')}</div>
+        <div class="peer-info">
+          <div class="peer-name-row">
+            <strong>${p.acc.fullName}</strong>
+            ${p.isMe ? '<span class="role-badge sm">คุณ</span>' : ''}
+          </div>
+          <div class="peer-zone-tag" style="color:${p.zone.themeColor};">📍 ${p.zone.code}: ${p.zone.roName}</div>
+          <div class="peer-meta-row">
+            <span>ผ่าน ${p.clearedZones}/${CAMPAIGN_ZONES.length} โซน</span>
+            <span>⭐ ${p.totalStars}/${maxStars}</span>
+          </div>
+          <div class="hud-xp-bar" style="height:5px;margin-top:0.25rem;">
+            <div class="hud-xp-fill" style="width:${Math.max(2, p.pct)}%"></div>
+          </div>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        SoundFX.click();
+        activeContinentId = p.continent;
+        activeRoZoneId = null;
+        renderWorldMap();
+        $('roPreviewTitle').textContent = `👤 ${p.acc.fullName} กำลังอยู่ที่ [${p.zone.code}] ${p.zone.roName}`;
+        $('roPreviewDesc').textContent = `ผ่านแล้ว ${p.clearedZones}/${CAMPAIGN_ZONES.length} โซน • สะสม ⭐ ${p.totalStars}/${maxStars} • ${p.xp} XP`;
+        $('roWorldMapWrap')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  function renderContinentBar(snap) {
     const bar = $('continentTabsBar');
     if (!bar || typeof WORLD_CONTINENTS === 'undefined') return;
+    const peerMap = snap || getMapPeersSnapshot();
     bar.innerHTML = '';
 
     WORLD_CONTINENTS.forEach((cont) => {
@@ -578,6 +716,7 @@
       const firstIdx = cZones[0]?.idx ?? 0;
       const unlocked = isZoneUnlocked(firstIdx);
       const active = cont.id === activeContinentId;
+      const peersHere = peerMap.othersByContinent[cont.id] || 0;
 
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -589,7 +728,10 @@
           <span class="cont-range">${cont.range}</span>
         </div>
         <div class="cont-name">${cont.name.replace(/^ทวีปที่ \d+:\s*/, '')}</div>
-        <div class="cont-stars">${unlocked ? `⭐ ${earned}/${maxS}` : '🔒 ล็อกอยู่ (ดูตัวอย่างได้)'}</div>
+        <div class="cont-foot-row">
+          <span class="cont-stars">${unlocked ? `⭐ ${earned}/${maxS}` : '🔒 ล็อกอยู่'}</span>
+          ${peersHere > 0 ? `<span class="cont-peer-pill">👥 ${peersHere}</span>` : ''}
+        </div>
       `;
       btn.addEventListener('click', () => {
         SoundFX.click();
@@ -641,11 +783,12 @@
     }
   }
 
-  function renderRoWorldMap() {
+  function renderRoWorldMap(snap) {
     const routesLayer = $('roRoutesLayer');
     const pinsLayer = $('roPinsLayer');
     routesLayer.innerHTML = '';
     pinsLayer.innerHTML = '';
+    const peerMap = snap || getMapPeersSnapshot();
 
     const contInfo = (typeof WORLD_CONTINENTS !== 'undefined' && WORLD_CONTINENTS.find((c) => c.id === activeContinentId)) || null;
     if (contInfo) {
@@ -694,7 +837,7 @@
       routesLayer.appendChild(line);
     }
 
-    // 2. Render clickable RO Region Pins (10 per continent)
+    // 2. Render clickable RO Region Pins (10 per continent) + Live Other Players' Avatars
     const hasWarpPass = (state.inventory?.warp_pass || 0) > 0;
     continentEntries.forEach(({ zone, zIdx }) => {
       const unlocked = isZoneUnlocked(zIdx);
@@ -704,6 +847,13 @@
       const cleared = zone.stages.every((st) => Boolean(state.stageStars[st.id]));
       const isCurrent = zone.id === currentTargetZoneId;
       const bossStage = zone.stages[zone.stages.length - 1];
+      const peersHere = peerMap.othersByZone[zone.id] || [];
+      const peerStackHtml = peersHere.length
+        ? `<div class="ro-pin-peers" title="เพื่อนในโซนนี้: ${peersHere.map((p) => p.acc.fullName).join(', ')}">
+            ${peersHere.slice(0, 3).map((p) => `<span class="peer-mini-av">${avatarHtml(p.avatar, 'hud-fit')}</span>`).join('')}
+            ${peersHere.length > 3 ? `<span class="peer-more-pill">+${peersHere.length - 3}</span>` : ''}
+          </div>`
+        : '';
 
       const pin = document.createElement('button');
       pin.type = 'button';
@@ -716,6 +866,7 @@
         <div class="ro-pin-orb">
           ${isCurrent ? `<span class="ro-pin-player">${avatarHtml(state.avatar, 'map-pin')}</span>` : ''}
           <span class="ro-pin-art">${unlocked ? AnimeSprites.getZoneIcon(zone.id, zone.tag) : (canWarpHere ? '🌀' : '🔒')}</span>
+          ${peerStackHtml}
         </div>
         <div class="ro-pin-plate">
           <span class="ro-pin-name">${zone.code}: ${zone.roName}</span>
@@ -723,13 +874,17 @@
         </div>
       `;
 
+      const peerSummary = peersHere.length
+        ? ` • 👥 เพื่อนในโซนนี้ (${peersHere.length} คน): ${peersHere.slice(0, 4).map((p) => p.acc.fullName).join(', ')}${peersHere.length > 4 ? '...' : ''}`
+        : '';
+
       const updatePreview = () => {
         $('roPreviewTitle').textContent = `[${zone.code} • ${zone.roCode}] ${zone.roName} — ${zone.name} (${zone.lvRange})`;
-        $('roPreviewDesc').textContent = unlocked
-          ? `${zone.subtitle} • 👑 MVP: ${bossStage.enemy.name} • คลิกเพื่อวาร์ปเข้าแมพ!`
+        $('roPreviewDesc').textContent = (unlocked
+          ? `${zone.subtitle} • 👑 MVP: ${bossStage.enemy.name}`
           : (canWarpHere
-            ? `🌀 คลิกที่โซนนี้เพื่อใช้ Dimensional Zone Warp Pass ปลดล็อกข้ามโซนทันที! • 👑 MVP: ${bossStage.enemy.name}`
-            : `🔒 ล็อกอยู่ — ปราบ MVP Boss ของโซนก่อนหน้าให้สำเร็จเพื่อปลดล็อก!`);
+            ? `🌀 คลิกเพื่อใช้ Dimensional Zone Warp Pass ปลดล็อกข้ามโซนทันที! • 👑 MVP: ${bossStage.enemy.name}`
+            : `🔒 ล็อกอยู่ — ปราบ MVP Boss ของโซนก่อนหน้าให้สำเร็จเพื่อปลดล็อก!`)) + peerSummary;
       };
 
       pin.addEventListener('mouseenter', updatePreview);
@@ -847,7 +1002,9 @@
 
   function renderWorldMap() {
     renderDailyQuests();
-    renderContinentBar();
+    const peerSnap = getMapPeersSnapshot();
+    renderContinentBar(peerSnap);
+    renderMapPeersPanel(peerSnap);
     const allowFreePlay = isTeacherAccount();
     $('mapFreePlayWrap').classList.toggle('hidden', !allowFreePlay);
     $('mapFreePlayToggle').checked = allowFreePlay && state.freePlay;
@@ -864,7 +1021,7 @@
       } else {
         $('roFieldView').classList.add('hidden');
         $('roWorldMapWrap').classList.remove('hidden');
-        renderRoWorldMap();
+        renderRoWorldMap(peerSnap);
       }
       return;
     }
@@ -914,6 +1071,15 @@
         `;
       }).join('');
 
+      const zonePeers = peerSnap.othersByZone[zone.id] || [];
+      const zonePeersHtml = zonePeers.length
+        ? `<div class="zone-peers-strip">
+            <span class="zone-peers-lbl">👥 เพื่อนที่อยู่โซนนี้ (${zonePeers.length}):</span>
+            ${zonePeers.slice(0, 6).map((p) => `<span class="zone-peer-chip">${avatarHtml(p.avatar, 'hud-fit')}<span>${p.acc.fullName}</span></span>`).join('')}
+            ${zonePeers.length > 6 ? `<span class="zone-peer-chip">+${zonePeers.length - 6} คน</span>` : ''}
+          </div>`
+        : '';
+
       card.innerHTML = `
         <div class="zone-header">
           <div class="zone-title-wrap">
@@ -929,6 +1095,7 @@
             <div class="zone-stars">⭐ ${zoneEarned}/${zoneMax}</div>
           </div>
         </div>
+        ${zonePeersHtml}
         <div class="stage-path">${stagesHtml}</div>
       `;
 
@@ -957,6 +1124,20 @@
     SoundFX.click();
     mapViewMode = 'list';
     renderWorldMap();
+  });
+  $('mapPeerAllBtn').addEventListener('click', () => {
+    SoundFX.click();
+    mapPeerFilter = 'all';
+    renderWorldMap();
+  });
+  $('mapPeerClassBtn').addEventListener('click', () => {
+    SoundFX.click();
+    mapPeerFilter = 'class';
+    renderWorldMap();
+  });
+  $('mapSyncPeersBtn').addEventListener('click', () => {
+    SoundFX.click();
+    maybePullPeersForMap(true);
   });
 
   /* ==================== SCREEN 2: RPG BATTLE ENGINE + VFX ==================== */
