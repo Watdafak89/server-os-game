@@ -2834,8 +2834,36 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
   /* ==================== SCREEN 7: INTERACTIVE CODEX LIBRARY & STATS ==================== */
   let activeCodexIdx = null;
+  let codexContFilter = 0; // 0 = all, 1..5 = continent
+
+  function renderCodexFilterBar() {
+    const bar = $('codexContinentFilter');
+    if (!bar) return;
+    const filters = [
+      { id: 0, label: `📚 ทั้งหมด (${CODEX_VOLUMES.length} เล่ม)` },
+      { id: 1, label: '🖥️ ทวีป 1: Core (Z01–10)' },
+      { id: 2, label: '🐧 ทวีป 2: Linuxia (Z11–20)' },
+      { id: 3, label: '🪟 ทวีป 3: WinServer (Z21–30)' },
+      { id: 4, label: '☁️ ทวีป 4: NetCloud (Z31–40)' },
+      { id: 5, label: '🔥 ทวีป 5: Apex (Z41–50)' }
+    ];
+    bar.innerHTML = '';
+    filters.forEach((f) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `btn btn-xs ${codexContFilter === f.id ? 'btn-neon' : 'btn-ghost'}`;
+      btn.textContent = f.label;
+      btn.addEventListener('click', () => {
+        SoundFX.click();
+        codexContFilter = f.id;
+        renderCodexBookshelf();
+      });
+      bar.appendChild(btn);
+    });
+  }
 
   function renderCodexBookshelf() {
+    renderCodexFilterBar();
     const readList = state.readChapters || [];
     $('codexReadChip').textContent = `อ่านแล้ว ${readList.length} / ${CODEX_VOLUMES.length} เล่ม`;
 
@@ -2844,10 +2872,12 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     grid.innerHTML = '';
 
     const filtered = CODEX_VOLUMES.map((vol, idx) => ({ vol, idx })).filter(({ vol }) => {
+      if (codexContFilter > 0 && (vol.continent || 1) !== codexContFilter) return false;
       if (!q) return true;
       return vol.title.toLowerCase().includes(q) ||
         vol.subtitle.toLowerCase().includes(q) ||
-        vol.vol.toLowerCase().includes(q);
+        vol.vol.toLowerCase().includes(q) ||
+        (vol.zoneRange || '').toLowerCase().includes(q);
     });
 
     if (!filtered.length) {
@@ -2866,6 +2896,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
           <span class="book-vol-tag">${vol.vol} • ⏱️ ${vol.readTime}</span>
           <span class="book-icon">${vol.icon}</span>
         </div>
+        ${vol.zoneRange ? `<div class="book-zone-pill">🗺️ สำหรับพิชิต: ${vol.zoneRange}</div>` : ''}
         <div class="book-title">${vol.title}</div>
         <div class="book-sub">${vol.subtitle}</div>
         <div class="book-foot">
@@ -2912,11 +2943,13 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       <div class="reader-hero">
         <div class="reader-hero-top">
           <span class="book-vol-tag" style="--book-color:${vol.color}">${vol.icon} ${vol.vol}</span>
+          ${vol.zoneRange ? `<span class="stage-chip">🗺️ ${vol.zoneRange}</span>` : ''}
           <span class="stage-chip">⏱️ เวลาอ่านประมาณ ${vol.readTime}</span>
           ${isRead ? '<span class="role-badge">✅ อ่านเข้าใจแล้ว</span>' : ''}
         </div>
         <h2>${vol.title}</h2>
         <p class="muted-text">${vol.subtitle}</p>
+        ${vol.zoneRange ? `<div style="margin-top:0.7rem;"><button type="button" class="btn btn-secondary btn-sm" id="codexGoZoneBtn">⚔️ ไปพิชิต ${vol.zoneRange} บนแผนที่โลก →</button></div>` : ''}
       </div>
 
       <div class="reader-objectives">
@@ -2943,6 +2976,13 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
         <ul>${vol.examTips.map((t) => `<li>${t}</li>`).join('')}</ul>
       </div>
     `;
+
+    $('codexGoZoneBtn')?.addEventListener('click', () => {
+      activeCodexIdx = null;
+      activeContinentId = vol.continent || 1;
+      activeRoZoneId = null;
+      switchScreen('map');
+    });
 
     $('codexPrevBtn').disabled = idx <= 0;
     const isLast = idx >= CODEX_VOLUMES.length - 1;

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=5.0" />
+  <link rel="stylesheet" href="styles.css?v=5.1" />
 </head>
 <body>
   <div class="cyber-bg" aria-hidden="true"></div>
@@ -15,7 +15,7 @@
   <!-- ==================== GAME TITLE / AUTH GATE SCREEN ==================== -->
   <section id="titleScreen" class="title-screen no-print">
     <div class="title-card">
-      <div class="title-badge">SERVER OS RPG • 50 ZONES • 150 STAGES • 30 CLI LABS • 10 BOOKS</div>
+      <div class="title-badge">SERVER OS RPG • 50 ZONES • 150 STAGES • 30 CLI LABS • 20 BOOKS</div>
       <h1 class="game-logo">
         <span class="logo-main">SERVEROPS</span>
         <span class="logo-sub">DATA CENTER DEFENDER</span>
@@ -875,16 +875,17 @@
         <div id="codexLibraryView">
           <div class="screen-header">
             <div>
-              <h2>📖 ห้องสมุดตำราเรียน SysAdmin (10 เล่มพร้อมภาพประกอบ)</h2>
-              <p class="muted-text">คลิกเข้าไปอ่านตำราแต่ละเล่มเพื่อดูแผนภาพอธิบาย ตารางเปรียบเทียบ ตัวอย่างคำสั่ง และรับโบนัส <strong>+25 XP / 💰20</strong> ต่อเล่ม!</p>
+              <h2>📖 ห้องสมุดตำราเรียน SysAdmin (20 เล่ม ครอบคลุมครบ 50 โซน!)</h2>
+              <p class="muted-text">อ่านตำราเรียนพร้อมแผนภาพประกอบ ตารางเปรียบเทียบ และ Cheat Sheet ที่ตรงกับแต่ละด่านบนแผนที่ เพื่อนำไปพิชิตบอส + รับโบนัส <strong>+25 XP / 💰20</strong> ต่อเล่ม!</p>
             </div>
             <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-              <span class="stage-chip" id="codexReadChip">อ่านแล้ว 0 / 10 เล่ม</span>
-              <input type="text" id="codexSearchInput" class="game-input left-input sm-input" style="max-width:210px;" placeholder="🔍 ค้นหาบทเรียน..." />
+              <span class="stage-chip" id="codexReadChip">อ่านแล้ว 0 / 20 เล่ม</span>
+              <input type="text" id="codexSearchInput" class="game-input left-input sm-input" style="max-width:220px;" placeholder="🔍 ค้นหาบทเรียน / โซน..." />
               <button class="btn btn-ghost btn-sm" id="resetSaveBtn">🗑️ ล้างเซฟ</button>
             </div>
           </div>
 
+          <div id="codexContinentFilter" class="codex-filter-bar"></div>
           <div id="codexChapters" class="bookshelf-grid"></div>
 
           <h3 class="section-heading">📊 สถิติความเชี่ยวชาญ 10 หมวดวิชา (Skill Mastery)</h3>
@@ -1410,15 +1411,16 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="cloud-config.js?v=5.0"></script>
-  <script src="audio.js?v=5.0"></script>
-  <script src="data.js?v=5.0"></script>
-  <script src="anime-avatars.js?v=5.0"></script>
-  <script src="zones-expansion.js?v=5.0"></script>
-  <script src="codex-data.js?v=5.0"></script>
-  <script src="auth.js?v=5.0"></script>
-  <script src="vbox-sim.js?v=5.0"></script>
-  <script src="anime-sprites.js?v=5.0"></script>
-  <script src="game.js?v=5.0"></script>
+  <script src="cloud-config.js?v=5.1"></script>
+  <script src="audio.js?v=5.1"></script>
+  <script src="data.js?v=5.1"></script>
+  <script src="anime-avatars.js?v=5.1"></script>
+  <script src="zones-expansion.js?v=5.1"></script>
+  <script src="codex-data.js?v=5.1"></script>
+  <script src="codex-expansion.js?v=5.1"></script>
+  <script src="auth.js?v=5.1"></script>
+  <script src="vbox-sim.js?v=5.1"></script>
+  <script src="anime-sprites.js?v=5.1"></script>
+  <script src="game.js?v=5.1"></script>
 </body>
 </html>

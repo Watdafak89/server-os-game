@@ -4477,6 +4477,27 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   object-fit: cover;
 }
 
+.codex-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.book-zone-pill {
+  display: inline-block;
+  align-self: flex-start;
+  font-family: 'JetBrains Mono', 'Prompt', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.14rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.14);
+  color: var(--primary);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  margin-bottom: 0.35rem;
+}
+
 .map-peers-panel {
   margin-top: 1.25rem;
 }
