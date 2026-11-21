@@ -12,37 +12,122 @@
 <body>
   <div class="cyber-bg" aria-hidden="true"></div>
 
-  <!-- ==================== GAME TITLE / START SCREEN ==================== -->
+  <!-- ==================== GAME TITLE / AUTH GATE SCREEN ==================== -->
   <section id="titleScreen" class="title-screen no-print">
     <div class="title-card">
-      <div class="title-badge">SERVER OS RPG • EDITION 2.0 • 18 STAGES + 14 CLI LABS</div>
+      <div class="title-badge">SERVER OS RPG • EDITION 2.1 • LOGIN &amp; CLASSROOM SYSTEM</div>
       <h1 class="game-logo">
         <span class="logo-main">SERVEROPS</span>
         <span class="logo-sub">DATA CENTER DEFENDER</span>
       </h1>
       <p class="title-tagline">
         เกมผจญภัยสวมบทบาทผู้ดูแลระบบเครื่องแม่ข่าย • รายวิชาระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น<br />
-        พิชิต 6 โซนศูนย์ข้อมูล สู้บอสไซเบอร์ ฝึก Linux &amp; Windows CLI ป้องกันพอร์ต ไขปริศนา CHMOD/RAID และชิงใบรับรอง SysAdmin!
+        เข้าสู่ระบบเพื่อบันทึกความก้าวหน้า แข่งขันบน Leaderboard และเก็บคะแนนส่งอาจารย์ผู้สอน
       </p>
 
-      <div class="profile-setup">
-        <div class="avatar-picker-label">เลือกตัวละคร SysAdmin ของคุณ:</div>
-        <div id="avatarPicker" class="avatar-picker"></div>
-        <div class="callsign-row">
-          <input type="text" id="playerNameInput" class="game-input" placeholder="ตั้งชื่อผู้ดูแลระบบ (เช่น Admin ต้น)" maxlength="32" />
+      <!-- Already Logged In Resume Box -->
+      <div id="loggedInGate" class="auth-panel hidden">
+        <div class="resume-user-row">
+          <div class="resume-avatar" id="resumeAvatar">👨‍💻</div>
+          <div style="text-align:left;">
+            <div class="resume-name-row">
+              <strong id="resumeFullName">ผู้ใช้งาน</strong>
+              <span class="role-badge" id="resumeRoleBadge">นักศึกษา</span>
+            </div>
+            <div class="muted-text" id="resumeMeta">@username • ห้องเรียน</div>
+          </div>
+        </div>
+        <div class="save-preview" id="titleSavePreview"></div>
+        <div class="title-actions" style="display:flex;justify-content:center;gap:0.75rem;flex-wrap:wrap;">
+          <button class="btn btn-neon btn-xl" id="enterGameBtn">▶ เข้าสู่ศูนย์ข้อมูล (PLAY GAME)</button>
+          <button class="btn btn-secondary btn-lg" id="titleLogoutBtn">🚪 สลับบัญชี / ออกจากระบบ</button>
         </div>
       </div>
 
-      <div class="save-preview" id="titleSavePreview"></div>
+      <!-- Auth Gate (Login / Register Tabs) -->
+      <div id="authGate" class="auth-panel">
+        <div class="auth-tabs">
+          <button type="button" class="auth-tab active" id="tabLoginBtn" data-auth-tab="login">🔑 เข้าสู่ระบบ (Login)</button>
+          <button type="button" class="auth-tab" id="tabRegisterBtn" data-auth-tab="register">📝 สมัครสมาชิก (Register)</button>
+        </div>
 
-      <div class="title-actions">
-        <button class="btn btn-neon btn-xl" id="enterGameBtn">▶ เข้าสู่ศูนย์ข้อมูล (PLAY GAME)</button>
+        <div id="authErrorBox" class="auth-error hidden"></div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="auth-form">
+          <div class="form-field">
+            <label for="loginUsername">รหัสนักศึกษา / ชื่อผู้ใช้ (Username)</label>
+            <input type="text" id="loginUsername" class="game-input left-input" placeholder="เช่น 6701001 หรือ student01" required autocomplete="username" />
+          </div>
+          <div class="form-field">
+            <label for="loginPassword">รหัสผ่าน (Password)</label>
+            <input type="password" id="loginPassword" class="game-input left-input" placeholder="กรอกรหัสผ่าน" required autocomplete="current-password" />
+          </div>
+          <button type="submit" class="btn btn-neon btn-lg" style="width:100%;">🔓 เข้าสู่ระบบและเริ่มเกม</button>
+
+          <div class="demo-login-bar">
+            <span class="muted-text">ทดลองใช้งานทันที (รหัส 123456):</span>
+            <div class="demo-btns">
+              <button type="button" class="btn btn-secondary btn-xs" id="demoStudentBtn">🎓 เข้าเป็นนักศึกษา (student01)</button>
+              <button type="button" class="btn btn-secondary btn-xs" id="demoTeacherBtn">👨‍🏫 เข้าเป็นครูผู้สอน (teacher)</button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" class="auth-form hidden">
+          <div class="avatar-picker-label">เลือกตัวละคร Avatar:</div>
+          <div id="avatarPicker" class="avatar-picker"></div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label for="regUsername">รหัสนักศึกษา / Username *</label>
+              <input type="text" id="regUsername" class="game-input left-input" placeholder="เช่น 6701005 (อังกฤษ/ตัวเลข)" required />
+            </div>
+            <div class="form-field">
+              <label for="regClassroom">ห้องเรียน / กลุ่มเรียน</label>
+              <input type="text" id="regClassroom" class="game-input left-input" placeholder="เช่น ปวส.1/1 หรือ IT-A" />
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="regFullName">ชื่อ-นามสกุล (ใช้แสดงบนเกียรติบัตร) *</label>
+            <input type="text" id="regFullName" class="game-input left-input" placeholder="เช่น นางสาวสุดา เรียนดี" required />
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label for="regPassword">รหัสผ่าน (อย่างน้อย 4 ตัว) *</label>
+              <input type="password" id="regPassword" class="game-input left-input" placeholder="ตั้งรหัสผ่าน" required />
+            </div>
+            <div class="form-field">
+              <label for="regConfirm">ยืนยันรหัสผ่าน *</label>
+              <input type="password" id="regConfirm" class="game-input left-input" placeholder="พิมพ์รหัสผ่านอีกครั้ง" required />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label for="regRole">บทบาทผู้ใช้ (Role)</label>
+              <select id="regRole" class="game-input left-input">
+                <option value="student">🎓 นักศึกษา (Student)</option>
+                <option value="teacher">👨‍🏫 ครูผู้สอน (Teacher)</option>
+              </select>
+            </div>
+            <div class="form-field hidden" id="teacherCodeField">
+              <label for="regTeacherCode">รหัสยืนยันครูผู้สอน *</label>
+              <input type="text" id="regTeacherCode" class="game-input left-input" placeholder="รหัส: TEACHER2026" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-neon btn-lg" style="width:100%;">✨ สมัครสมาชิกและเข้าสู่ระบบ</button>
+        </form>
       </div>
 
       <div class="title-footer-bar">
         <label class="toggle-chip">
           <input type="checkbox" id="titleFreePlayToggle" />
-          <span>🔓 โหมดอิสระ/ครูผู้สอน (ปลดล็อกทุกด่าน)</span>
+          <span>🔓 โหมดอิสระ (ปลดล็อกทุกด่าน)</span>
         </label>
         <div class="title-mini-btns">
           <button class="icon-btn" id="titleSoundBtn" title="เปิด/ปิดเสียง">🔊</button>
@@ -62,6 +147,7 @@
           <div class="hud-name-row">
             <strong id="hudPlayerName">SysAdmin</strong>
             <span class="level-tag" id="hudLevel">LV.1</span>
+            <span class="role-badge sm" id="hudRoleBadge">นักศึกษา</span>
           </div>
           <div class="hud-rank" id="hudRank">Rookie Technician</div>
           <div class="hud-xp-bar"><div class="hud-xp-fill" id="hudXpFill" style="width:0%"></div></div>
@@ -86,7 +172,8 @@
       <div class="hud-controls">
         <button class="icon-btn" id="hudSoundBtn" title="เปิด/ปิดเสียง">🔊</button>
         <button class="icon-btn" id="hudThemeBtn" title="สลับโหมดมืด/สว่าง (โปรเจคเตอร์)">☀️</button>
-        <button class="icon-btn" id="hudHomeBtn" title="กลับหน้าเริ่มต้น">🏠</button>
+        <button class="icon-btn" id="hudHomeBtn" title="กลับหน้า Title">🏠</button>
+        <button class="icon-btn" id="hudLogoutBtn" title="ออกจากระบบ (Logout)">🚪</button>
       </div>
     </header>
 
@@ -571,6 +658,135 @@
           </div>
         </div>
       </section>
+      <!-- ==================== SCREEN 9: LEADERBOARD ==================== -->
+      <section id="screen-leaderboard" class="screen">
+        <div class="screen-header">
+          <div>
+            <h2>🏆 ตารางจัดอันดับผู้ดูแลระบบ (Hall of Fame Leaderboard)</h2>
+            <p class="muted-text">เปรียบเทียบคะแนน XP, ดาวแคมเปญ, Packet Defense และผลสอบวัดความรู้ของทุกคนในห้อง</p>
+          </div>
+          <div class="os-switch-group">
+            <button class="btn btn-neon btn-sm lb-sort active" data-sort="xp">⚡ XP รวม</button>
+            <button class="btn btn-ghost btn-sm lb-sort" data-sort="stars">⭐ ดาว</button>
+            <button class="btn btn-ghost btn-sm lb-sort" data-sort="defense">🛡️ Defense</button>
+            <button class="btn btn-ghost btn-sm lb-sort" data-sort="exam">🎓 สอบวัดผล</button>
+          </div>
+        </div>
+
+        <!-- Top 3 Podium -->
+        <div id="lbPodium" class="podium-grid"></div>
+
+        <!-- Full Ranked Table -->
+        <div class="panel" style="margin-bottom:1.25rem;">
+          <div class="panel-header">
+            <h3>📋 อันดับคะแนนทั้งหมด</h3>
+            <button class="btn btn-secondary btn-sm hidden" id="lbSyncCloudBtn">☁️ ซิงค์ข้อมูลล่าสุด</button>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>อันดับ</th>
+                  <th>ผู้เล่น</th>
+                  <th>ห้องเรียน</th>
+                  <th>XP / ระดับ</th>
+                  <th>ดาว</th>
+                  <th>CLI</th>
+                  <th>Defense</th>
+                  <th>สอบวัดผล</th>
+                </tr>
+              </thead>
+              <tbody id="lbTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Student Offline Score Export Card -->
+        <div class="panel">
+          <div class="panel-header">
+            <h3>📤 ส่งรหัสผลคะแนนให้อาจารย์ผู้สอน (Offline Score Code)</h3>
+            <button class="btn btn-neon btn-sm" id="copyScoreCodeBtn">📋 คัดลอกรหัสส่งงาน</button>
+          </div>
+          <p class="muted-text" style="margin-bottom:0.65rem;">
+            หากห้องเรียนไม่ได้เปิด Cloud Sync นักศึกษาสามารถคัดลอกรหัสคะแนนด้านล่างส่งให้อาจารย์ทางแชท/Google Classroom เพื่อนำเข้าตารางคะแนนกลางได้ทันที
+          </p>
+          <textarea id="myScoreCodeOutput" class="code-textarea" rows="2" readonly></textarea>
+        </div>
+      </section>
+
+      <!-- ==================== SCREEN 10: TEACHER DASHBOARD ==================== -->
+      <section id="screen-teacher" class="screen">
+        <div class="screen-header">
+          <div>
+            <h2>👨‍🏫 Teacher Command Dashboard (ระบบจัดการสำหรับผู้สอน)</h2>
+            <p class="muted-text">ติดตามความก้าวหน้าและคะแนนนักศึกษาทุกคน กรองตามห้องเรียน ส่งออกไฟล์ Excel/CSV และรวมคะแนนทั้งห้อง</p>
+          </div>
+          <div class="os-switch-group">
+            <button class="btn btn-neon btn-sm" id="exportCsvBtn">📥 ส่งออกคะแนน Excel (CSV)</button>
+            <button class="btn btn-secondary btn-sm" id="teacherRefreshBtn">🔄 รีเฟรชตาราง</button>
+          </div>
+        </div>
+
+        <!-- Class KPIs -->
+        <div class="teacher-kpi-grid" id="teacherKpis"></div>
+
+        <!-- Student Roster Table -->
+        <div class="panel" style="margin-bottom:1.25rem;">
+          <div class="panel-header" style="flex-wrap:wrap;">
+            <h3>🧑‍🎓 รายชื่อและผลคะแนนนักศึกษา</h3>
+            <div class="teacher-filter-row">
+              <input type="text" id="teacherSearchInput" class="game-input left-input sm-input" placeholder="ค้นหารหัส / ชื่อนักศึกษา..." />
+              <select id="teacherClassFilter" class="game-input left-input sm-input">
+                <option value="">ทุกห้องเรียน</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>รหัส</th>
+                  <th>ชื่อ-นามสกุล</th>
+                  <th>ห้องเรียน</th>
+                  <th>XP</th>
+                  <th>ดาว (/54)</th>
+                  <th>CLI (/14)</th>
+                  <th>Defense</th>
+                  <th>สอบ (/15)</th>
+                  <th>เกียรติบัตร</th>
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="teacherTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Import Score Code + Optional Firebase Cloud Sync -->
+        <div class="two-col-grid">
+          <div class="panel">
+            <h3>📥 นำเข้ารหัสคะแนนนักศึกษา (Offline Import)</h3>
+            <p class="muted-text" style="margin:0.35rem 0 0.75rem;">
+              วางรหัส <code>SOPS2:...</code> ที่นักศึกษาส่งมา (วางหลายบรรทัดพร้อมกันได้ บรรทัดละ 1 คน) เพื่อรวมเข้าตารางคะแนนและ Leaderboard ทันที
+            </p>
+            <textarea id="teacherImportInput" class="code-textarea" rows="4" placeholder="วางรหัส SOPS2:... ที่นี่ (วางหลายคนพร้อมกันได้ บรรทัดละ 1 รหัส)"></textarea>
+            <button class="btn btn-neon btn-sm" id="teacherImportBtn" style="margin-top:0.65rem;">✅ นำเข้าคะแนนสู่ตาราง</button>
+          </div>
+
+          <div class="panel">
+            <h3>☁️ ตั้งค่า Cloud Sync ข้ามอุปกรณ์ (Firebase RTDB — เสริม)</h3>
+            <p class="muted-text" style="margin:0.35rem 0 0.75rem;">
+              หากต้องการให้คะแนนและ Leaderboard ซิงค์อัตโนมัติข้ามเครื่องทั้งห้อง วาง URL ของ Firebase Realtime Database (เช่น <code>https://your-app.firebaseio.com</code>)
+            </p>
+            <input type="url" id="cloudUrlInput" class="game-input left-input" style="max-width:100%;margin-bottom:0.65rem;" placeholder="https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app" />
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <button class="btn btn-neon btn-sm" id="saveCloudUrlBtn">💾 บันทึก URL</button>
+              <button class="btn btn-secondary btn-sm" id="pullCloudBtn">⬇️ ดึงข้อมูลจาก Cloud ตอนนี้</button>
+            </div>
+            <div id="cloudStatusText" class="muted-text" style="margin-top:0.6rem;"></div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- BOTTOM PERSISTENT GAME DOCK -->
@@ -590,11 +806,17 @@
       <button class="dock-btn" data-screen="shop">
         <span class="dock-icon">🛒</span><span class="dock-label">ร้านค้า</span>
       </button>
+      <button class="dock-btn" data-screen="leaderboard">
+        <span class="dock-icon">🏆</span><span class="dock-label">อันดับ</span>
+      </button>
       <button class="dock-btn" data-screen="codex">
         <span class="dock-icon">📖</span><span class="dock-label">คัมภีร์</span>
       </button>
       <button class="dock-btn" data-screen="exam">
         <span class="dock-icon">🎓</span><span class="dock-label">สอบรับรอง</span>
+      </button>
+      <button class="dock-btn hidden" id="dockTeacherBtn" data-screen="teacher">
+        <span class="dock-icon">👨‍🏫</span><span class="dock-label">ครูผู้สอน</span>
       </button>
     </nav>
   </div>
@@ -604,6 +826,7 @@
 
   <script src="audio.js"></script>
   <script src="data.js"></script>
+  <script src="auth.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

@@ -1,69 +1,57 @@
-/* ServerOps: Data Center Defender — Complete RPG & Simulation Game Engine */
+/* ServerOps: Data Center Defender — Complete RPG, Auth, Leaderboard & Teacher Engine */
 (() => {
-  const STORAGE_KEY = 'serverops_rpg_v2';
+  const PREFS_KEY = 'serverops_prefs_v2';
 
   const ALL_STAGES_FLAT = CAMPAIGN_ZONES.flatMap((zone) =>
     zone.stages.map((stage) => ({ ...stage, zoneId: zone.id, zoneCode: zone.code, zoneName: zone.name }))
   );
 
-  const defaultState = () => ({
-    playerName: 'SysAdmin',
-    avatar: '👨‍💻',
-    xp: 0,
-    coins: 100,
-    xpBoostActive: false,
-    freePlay: false,
-    inventory: {
-      shield: 1,
-      hint: 1,
-      heal: 0
-    },
-    stageStars: {}, // stageId -> 1..3
-    completedLabs: [],
-    solvedChmod: [],
-    solvedRaid: [],
-    defenseHighScore: 0,
-    examBestScore: 0,
-    examPassed: false,
-    unlockedBadges: [],
-    analytics: {
-      fundamentals: { correct: 0, total: 0 },
-      hardware: { correct: 0, total: 0 },
-      storage: { correct: 0, total: 0 },
-      network: { correct: 0, total: 0 },
-      users: { correct: 0, total: 0 },
-      cli: { correct: 0, total: 0 },
-      security: { correct: 0, total: 0 },
-      backup: { correct: 0, total: 0 }
-    },
-    theme: 'dark',
-    sound: true
-  });
-
-  let state = loadState();
+  let prefs = loadPrefs();
+  let currentAccount = null;
+  let state = AuthSystem.createEmptyGameData('SysAdmin', '👨‍💻');
+  let selectedRegAvatar = '👨‍💻';
+  let lbSortBy = 'xp';
   let defIntervalId = null;
 
-  function loadState() {
+  function loadPrefs() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultState();
-      const parsed = JSON.parse(raw);
-      return {
-        ...defaultState(),
-        ...parsed,
-        inventory: { ...defaultState().inventory, ...(parsed.inventory || {}) },
-        analytics: { ...defaultState().analytics, ...(parsed.analytics || {}) }
-      };
+      const raw = localStorage.getItem(PREFS_KEY);
+      return raw ? { theme: 'dark', sound: true, ...JSON.parse(raw) } : { theme: 'dark', sound: true };
     } catch {
-      return defaultState();
+      return { theme: 'dark', sound: true };
     }
   }
 
-  function saveState() {
+  function savePrefs() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
     } catch {
-      // ignore quota errors
+      // ignore
+    }
+  }
+
+  function hydrateFromCurrentAccount() {
+    currentAccount = AuthSystem.getCurrentAccount();
+    if (!currentAccount) {
+      state = AuthSystem.createEmptyGameData('SysAdmin', '👨‍💻');
+      return false;
+    }
+    const base = AuthSystem.createEmptyGameData(currentAccount.fullName, currentAccount.gameData?.avatar);
+    const saved = currentAccount.gameData || {};
+    state = {
+      ...base,
+      ...saved,
+      playerName: currentAccount.fullName,
+      inventory: { ...base.inventory, ...(saved.inventory || {}) },
+      analytics: { ...base.analytics, ...(saved.analytics || {}) }
+    };
+    return true;
+  }
+
+  function saveState() {
+    if (currentAccount) {
+      AuthSystem.updateCurrentGameData(state);
+      currentAccount = AuthSystem.getCurrentAccount();
     }
   }
 
@@ -152,91 +140,144 @@
 
   /* ==================== THEME & SOUND ==================== */
   function applyTheme() {
-    document.documentElement.setAttribute('data-theme', state.theme);
-    const icon = state.theme === 'dark' ? '☀️' : '🌙';
+    document.documentElement.setAttribute('data-theme', prefs.theme);
+    const icon = prefs.theme === 'dark' ? '☀️' : '🌙';
     $('titleThemeBtn').textContent = icon;
     $('hudThemeBtn').textContent = icon;
   }
 
   function applySound() {
-    SoundFX.setEnabled(state.sound);
-    const icon = state.sound ? '🔊' : '🔇';
+    SoundFX.setEnabled(prefs.sound);
+    const icon = prefs.sound ? '🔊' : '🔇';
     $('titleSoundBtn').textContent = icon;
     $('hudSoundBtn').textContent = icon;
   }
 
   function toggleTheme() {
-    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    prefs.theme = prefs.theme === 'dark' ? 'light' : 'dark';
     applyTheme();
-    saveState();
+    savePrefs();
     SoundFX.click();
   }
 
   function toggleSound() {
-    state.sound = !state.sound;
+    prefs.sound = !prefs.sound;
     applySound();
-    saveState();
-    if (state.sound) SoundFX.click();
+    savePrefs();
+    if (prefs.sound) SoundFX.click();
   }
 
-  /* ==================== TITLE SCREEN & HUD ==================== */
-  function renderTitleScreen() {
+  /* ==================== AUTH GATE, TITLE SCREEN & HUD ==================== */
+  function showAuthError(msg) {
+    const box = $('authErrorBox');
+    if (!msg) {
+      box.classList.add('hidden');
+      box.textContent = '';
+    } else {
+      box.textContent = `⚠️ ${msg}`;
+      box.classList.remove('hidden');
+    }
+  }
+
+  function switchAuthTab(tab) {
+    SoundFX.click();
+    showAuthError('');
+    $('tabLoginBtn').classList.toggle('active', tab === 'login');
+    $('tabRegisterBtn').classList.toggle('active', tab === 'register');
+    $('loginForm').classList.toggle('hidden', tab !== 'login');
+    $('registerForm').classList.toggle('hidden', tab !== 'register');
+  }
+
+  function renderAvatarPicker() {
     const picker = $('avatarPicker');
     picker.innerHTML = '';
     AVATARS.forEach((av) => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = `avatar-choice ${state.avatar === av ? 'active' : ''}`;
+      btn.className = `avatar-choice ${selectedRegAvatar === av ? 'active' : ''}`;
       btn.textContent = av;
       btn.addEventListener('click', () => {
         SoundFX.click();
-        state.avatar = av;
-        saveState();
-        renderTitleScreen();
+        selectedRegAvatar = av;
+        renderAvatarPicker();
       });
       picker.appendChild(btn);
     });
+  }
 
-    $('playerNameInput').value = state.playerName === 'SysAdmin' ? '' : state.playerName;
+  function renderTitleScreen() {
+    renderAvatarPicker();
+    showAuthError('');
+    const loggedIn = hydrateFromCurrentAccount();
     $('titleFreePlayToggle').checked = state.freePlay;
 
-    const rank = getRankInfo(state.xp);
-    const maxStars = ALL_STAGES_FLAT.length * 3;
-    $('titleSavePreview').innerHTML = `
-      <span class="save-chip">LV.${rank.level} ${rank.title}</span>
-      <span class="save-chip">⭐ ${getTotalStars()}/${maxStars} ดาว</span>
-      <span class="save-chip">💰 ${state.coins} เหรียญ</span>
-      <span class="save-chip">🏆 ${state.unlockedBadges.length}/${BADGES.length} เหรียญตรา</span>
-    `;
+    if (loggedIn && currentAccount) {
+      $('authGate').classList.add('hidden');
+      $('loggedInGate').classList.remove('hidden');
+      $('resumeAvatar').textContent = state.avatar;
+      $('resumeFullName').textContent = currentAccount.fullName;
+      const rBadge = $('resumeRoleBadge');
+      rBadge.textContent = currentAccount.role === 'teacher' ? '👨‍🏫 ครูผู้สอน' : '🎓 นักศึกษา';
+      rBadge.className = `role-badge ${currentAccount.role === 'teacher' ? 'teacher' : ''}`;
+      $('resumeMeta').textContent = `@${currentAccount.username} • ห้อง: ${currentAccount.classroom || '-'}`;
+
+      const rank = getRankInfo(state.xp);
+      const maxStars = ALL_STAGES_FLAT.length * 3;
+      $('titleSavePreview').innerHTML = `
+        <span class="save-chip">LV.${rank.level} ${rank.title}</span>
+        <span class="save-chip">⭐ ${getTotalStars()}/${maxStars} ดาว</span>
+        <span class="save-chip">💰 ${state.coins} เหรียญ</span>
+        <span class="save-chip">🏆 ${state.unlockedBadges.length}/${BADGES.length} เหรียญตรา</span>
+      `;
+    } else {
+      $('loggedInGate').classList.add('hidden');
+      $('authGate').classList.remove('hidden');
+    }
   }
 
   function renderHud() {
     const rank = getRankInfo(state.xp);
     const maxStars = ALL_STAGES_FLAT.length * 3;
+    const isTeacher = currentAccount?.role === 'teacher';
+
     $('hudAvatar').textContent = state.avatar;
-    $('hudPlayerName').textContent = state.playerName;
+    $('hudPlayerName').textContent = currentAccount ? currentAccount.fullName : state.playerName;
     $('hudLevel').textContent = `LV.${rank.level}`;
-    $('hudRank').textContent = rank.title;
+    const hudRole = $('hudRoleBadge');
+    hudRole.textContent = isTeacher ? 'ครูผู้สอน' : 'นักศึกษา';
+    hudRole.className = `role-badge sm ${isTeacher ? 'teacher' : ''}`;
+    $('hudRank').textContent = `${rank.title} • @${currentAccount?.username || 'guest'}`;
     $('hudXpFill').style.width = `${rank.pct}%`;
     $('hudStars').textContent = `${getTotalStars()}/${maxStars}`;
     $('hudCoins').textContent = state.coins.toLocaleString();
     $('hudXp').textContent = `${state.xp} XP`;
     $('hudBoostBadge').classList.toggle('hidden', !state.xpBoostActive);
     $('shopCoinsDisplay').textContent = state.coins.toLocaleString();
+    $('dockTeacherBtn').classList.toggle('hidden', !isTeacher);
+
+    // Auto-fill Exam name/studentId from logged-in account
+    if (currentAccount) {
+      if (!$('studentNameInput').value.trim()) $('studentNameInput').value = currentAccount.fullName;
+      if (!$('studentIdInput').value.trim()) {
+        $('studentIdInput').value = `${currentAccount.username}${currentAccount.classroom && currentAccount.classroom !== '-' ? ' • ' + currentAccount.classroom : ''}`;
+      }
+    }
   }
 
   function enterGame() {
+    if (!hydrateFromCurrentAccount()) {
+      showAuthError('กรุณาเข้าสู่ระบบหรือสมัครสมาชิกก่อนเข้าเล่นเกม');
+      return;
+    }
     SoundFX.levelUp();
-    const typed = $('playerNameInput').value.trim();
-    if (typed) state.playerName = typed;
-    state.freePlay = $('titleFreePlayToggle').checked;
+    state.freePlay = $('titleFreePlayToggle').checked || state.freePlay;
     $('mapFreePlayToggle').checked = state.freePlay;
     saveState();
 
     $('titleScreen').classList.add('hidden');
     $('gameShell').classList.remove('hidden');
     renderHud();
-    switchScreen('map');
+    switchScreen(currentAccount.role === 'teacher' ? 'teacher' : 'map');
   }
 
   function returnToTitle() {
@@ -247,9 +288,26 @@
     renderTitleScreen();
   }
 
+  function handleLogout() {
+    SoundFX.click();
+    stopDefenseTimer();
+    AuthSystem.logout();
+    currentAccount = null;
+    $('studentNameInput').value = '';
+    $('studentIdInput').value = '';
+    $('gameShell').classList.add('hidden');
+    $('titleScreen').classList.remove('hidden');
+    renderTitleScreen();
+    showToast('🚪 ออกจากระบบเรียบร้อยแล้ว');
+  }
+
   function switchScreen(screenName) {
     SoundFX.click();
     if (screenName !== 'defense') stopDefenseTimer();
+    if (screenName === 'teacher' && currentAccount?.role !== 'teacher') {
+      showToast('⚠️ หน้านี้สงวนสิทธิ์เฉพาะบัญชีครูผู้สอนเท่านั้น');
+      return;
+    }
 
     document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
     const target = $(`screen-${screenName}`);
@@ -274,6 +332,8 @@
     if (screenName === 'defense') {
       $('defHigh').textContent = state.defenseHighScore.toLocaleString();
     }
+    if (screenName === 'leaderboard') renderLeaderboard();
+    if (screenName === 'teacher') renderTeacherDashboard();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -1601,10 +1661,337 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
   });
   $('printCertBtn').addEventListener('click', () => window.print());
 
+  /* ==================== SCREEN 9: LEADERBOARD ==================== */
+  function getAccountMetrics(acc) {
+    const g = acc.gameData || {};
+    const stars = Math.max(
+      Object.values(g.stageStars || {}).reduce((s, x) => s + x, 0),
+      g.importedStars || 0
+    );
+    const labs = Math.max((g.completedLabs || []).length, g.importedLabs || 0);
+    return {
+      xp: g.xp || 0,
+      stars,
+      labs,
+      defense: g.defenseHighScore || 0,
+      exam: g.examBestScore || 0,
+      passed: Boolean(g.examPassed),
+      avatar: g.avatar || '👨‍💻',
+      rank: getRankInfo(g.xp || 0)
+    };
+  }
+
+  function renderLeaderboard() {
+    const accounts = AuthSystem.getAllAccountsList()
+      .map((acc) => ({ acc, m: getAccountMetrics(acc) }))
+      .sort((a, b) => {
+        if (lbSortBy === 'stars') return b.m.stars - a.m.stars || b.m.xp - a.m.xp;
+        if (lbSortBy === 'defense') return b.m.defense - a.m.defense || b.m.xp - a.m.xp;
+        if (lbSortBy === 'exam') return b.m.exam - a.m.exam || b.m.xp - a.m.xp;
+        return b.m.xp - a.m.xp || b.m.stars - a.m.stars;
+      });
+
+    $('lbSyncCloudBtn').classList.toggle('hidden', !AuthSystem.getCloudUrl());
+
+    // Top 3 Podium
+    const podium = $('lbPodium');
+    podium.innerHTML = '';
+    const medals = ['🥇 อันดับ 1', '🥈 อันดับ 2', '🥉 อันดับ 3'];
+    accounts.slice(0, 3).forEach((entry, idx) => {
+      const metricStr = lbSortBy === 'stars' ? `⭐ ${entry.m.stars}/54`
+        : lbSortBy === 'defense' ? `🛡️ ${entry.m.defense.toLocaleString()}`
+        : lbSortBy === 'exam' ? `🎓 ${entry.m.exam}/15`
+        : `⚡ ${entry.m.xp.toLocaleString()} XP`;
+      const card = document.createElement('div');
+      card.className = `podium-card rank-${idx + 1}`;
+      card.innerHTML = `
+        <div class="podium-medal">${medals[idx]}</div>
+        <div class="podium-avatar">${entry.m.avatar}</div>
+        <strong>${entry.acc.fullName}</strong>
+        <span class="muted-text" style="font-size:0.76rem;">@${entry.acc.username} • ${entry.acc.classroom || '-'}</span>
+        <div class="podium-score">${metricStr}</div>
+        <span class="stage-chip">LV.${entry.m.rank.level} ${entry.m.rank.title}</span>
+      `;
+      podium.appendChild(card);
+    });
+
+    // Table Body
+    const tbody = $('lbTableBody');
+    tbody.innerHTML = '';
+    accounts.forEach((entry, idx) => {
+      const isMe = currentAccount && entry.acc.username === currentAccount.username;
+      const tr = document.createElement('tr');
+      if (isMe) tr.className = 'me-row';
+      tr.innerHTML = `
+        <td><strong>#${idx + 1}</strong></td>
+        <td>${entry.m.avatar} <strong>${entry.acc.fullName}</strong> ${isMe ? '<span class="stage-chip">คุณ</span>' : ''}</td>
+        <td>${entry.acc.classroom || '-'}</td>
+        <td><strong>${entry.m.xp.toLocaleString()} XP</strong> <span class="muted-text">(LV.${entry.m.rank.level})</span></td>
+        <td>⭐ ${entry.m.stars}/54</td>
+        <td>💻 ${entry.m.labs}/14</td>
+        <td>${entry.m.defense.toLocaleString()}</td>
+        <td>${entry.m.exam}/15 ${entry.m.passed ? '✅' : ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Student score code
+    if (currentAccount) {
+      $('myScoreCodeOutput').value = AuthSystem.encodeScoreReport(currentAccount);
+    }
+  }
+
+  document.querySelectorAll('.lb-sort').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      SoundFX.click();
+      lbSortBy = btn.dataset.sort;
+      document.querySelectorAll('.lb-sort').forEach((b) => {
+        b.className = `btn btn-sm lb-sort ${b.dataset.sort === lbSortBy ? 'btn-neon active' : 'btn-ghost'}`;
+      });
+      renderLeaderboard();
+    });
+  });
+
+  $('copyScoreCodeBtn').addEventListener('click', () => {
+    const txt = $('myScoreCodeOutput').value;
+    if (!txt) return;
+    navigator.clipboard?.writeText(txt).then(
+      () => { SoundFX.coin(); showToast('📋 คัดลอกรหัสคะแนนส่งงานแล้ว! ส่งให้ครูทางแชทได้เลย'); },
+      () => { $('myScoreCodeOutput').select(); document.execCommand('copy'); showToast('📋 คัดลอกรหัสคะแนนแล้ว'); }
+    );
+  });
+
+  $('lbSyncCloudBtn').addEventListener('click', async () => {
+    SoundFX.click();
+    const res = await AuthSystem.pullAllFromCloud();
+    if (res.ok) {
+      showToast(`☁️ ซิงค์ข้อมูลล่าสุดสำเร็จ (${res.count} บัญชี)`);
+      renderLeaderboard();
+    } else {
+      showToast(`⚠️ ${res.error}`);
+    }
+  });
+
+  /* ==================== SCREEN 10: TEACHER DASHBOARD ==================== */
+  function renderTeacherDashboard() {
+    const allStudents = AuthSystem.getAllAccountsList()
+      .filter((a) => a.role === 'student')
+      .map((acc) => ({ acc, m: getAccountMetrics(acc) }))
+      .sort((a, b) => b.m.xp - a.m.xp);
+
+    // KPIs
+    const count = allStudents.length;
+    const avgXp = count ? Math.round(allStudents.reduce((s, x) => s + x.m.xp, 0) / count) : 0;
+    const avgStars = count ? (allStudents.reduce((s, x) => s + x.m.stars, 0) / count).toFixed(1) : '0.0';
+    const passedCert = allStudents.filter((x) => x.m.passed).length;
+
+    $('teacherKpis').innerHTML = `
+      <div class="kpi-card"><span>นักศึกษาทั้งหมด</span><strong>${count} คน</strong></div>
+      <div class="kpi-card"><span>ค่าเฉลี่ย XP</span><strong>${avgXp.toLocaleString()} XP</strong></div>
+      <div class="kpi-card"><span>ค่าเฉลี่ยดาวแคมเปญ</span><strong>⭐ ${avgStars} / 54</strong></div>
+      <div class="kpi-card"><span>สอบผ่านรับเกียรติบัตร</span><strong>🎓 ${passedCert} / ${count}</strong></div>
+    `;
+
+    // Populate classroom dropdown
+    const filterSel = $('teacherClassFilter');
+    const prevSelected = filterSel.value;
+    const classes = [...new Set(allStudents.map((x) => x.acc.classroom || '-'))].sort();
+    filterSel.innerHTML = '<option value="">ทุกห้องเรียน</option>' +
+      classes.map((c) => `<option value="${c}">${c}</option>`).join('');
+    if (classes.includes(prevSelected)) filterSel.value = prevSelected;
+
+    // Filter rows
+    const q = ($('teacherSearchInput').value || '').trim().toLowerCase();
+    const cls = filterSel.value;
+    const filtered = allStudents.filter(({ acc }) => {
+      const matchClass = !cls || (acc.classroom || '-') === cls;
+      const matchQuery = !q || acc.username.toLowerCase().includes(q) || acc.fullName.toLowerCase().includes(q);
+      return matchClass && matchQuery;
+    });
+
+    const tbody = $('teacherTableBody');
+    tbody.innerHTML = '';
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:1.5rem;">ไม่พบข้อมูลนักศึกษาตามเงื่อนไข</td></tr>';
+    } else {
+      filtered.forEach(({ acc, m }) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><code>${acc.username}</code></td>
+          <td>${m.avatar} <strong>${acc.fullName}</strong></td>
+          <td>${acc.classroom || '-'}</td>
+          <td><strong>${m.xp.toLocaleString()}</strong></td>
+          <td>⭐ ${m.stars}/54</td>
+          <td>💻 ${m.labs}/14</td>
+          <td>${m.defense.toLocaleString()}</td>
+          <td>${m.exam}/15</td>
+          <td>${m.passed ? '<span class="role-badge">ผ่าน ✓</span>' : '<span class="muted-text">ยังไม่ผ่าน</span>'}</td>
+          <td>
+            <button class="btn btn-ghost btn-xs t-reset-pw" data-u="${acc.username}" title="รีเซ็ตรหัสผ่านเป็น 123456">🔑 รีเซ็ตรหัส</button>
+            <button class="btn btn-ghost btn-xs t-del-u" data-u="${acc.username}" title="ลบบัญชีนี้">🗑️</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll('.t-reset-pw').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const u = btn.dataset.u;
+          if (confirm(`รีเซ็ตรหัสผ่านของ "${u}" เป็น 123456 ใช่หรือไม่?`)) {
+            await AuthSystem.resetUserPassword(u, '123456');
+            showToast(`🔑 รีเซ็ตรหัสผ่านของ ${u} เป็น 123456 แล้ว`);
+          }
+        });
+      });
+
+      tbody.querySelectorAll('.t-del-u').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const u = btn.dataset.u;
+          if (confirm(`ต้องการลบบัญชีนักศึกษา "${u}" ออกจากเครื่องนี้ใช่หรือไม่?`)) {
+            AuthSystem.deleteAccount(u);
+            showToast(`🗑️ ลบบัญชี ${u} เรียบร้อยแล้ว`);
+            renderTeacherDashboard();
+          }
+        });
+      });
+    }
+
+    // Cloud URL display
+    const savedUrl = AuthSystem.getCloudUrl();
+    $('cloudUrlInput').value = savedUrl;
+    $('cloudStatusText').textContent = savedUrl
+      ? `สถานะ: 🟢 เชื่อมต่อ Cloud Sync (${savedUrl})`
+      : 'สถานะ: 🟡 ทำงานแบบ Local/Offline (ยังไม่ตั้งค่า Firebase URL)';
+  }
+
+  $('teacherSearchInput').addEventListener('input', renderTeacherDashboard);
+  $('teacherClassFilter').addEventListener('change', renderTeacherDashboard);
+  $('teacherRefreshBtn').addEventListener('click', () => {
+    SoundFX.click();
+    renderTeacherDashboard();
+    showToast('🔄 อัปเดตตารางคะแนนแล้ว');
+  });
+
+  $('exportCsvBtn').addEventListener('click', () => {
+    SoundFX.coin();
+    const n = AuthSystem.exportScoresCsv();
+    showToast(`📥 ดาวน์โหลดไฟล์ CSV คะแนนนักศึกษา ${n} คนเรียบร้อย!`);
+  });
+
+  $('teacherImportBtn').addEventListener('click', () => {
+    const raw = $('teacherImportInput').value.trim();
+    if (!raw) {
+      showToast('⚠️ กรุณาวางรหัส SOPS2:... ก่อนกดนำเข้า');
+      return;
+    }
+    const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    let okCount = 0;
+    let errMsg = '';
+    lines.forEach((line) => {
+      const res = AuthSystem.importScoreReport(line);
+      if (res.ok) okCount += 1;
+      else errMsg = res.error;
+    });
+    if (okCount > 0) {
+      SoundFX.levelUp();
+      $('teacherImportInput').value = '';
+      renderTeacherDashboard();
+      showToast(`✅ นำเข้าคะแนนนักศึกษาสำเร็จ ${okCount} คน!`);
+    } else {
+      SoundFX.wrong();
+      showToast(`❌ ${errMsg || 'รหัสไม่ถูกต้อง'}`);
+    }
+  });
+
+  $('saveCloudUrlBtn').addEventListener('click', () => {
+    SoundFX.click();
+    const url = AuthSystem.setCloudUrl($('cloudUrlInput').value);
+    renderTeacherDashboard();
+    showToast(url ? '💾 บันทึก Firebase Cloud URL แล้ว!' : 'ปิดการใช้งาน Cloud Sync แล้ว');
+  });
+
+  $('pullCloudBtn').addEventListener('click', async () => {
+    SoundFX.click();
+    const res = await AuthSystem.pullAllFromCloud();
+    if (res.ok) {
+      SoundFX.levelUp();
+      renderTeacherDashboard();
+      showToast(`⬇️ ซิงค์ข้อมูลจาก Cloud สำเร็จ (${res.count} บัญชี)`);
+    } else {
+      SoundFX.wrong();
+      showToast(`❌ ${res.error}`);
+    }
+  });
+
+  /* ==================== AUTH FORM BINDINGS ==================== */
+  $('tabLoginBtn').addEventListener('click', () => switchAuthTab('login'));
+  $('tabRegisterBtn').addEventListener('click', () => switchAuthTab('register'));
+
+  $('regRole').addEventListener('change', (e) => {
+    $('teacherCodeField').classList.toggle('hidden', e.target.value !== 'teacher');
+  });
+
+  $('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showAuthError('');
+    const res = await AuthSystem.login($('loginUsername').value, $('loginPassword').value);
+    if (!res.ok) {
+      SoundFX.wrong();
+      showAuthError(res.error);
+      return;
+    }
+    $('loginPassword').value = '';
+    enterGame();
+  });
+
+  $('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showAuthError('');
+    const pw = $('regPassword').value;
+    const cf = $('regConfirm').value;
+    if (pw !== cf) {
+      SoundFX.wrong();
+      showAuthError('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+      return;
+    }
+    const res = await AuthSystem.register({
+      username: $('regUsername').value,
+      fullName: $('regFullName').value,
+      classroom: $('regClassroom').value,
+      password: pw,
+      role: $('regRole').value,
+      teacherCode: $('regTeacherCode').value,
+      avatar: selectedRegAvatar
+    });
+    if (!res.ok) {
+      SoundFX.wrong();
+      showAuthError(res.error);
+      return;
+    }
+    $('registerForm').reset();
+    $('teacherCodeField').classList.add('hidden');
+    showToast(`🎉 สมัครสมาชิกสำเร็จ ยินดีต้อนรับ ${res.account.fullName}!`);
+    enterGame();
+  });
+
+  $('demoStudentBtn').addEventListener('click', async () => {
+    SoundFX.click();
+    const res = await AuthSystem.login('student01', '123456');
+    if (res.ok) enterGame();
+  });
+
+  $('demoTeacherBtn').addEventListener('click', async () => {
+    SoundFX.click();
+    const res = await AuthSystem.login('teacher', '123456');
+    if (res.ok) enterGame();
+  });
+
   /* ==================== GLOBAL BINDINGS & INIT ==================== */
   $('enterGameBtn').addEventListener('click', enterGame);
   $('hudHomeBtn').addEventListener('click', returnToTitle);
   $('hudProfileBtn').addEventListener('click', returnToTitle);
+  $('hudLogoutBtn').addEventListener('click', handleLogout);
+  $('titleLogoutBtn').addEventListener('click', handleLogout);
   $('titleThemeBtn').addEventListener('click', toggleTheme);
   $('hudThemeBtn').addEventListener('click', toggleTheme);
   $('titleSoundBtn').addEventListener('click', toggleSound);
@@ -1624,12 +2011,10 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
   });
 
   $('resetSaveBtn').addEventListener('click', () => {
-    if (confirm('ต้องการล้างข้อมูลเซฟ เลเวล ดาว เหรียญ และเหรียญตราทั้งหมดใช่หรือไม่?')) {
-      const keepTheme = state.theme;
-      const keepSound = state.sound;
-      state = defaultState();
-      state.theme = keepTheme;
-      state.sound = keepSound;
+    if (!currentAccount) return;
+    if (confirm(`ต้องการล้างความก้าวหน้าเกมทั้งหมดของบัญชี "${currentAccount.username}" ใช่หรือไม่?`)) {
+      state = AuthSystem.createEmptyGameData(currentAccount.fullName, state.avatar);
+      if (currentAccount.role === 'teacher') state.freePlay = true;
       saveState();
       renderHud();
       renderWorldMap();
@@ -1640,11 +2025,15 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
   });
 
   // Boot
-  applyTheme();
-  applySound();
-  renderTitleScreen();
-  renderHud();
-  initCliWelcome();
-  renderChmodVault();
-  renderRaidVisual('5', 0);
+  (async () => {
+    applyTheme();
+    applySound();
+    await AuthSystem.ensureSeedAccounts();
+    hydrateFromCurrentAccount();
+    renderTitleScreen();
+    renderHud();
+    initCliWelcome();
+    renderChmodVault();
+    renderRaidVisual('5', 0);
+  })();
 })();
