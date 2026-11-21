@@ -47,6 +47,7 @@
       analytics: { ...base.analytics, ...(saved.analytics || {}) },
       solvedFirewall: saved.solvedFirewall || [],
       solvedSubnet: saved.solvedSubnet || [],
+      readChapters: saved.readChapters || [],
       blitzHighScore: saved.blitzHighScore || 0,
       dailyQuests: { ...base.dailyQuests, ...(saved.dailyQuests || {}) }
     };
@@ -2308,8 +2309,152 @@ a8f2c91b40e1   nginx:alpine   "/docker-entrypoint.…"   Up 4 days       0.0.0.0
     });
   }
 
-  /* ==================== SCREEN 7: CODEX & STATS ==================== */
+  /* ==================== SCREEN 7: INTERACTIVE CODEX LIBRARY & STATS ==================== */
+  let activeCodexIdx = null;
+
+  function renderCodexBookshelf() {
+    const readList = state.readChapters || [];
+    $('codexReadChip').textContent = `อ่านแล้ว ${readList.length} / ${CODEX_VOLUMES.length} เล่ม`;
+
+    const q = ($('codexSearchInput').value || '').trim().toLowerCase();
+    const grid = $('codexChapters');
+    grid.innerHTML = '';
+
+    const filtered = CODEX_VOLUMES.map((vol, idx) => ({ vol, idx })).filter(({ vol }) => {
+      if (!q) return true;
+      return vol.title.toLowerCase().includes(q) ||
+        vol.subtitle.toLowerCase().includes(q) ||
+        vol.vol.toLowerCase().includes(q);
+    });
+
+    if (!filtered.length) {
+      grid.innerHTML = '<div class="panel" style="grid-column:1/-1;text-align:center;color:var(--text-muted);">ไม่พบบทเรียนที่ตรงกับคำค้นหา</div>';
+      return;
+    }
+
+    filtered.forEach(({ vol, idx }) => {
+      const isRead = readList.includes(vol.id);
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = `book-card ${isRead ? 'is-read' : ''}`;
+      card.style.setProperty('--book-color', vol.color);
+      card.innerHTML = `
+        <div class="book-top">
+          <span class="book-vol-tag">${vol.vol} • ⏱️ ${vol.readTime}</span>
+          <span class="book-icon">${vol.icon}</span>
+        </div>
+        <div class="book-title">${vol.title}</div>
+        <div class="book-sub">${vol.subtitle}</div>
+        <div class="book-foot">
+          <span>${isRead ? '✅ อ่านเข้าใจแล้ว' : '📘 ยังไม่ได้อ่าน (+25 XP)'}</span>
+          <span class="book-cta">เปิดอ่านตำรา →</span>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        SoundFX.click();
+        openCodexChapter(idx);
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  function openCodexChapter(idx) {
+    activeCodexIdx = idx;
+    const vol = CODEX_VOLUMES[idx];
+    if (!vol) return;
+
+    $('codexLibraryView').classList.add('hidden');
+    $('codexReaderView').classList.remove('hidden');
+
+    const isRead = (state.readChapters || []).includes(vol.id);
+    const sectionsHtml = vol.sections.map((sec) => {
+      let body = '';
+      if (sec.bullets) {
+        body += `<ul>${sec.bullets.map((b) => `<li>${b}</li>`).join('')}</ul>`;
+      }
+      if (sec.table) {
+        body += `
+          <div class="codex-table-wrap">
+            <table class="codex-table">
+              <thead><tr>${sec.table.headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead>
+              <tbody>${sec.table.rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+            </table>
+          </div>
+        `;
+      }
+      return `<section class="reader-section"><h3>${sec.heading}</h3>${body}</section>`;
+    }).join('');
+
+    $('codexReaderBody').innerHTML = `
+      <div class="reader-hero">
+        <div class="reader-hero-top">
+          <span class="book-vol-tag" style="--book-color:${vol.color}">${vol.icon} ${vol.vol}</span>
+          <span class="stage-chip">⏱️ เวลาอ่านประมาณ ${vol.readTime}</span>
+          ${isRead ? '<span class="role-badge">✅ อ่านเข้าใจแล้ว</span>' : ''}
+        </div>
+        <h2>${vol.title}</h2>
+        <p class="muted-text">${vol.subtitle}</p>
+      </div>
+
+      <div class="reader-objectives">
+        <h4>🎯 เป้าหมายการเรียนรู้ประจำบทนี้</h4>
+        <ul>${vol.objectives.map((o) => `<li>${o}</li>`).join('')}</ul>
+      </div>
+
+      <div class="diagram-stage">
+        ${vol.diagramSvg}
+        <div class="diagram-caption">🖼️ แผนภาพประกอบ ${vol.vol}: ${vol.title}</div>
+      </div>
+
+      ${sectionsHtml}
+
+      <div class="analogy-box">${vol.analogy}</div>
+
+      <section class="reader-section">
+        <h3>💻 ตัวอย่างคำสั่งจริงที่ใช้หน้างาน (Cheat Sheet)</h3>
+        <pre class="code-snippet">${vol.cheatSheet}</pre>
+      </section>
+
+      <div class="exam-tip-box">
+        <h4>⚠️ ข้อควรระวัง &amp; จุดที่มักออกสอบ</h4>
+        <ul>${vol.examTips.map((t) => `<li>${t}</li>`).join('')}</ul>
+      </div>
+    `;
+
+    $('codexPrevBtn').disabled = idx <= 0;
+    const isLast = idx >= CODEX_VOLUMES.length - 1;
+    $('codexNextBtn').disabled = isLast;
+    $('codexNextBottomBtn').disabled = isLast;
+
+    const markBtn = $('codexMarkReadBtn');
+    if (isRead) {
+      markBtn.textContent = '✅ อ่านบทนี้เรียบร้อยแล้ว';
+      markBtn.disabled = true;
+    } else {
+      markBtn.textContent = '✅ ทำเครื่องหมายว่าอ่านเข้าใจแล้ว (+25 XP, 💰20)';
+      markBtn.disabled = false;
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function closeCodexReader() {
+    SoundFX.click();
+    activeCodexIdx = null;
+    $('codexReaderView').classList.add('hidden');
+    $('codexLibraryView').classList.remove('hidden');
+    renderCodexAndStats();
+  }
+
   function renderCodexAndStats() {
+    if (activeCodexIdx !== null) {
+      openCodexChapter(activeCodexIdx);
+      return;
+    }
+    $('codexReaderView').classList.add('hidden');
+    $('codexLibraryView').classList.remove('hidden');
+    renderCodexBookshelf();
+
     const analyticsEl = $('analyticsContainer');
     analyticsEl.innerHTML = '';
     Object.entries(CATEGORIES).forEach(([key, label]) => {
@@ -2340,17 +2485,31 @@ a8f2c91b40e1   nginx:alpine   "/docker-entrypoint.…"   Up 4 days       0.0.0.0
       `;
       badgesEl.appendChild(card);
     });
-
-    const chaptersEl = $('codexChapters');
-    if (!chaptersEl.hasChildNodes()) {
-      CODEX_CHAPTERS.forEach((ch) => {
-        const card = document.createElement('article');
-        card.className = 'codex-card';
-        card.innerHTML = `<h4>${ch.title}</h4><ul>${ch.points.map((p) => `<li>${p}</li>`).join('')}</ul>`;
-        chaptersEl.appendChild(card);
-      });
-    }
   }
+
+  $('codexSearchInput').addEventListener('input', renderCodexBookshelf);
+  $('codexBackBtn').addEventListener('click', closeCodexReader);
+  $('codexPrevBtn').addEventListener('click', () => {
+    if (activeCodexIdx > 0) { SoundFX.click(); openCodexChapter(activeCodexIdx - 1); }
+  });
+  $('codexNextBtn').addEventListener('click', () => {
+    if (activeCodexIdx < CODEX_VOLUMES.length - 1) { SoundFX.click(); openCodexChapter(activeCodexIdx + 1); }
+  });
+  $('codexNextBottomBtn').addEventListener('click', () => {
+    if (activeCodexIdx < CODEX_VOLUMES.length - 1) { SoundFX.click(); openCodexChapter(activeCodexIdx + 1); }
+  });
+  $('codexMarkReadBtn').addEventListener('click', () => {
+    if (activeCodexIdx === null) return;
+    const vol = CODEX_VOLUMES[activeCodexIdx];
+    if (!state.readChapters) state.readChapters = [];
+    if (!state.readChapters.includes(vol.id)) {
+      state.readChapters.push(vol.id);
+      grantRewards(25, 20);
+      SoundFX.coin();
+      showToast(`📖 บันทึกว่าอ่าน "${vol.vol}" เข้าใจแล้ว! (+25 XP, +💰20)`);
+      openCodexChapter(activeCodexIdx);
+    }
+  });
 
   /* ==================== SCREEN 8: GUILD CERTIFICATION EXAM ==================== */
   let examQs = [];
@@ -2972,6 +3131,7 @@ a8f2c91b40e1   nginx:alpine   "/docker-entrypoint.…"   Up 4 days       0.0.0.0
   document.querySelectorAll('.dock-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       if (btn.dataset.screen === 'map') activeRoZoneId = null;
+      if (btn.dataset.screen === 'codex') activeCodexIdx = null;
       switchScreen(btn.dataset.screen);
     });
   });

@@ -839,35 +839,60 @@
         <div id="shopGrid" class="shop-grid"></div>
       </section>
 
-      <!-- ==================== SCREEN 7: CODEX & PLAYER STATS ==================== -->
+      <!-- ==================== SCREEN 7: INTERACTIVE CODEX LIBRARY & STATS ==================== -->
       <section id="screen-codex" class="screen">
-        <div class="screen-header">
-          <div>
-            <h2>📖 คัมภีร์ความรู้ (10 บทเรียน) &amp; สถิติผู้เล่น</h2>
-            <p class="muted-text">ทบทวนเนื้อหาครบทุกหัวข้อของรายวิชาระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น พร้อมดูความเชี่ยวชาญ 10 หมวด</p>
+        <!-- LIBRARY BOOKSHELF VIEW -->
+        <div id="codexLibraryView">
+          <div class="screen-header">
+            <div>
+              <h2>📖 ห้องสมุดตำราเรียน SysAdmin (10 เล่มพร้อมภาพประกอบ)</h2>
+              <p class="muted-text">คลิกเข้าไปอ่านตำราแต่ละเล่มเพื่อดูแผนภาพอธิบาย ตารางเปรียบเทียบ ตัวอย่างคำสั่ง และรับโบนัส <strong>+25 XP / 💰20</strong> ต่อเล่ม!</p>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+              <span class="stage-chip" id="codexReadChip">อ่านแล้ว 0 / 10 เล่ม</span>
+              <input type="text" id="codexSearchInput" class="game-input left-input sm-input" style="max-width:210px;" placeholder="🔍 ค้นหาบทเรียน..." />
+              <button class="btn btn-ghost btn-sm" id="resetSaveBtn">🗑️ ล้างเซฟ</button>
+            </div>
           </div>
-          <button class="btn btn-ghost btn-sm" id="resetSaveBtn">🗑️ ล้างเซฟเริ่มใหม่</button>
+
+          <div id="codexChapters" class="bookshelf-grid"></div>
+
+          <h3 class="section-heading">📊 สถิติความเชี่ยวชาญ &amp; เหรียญตราความสำเร็จ</h3>
+          <div class="two-col-grid">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>📊 ความเชี่ยวชาญ 10 หมวดวิชา (Skill Mastery)</h3>
+              </div>
+              <div id="analyticsContainer" class="analytics-list"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h3>🏆 เหรียญตราความสำเร็จ (Achievements)</h3>
+                <span class="stage-chip" id="badgeCountChip">0 / 16</span>
+              </div>
+              <div id="badgesContainer" class="badges-grid"></div>
+            </div>
+          </div>
         </div>
 
-        <div class="two-col-grid">
-          <div class="panel">
-            <div class="panel-header">
-              <h3>📊 ความเชี่ยวชาญ 10 หมวดวิชา (Skill Mastery)</h3>
+        <!-- INTERACTIVE CHAPTER READER VIEW -->
+        <div id="codexReaderView" class="hidden">
+          <div class="reader-topbar">
+            <button class="btn btn-secondary btn-sm" id="codexBackBtn">← กลับชั้นวางตำรา</button>
+            <div class="reader-nav-btns">
+              <button class="btn btn-ghost btn-sm" id="codexPrevBtn">◀ บทก่อนหน้า</button>
+              <button class="btn btn-ghost btn-sm" id="codexNextBtn">บทถัดไป ▶</button>
             </div>
-            <div id="analyticsContainer" class="analytics-list"></div>
           </div>
 
-          <div class="panel">
-            <div class="panel-header">
-              <h3>🏆 เหรียญตราความสำเร็จ (Achievements)</h3>
-              <span class="stage-chip" id="badgeCountChip">0 / 16</span>
-            </div>
-            <div id="badgesContainer" class="badges-grid"></div>
+          <article class="panel codex-reader" id="codexReaderBody"></article>
+
+          <div class="reader-footer-bar">
+            <button class="btn btn-neon btn-lg" id="codexMarkReadBtn">✅ ทำเครื่องหมายว่าอ่านเข้าใจแล้ว (+25 XP, 💰20)</button>
+            <button class="btn btn-secondary" id="codexNextBottomBtn">อ่านบทถัดไป ▶</button>
           </div>
         </div>
-
-        <h3 class="section-heading">📚 สรุปตำรา SysAdmin ครบ 10 บทเรียน</h3>
-        <div id="codexChapters" class="codex-grid"></div>
       </section>
 
       <!-- ==================== SCREEN 8: GUILD CERTIFICATION EXAM ==================== -->
@@ -1159,6 +1184,7 @@
   <script src="cloud-config.js"></script>
   <script src="audio.js"></script>
   <script src="data.js"></script>
+  <script src="codex-data.js"></script>
   <script src="auth.js"></script>
   <script src="game.js"></script>
 </body>

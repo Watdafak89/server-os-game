@@ -110,6 +110,7 @@ const AuthSystem = (() => {
       solvedRaid: [],
       solvedFirewall: [],
       solvedSubnet: [],
+      readChapters: [],
       defenseHighScore: 0,
       blitzHighScore: 0,
       dailyQuests: {
