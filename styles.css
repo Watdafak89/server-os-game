@@ -4322,6 +4322,51 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
 .ro-map-canvas.continent-4 .ro-continent-svg { filter: hue-rotate(140deg) brightness(1.08); }
 .ro-map-canvas.continent-5 .ro-continent-svg { filter: hue-rotate(285deg) contrast(1.08); }
 
+/* ==================== DIMENSIONAL ZONE WARP PASS (SHOP + MAP) ==================== */
+.shop-card-special {
+  position: relative;
+  border-color: rgba(168, 85, 247, 0.7) !important;
+  background: linear-gradient(160deg, rgba(168, 85, 247, 0.16), rgba(56, 189, 248, 0.08), var(--bg-card));
+  box-shadow: 0 0 22px rgba(168, 85, 247, 0.22);
+}
+
+.shop-limit-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #a855f7, #ec4899);
+  color: #ffffff;
+}
+
+.warp-pass-banner {
+  margin-bottom: 0.9rem;
+  padding: 0.78rem 1.05rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.22), rgba(56, 189, 248, 0.18));
+  border: 1.5px solid #c084fc;
+  color: var(--text);
+  font-size: 0.86rem;
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.25);
+}
+
+.ro-pin.can-warp .ro-pin-orb {
+  border-color: #c084fc !important;
+  border-style: dashed;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.45), #0f172a);
+  box-shadow: 0 0 22px rgba(192, 132, 252, 0.85);
+  animation: targetRadarPulse 1.5s infinite;
+}
+
+.ro-pin.can-warp .ro-pin-meta {
+  color: #e879f9;
+  font-weight: 700;
+}
+
 @media (max-width: 1020px) {
   .continent-tabs-bar {
     grid-template-columns: repeat(2, 1fr);

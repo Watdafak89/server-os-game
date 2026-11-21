@@ -54,6 +54,8 @@
       solvedSubnet: saved.solvedSubnet || [],
       readChapters: saved.readChapters || [],
       installedVms: saved.installedVms || [],
+      warpPassPurchased: Boolean(saved.warpPassPurchased),
+      warpedZones: Array.isArray(saved.warpedZones) ? saved.warpedZones : [],
       blitzHighScore: saved.blitzHighScore || 0,
       dailyQuests: { ...base.dailyQuests, ...(saved.dailyQuests || {}) }
     };
@@ -599,15 +601,42 @@
 
   function isStageUnlocked(flatIdx) {
     if (canUseFreePlay() || flatIdx === 0) return true;
+    const stage = ALL_STAGES_FLAT[flatIdx];
+    if (stage && stage.id.endsWith('_s1') && (state.warpedZones || []).includes(stage.zoneId)) {
+      return true;
+    }
     const prevStage = ALL_STAGES_FLAT[flatIdx - 1];
     return Boolean(state.stageStars[prevStage.id]);
   }
 
   function isZoneUnlocked(zoneIdx) {
     if (canUseFreePlay() || zoneIdx === 0) return true;
+    const zone = CAMPAIGN_ZONES[zoneIdx];
+    if (zone && (state.warpedZones || []).includes(zone.id)) return true;
     const prevZone = CAMPAIGN_ZONES[zoneIdx - 1];
     const prevBoss = prevZone.stages[prevZone.stages.length - 1];
     return Boolean(state.stageStars[prevBoss.id]);
+  }
+
+  function useWarpPassOnZone(zone) {
+    if (!state.inventory || (state.inventory.warp_pass || 0) <= 0) return;
+    const ok = confirm(
+      `🌀 ต้องการใช้ "Dimensional Zone Warp Pass" (1 ชิ้นสุดท้าย) เพื่อปลดล็อกข้ามไปยัง [${zone.code}: ${zone.roName} — ${zone.name}] ใช่หรือไม่?\n\n⚠️ หมายเหตุ: ไอเทมนี้ซื้อได้เพียง 1 ครั้งต่อบัญชี เมื่อใช้แล้วจะไม่สามารถซื้อเพิ่มได้อีก`
+    );
+    if (!ok) return;
+
+    state.inventory.warp_pass = Math.max(0, (state.inventory.warp_pass || 1) - 1);
+    if (!Array.isArray(state.warpedZones)) state.warpedZones = [];
+    if (!state.warpedZones.includes(zone.id)) state.warpedZones.push(zone.id);
+    saveState();
+    SoundFX.levelUp();
+    showToast(`🌀 ปลดล็อกข้ามมิติสู่ ${zone.code}: ${zone.roName} สำเร็จ! เข้าปราบมอนสเตอร์ได้เลย!`);
+    if (mapViewMode === 'ro') {
+      renderContinentBar();
+      openRoFieldMap(zone.id);
+    } else {
+      renderWorldMap();
+    }
   }
 
   function renderRoWorldMap() {
@@ -664,8 +693,10 @@
     }
 
     // 2. Render clickable RO Region Pins (10 per continent)
+    const hasWarpPass = (state.inventory?.warp_pass || 0) > 0;
     continentEntries.forEach(({ zone, zIdx }) => {
       const unlocked = isZoneUnlocked(zIdx);
+      const canWarpHere = !unlocked && hasWarpPass;
       const earned = zone.stages.reduce((s, st) => s + (state.stageStars[st.id] || 0), 0);
       const maxS = zone.stages.length * 3;
       const cleared = zone.stages.every((st) => Boolean(state.stageStars[st.id]));
@@ -674,19 +705,19 @@
 
       const pin = document.createElement('button');
       pin.type = 'button';
-      pin.className = `ro-pin ${cleared ? 'cleared' : ''} ${isCurrent ? 'current-target' : ''}`;
+      pin.className = `ro-pin ${cleared ? 'cleared' : ''} ${isCurrent ? 'current-target' : ''} ${canWarpHere ? 'can-warp' : ''}`;
       pin.style.left = `${zone.mapX}%`;
       pin.style.top = `${zone.mapY}%`;
       pin.style.setProperty('--zone-color', zone.themeColor);
-      pin.disabled = !unlocked;
+      pin.disabled = !unlocked && !canWarpHere;
       pin.innerHTML = `
         <div class="ro-pin-orb">
           ${isCurrent ? `<span class="ro-pin-player">${avatarHtml(state.avatar, 'map-pin')}</span>` : ''}
-          <span class="ro-pin-art">${unlocked ? AnimeSprites.getZoneIcon(zone.id, zone.tag) : '🔒'}</span>
+          <span class="ro-pin-art">${unlocked ? AnimeSprites.getZoneIcon(zone.id, zone.tag) : (canWarpHere ? '🌀' : '🔒')}</span>
         </div>
         <div class="ro-pin-plate">
           <span class="ro-pin-name">${zone.code}: ${zone.roName}</span>
-          <span class="ro-pin-meta">${zone.lvRange} • ⭐${earned}/${maxS}</span>
+          <span class="ro-pin-meta">${canWarpHere ? '🌀 คลิกใช้ตั๋ววาร์ป!' : `${zone.lvRange} • ⭐${earned}/${maxS}`}</span>
         </div>
       `;
 
@@ -694,15 +725,20 @@
         $('roPreviewTitle').textContent = `[${zone.code} • ${zone.roCode}] ${zone.roName} — ${zone.name} (${zone.lvRange})`;
         $('roPreviewDesc').textContent = unlocked
           ? `${zone.subtitle} • 👑 MVP: ${bossStage.enemy.name} • คลิกเพื่อวาร์ปเข้าแมพ!`
-          : `🔒 ล็อกอยู่ — ปราบ MVP Boss ของโซนก่อนหน้าให้สำเร็จเพื่อปลดล็อก!`;
+          : (canWarpHere
+            ? `🌀 คลิกที่โซนนี้เพื่อใช้ Dimensional Zone Warp Pass ปลดล็อกข้ามโซนทันที! • 👑 MVP: ${bossStage.enemy.name}`
+            : `🔒 ล็อกอยู่ — ปราบ MVP Boss ของโซนก่อนหน้าให้สำเร็จเพื่อปลดล็อก!`);
       };
 
       pin.addEventListener('mouseenter', updatePreview);
       pin.addEventListener('focus', updatePreview);
       pin.addEventListener('click', () => {
-        if (!unlocked) return;
-        SoundFX.shield();
-        openRoFieldMap(zone.id);
+        if (unlocked) {
+          SoundFX.shield();
+          openRoFieldMap(zone.id);
+        } else if (canWarpHere) {
+          useWarpPassOnZone(zone);
+        }
       });
 
       pinsLayer.appendChild(pin);
@@ -813,6 +849,8 @@
     const allowFreePlay = isTeacherAccount();
     $('mapFreePlayWrap').classList.toggle('hidden', !allowFreePlay);
     $('mapFreePlayToggle').checked = allowFreePlay && state.freePlay;
+    const hasWarpPass = (state.inventory?.warp_pass || 0) > 0;
+    $('mapWarpPassBanner')?.classList.toggle('hidden', !hasWarpPass);
 
     $('mapViewRoBtn').className = `btn btn-sm ${mapViewMode === 'ro' ? 'btn-neon' : 'btn-ghost'}`;
     $('mapViewListBtn').className = `btn btn-sm ${mapViewMode === 'list' ? 'btn-neon' : 'btn-ghost'}`;
@@ -841,11 +879,13 @@
     const nextTargetId = nextTargetStage ? nextTargetStage.id : null;
 
     let globalIdx = 0;
-    CAMPAIGN_ZONES.forEach((zone) => {
+    CAMPAIGN_ZONES.forEach((zone, zIdx) => {
       const zoneStartFlatIdx = globalIdx;
       globalIdx += zone.stages.length;
       if ((zone.continent || 1) !== activeContinentId) return;
 
+      const zoneUnlocked = isZoneUnlocked(zIdx);
+      const canWarpZone = !zoneUnlocked && hasWarpPass;
       const zoneEarned = zone.stages.reduce((acc, st) => acc + (state.stageStars[st.id] || 0), 0);
       const zoneMax = zone.stages.length * 3;
 
@@ -882,10 +922,15 @@
               <p class="muted-text" style="font-size:0.78rem;">${zone.subtitle}</p>
             </div>
           </div>
-          <div class="zone-stars">⭐ ${zoneEarned}/${zoneMax}</div>
+          <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+            ${canWarpZone ? `<button type="button" class="btn btn-neon btn-xs list-warp-btn">🌀 ใช้ตั๋ววาร์ปปลดล็อกโซนนี้</button>` : ''}
+            <div class="zone-stars">⭐ ${zoneEarned}/${zoneMax}</div>
+          </div>
         </div>
         <div class="stage-path">${stagesHtml}</div>
       `;
+
+      card.querySelector('.list-warp-btn')?.addEventListener('click', () => useWarpPassOnZone(zone));
 
       card.querySelectorAll('.stage-node:not(:disabled)').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -2541,27 +2586,61 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     grid.innerHTML = '';
 
     SHOP_ITEMS.forEach((item) => {
-      const ownedText = item.id === 'boost'
-        ? (state.xpBoostActive ? '🔥 กำลังเปิดใช้งาน (x2 ด่านถัดไป)' : 'ยังไม่ได้เปิดใช้งาน')
-        : `มีในกระเป๋า: ${state.inventory[item.id] || 0} ชิ้น`;
-      const canBuy = state.coins >= item.price && !(item.id === 'boost' && state.xpBoostActive);
+      const isWarpPass = item.id === 'warp_pass';
+      const warpBought = isWarpPass && Boolean(state.warpPassPurchased);
+      const warpInBag = state.inventory.warp_pass || 0;
+
+      let ownedText = `มีในกระเป๋า: ${state.inventory[item.id] || 0} ชิ้น`;
+      let btnLabel = `ซื้อ 💰 ${item.price}`;
+      let canBuy = state.coins >= item.price;
+
+      if (item.id === 'boost') {
+        ownedText = state.xpBoostActive ? '🔥 กำลังเปิดใช้งาน (x2 ด่านถัดไป)' : 'ยังไม่ได้เปิดใช้งาน';
+        if (state.xpBoostActive) canBuy = false;
+      } else if (isWarpPass) {
+        if (warpBought) {
+          ownedText = warpInBag > 0
+            ? '🌀 มีในกระเป๋า: 1 ชิ้น (ไปที่แผนที่โลกแล้วคลิกโซนที่ล็อกเพื่อใช้!) • ครบสิทธิ์ 1/1'
+            : '✅ ใช้สิทธิ์ซื้อครบแล้ว (1 / 1 ครั้ง)';
+          btnLabel = '🔒 จำกัดซื้อได้ 1 ครั้ง (ซื้อแล้ว)';
+          canBuy = false;
+        } else {
+          ownedText = '⭐ สินค้าพิเศษ — จำกัดสิทธิ์ซื้อได้เพียง 1 ครั้งต่อบัญชี!';
+        }
+      }
 
       const card = document.createElement('article');
-      card.className = 'shop-card';
+      card.className = `shop-card ${isWarpPass ? 'shop-card-special' : ''}`;
       card.innerHTML = `
+        ${isWarpPass ? '<span class="shop-limit-badge">LIMIT 1 / ACCOUNT</span>' : ''}
         <div class="shop-icon">${item.icon}</div>
         <h3>${item.name}</h3>
         <p class="muted-text" style="flex:1">${item.desc}</p>
         <div class="shop-owned">${ownedText}</div>
-        <button class="btn btn-neon btn-sm" ${!canBuy ? 'disabled' : ''}>ซื้อ 💰 ${item.price}</button>
+        <button class="btn btn-neon btn-sm" ${!canBuy ? 'disabled' : ''}>${btnLabel}</button>
       `;
       card.querySelector('button').addEventListener('click', () => {
         if (state.coins < item.price) return;
+        if (isWarpPass && state.warpPassPurchased) {
+          SoundFX.wrong();
+          showToast('🔒 คุณใช้สิทธิ์ซื้อ Dimensional Zone Warp Pass ครบ 1 ครั้งแล้ว!');
+          return;
+        }
         state.coins -= item.price;
-        if (item.id === 'boost') state.xpBoostActive = true;
-        else state.inventory[item.id] = (state.inventory[item.id] || 0) + 1;
-        SoundFX.coin();
-        showToast(`🛒 ซื้อ ${item.icon} ${item.name} สำเร็จ!`);
+        if (item.id === 'boost') {
+          state.xpBoostActive = true;
+          SoundFX.coin();
+          showToast(`🛒 ซื้อ ${item.icon} ${item.name} สำเร็จ!`);
+        } else if (isWarpPass) {
+          state.warpPassPurchased = true;
+          state.inventory.warp_pass = 1;
+          SoundFX.levelUp();
+          showToast('🌀 ซื้อ Dimensional Zone Warp Pass สำเร็จ! ไปที่แผนที่โลกแล้วคลิกโซนที่ล็อกเพื่อปลดล็อกข้ามโซนได้เลย!');
+        } else {
+          state.inventory[item.id] = (state.inventory[item.id] || 0) + 1;
+          SoundFX.coin();
+          showToast(`🛒 ซื้อ ${item.icon} ${item.name} สำเร็จ!`);
+        }
         saveState();
         renderHud();
         renderShop();
