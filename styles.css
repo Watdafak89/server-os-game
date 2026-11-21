@@ -3101,6 +3101,28 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   flex-wrap: wrap;
 }
 
+.developer-credit {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--border);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.site-footer {
+  margin-top: 2rem;
+  padding: 0.9rem 1rem 0.5rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+.site-footer strong {
+  color: var(--text);
+}
+
 /* Responsive */
 @media (max-width: 980px) {
   .world-map-grid,
