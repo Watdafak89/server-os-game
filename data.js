@@ -94,6 +94,7 @@ const BADGES = [
   { id: 'zone7_clear', emoji: '🐳', name: 'กัปตัน Docker & Cloud', desc: 'พิชิตบอสโซน 7 (Cloud & Automation)' },
   { id: 'zone8_clear', emoji: '🔍', name: 'ยอดนักสืบไซเบอร์', desc: 'พิชิตบอสโซน 8 (Enterprise Forensics)' },
   { id: 'puzzle_master', emoji: '🧩', name: 'ยอดนักไขปริศนา', desc: 'ผ่านทั้ง CHMOD และ RAID อย่างน้อย 4 ด่าน' },
+  { id: 'vbox_master', emoji: '💿', name: 'ปรมาจารย์ VirtualBox', desc: 'จำลองติดตั้ง OS บน VirtualBox ครบทั้ง 5 ระบบ' },
   { id: 'certified', emoji: '🎓', name: 'Certified SysAdmin', desc: 'สอบผ่าน Guild Exam ตั้งแต่ 70% ขึ้นไป' }
 ];
 

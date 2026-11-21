@@ -53,6 +53,7 @@
       solvedFirewall: saved.solvedFirewall || [],
       solvedSubnet: saved.solvedSubnet || [],
       readChapters: saved.readChapters || [],
+      installedVms: saved.installedVms || [],
       blitzHighScore: saved.blitzHighScore || 0,
       dailyQuests: { ...base.dailyQuests, ...(saved.dailyQuests || {}) }
     };
@@ -169,6 +170,7 @@
     if ((state.solvedFirewall || []).length >= FIREWALL_PUZZLES.length) unlock('firewall_ace');
     if ((state.solvedSubnet || []).length >= SUBNET_PUZZLES.length) unlock('subnet_guru');
     if (state.solvedChmod.length >= 4 && state.solvedRaid.length >= 4) unlock('puzzle_master');
+    if ((state.installedVms || []).length >= 5) unlock('vbox_master');
     if (state.examPassed) unlock('certified');
   }
 
@@ -445,7 +447,7 @@
     // Adaptive BGM mood per screen
     if (screenName === 'map' || screenName === 'shop' || screenName === 'leaderboard' || screenName === 'teacher') {
       SoundFX.setBgmTrack('town');
-    } else if (screenName === 'codex' || screenName === 'cli' || screenName === 'puzzles' || screenName === 'exam') {
+    } else if (screenName === 'codex' || screenName === 'cli' || screenName === 'vbox' || screenName === 'puzzles' || screenName === 'exam') {
       SoundFX.setBgmTrack('study');
     } else if (screenName === 'defense') {
       SoundFX.setBgmTrack('battle');
@@ -464,6 +466,9 @@
     if (screenName === 'cli') {
       renderCliSidebar();
       setTimeout(() => $('terminalInput')?.focus(), 60);
+    }
+    if (screenName === 'vbox') {
+      VBoxSim.render();
     }
     if (screenName === 'shop') renderShop();
     if (screenName === 'codex') renderCodexAndStats();
@@ -3354,5 +3359,23 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     initCliWelcome();
     renderChmodVault();
     renderRaidVisual('5', 0);
+    VBoxSim.bindEvents();
+    VBoxSim.init({
+      getInstalled: () => state.installedVms || [],
+      playSound: (name) => { if (SoundFX[name]) SoundFX[name](); },
+      toast: showToast,
+      onMissionComplete: (mission) => {
+        if (!state.installedVms) state.installedVms = [];
+        recordAnalytics('hardware', true);
+        if (!state.installedVms.includes(mission.id)) {
+          state.installedVms.push(mission.id);
+          bumpDailyQuest('labsOrPuzzles');
+          grantRewards(mission.xp, mission.coins);
+          showToast(`💿 ติดตั้ง ${mission.name} สำเร็จ! (+${mission.xp} XP, +💰${mission.coins})`);
+        } else {
+          showToast(`✨ ทบทวนการติดตั้ง ${mission.name} เสร็จเรียบร้อย!`);
+        }
+      }
+    });
   })();
 })();

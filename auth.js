@@ -111,6 +111,7 @@ const AuthSystem = (() => {
       solvedFirewall: [],
       solvedSubnet: [],
       readChapters: [],
+      installedVms: [],
       defenseHighScore: 0,
       blitzHighScore: 0,
       dailyQuests: {

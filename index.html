@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=3.8" />
+  <link rel="stylesheet" href="styles.css?v=3.9" />
 </head>
 <body>
   <div class="cyber-bg" aria-hidden="true"></div>
@@ -1150,6 +1150,68 @@
         </div>
       </section>
 
+      <!-- ==================== SCREEN 11: ORACLE VM VIRTUALBOX LAB ==================== -->
+      <section id="screen-vbox" class="screen">
+        <div class="screen-header">
+          <div>
+            <h2>💿 Oracle VM VirtualBox Lab — จำลองติดตั้ง Linux &amp; Windows เสมือนจริง</h2>
+            <p class="muted-text">ฝึกสร้าง VM, ตั้งค่า RAM/CPU/VDI/EFI/TPM 2.0, ใส่ไฟล์ .ISO, เลือกโหมด Network และลง OS ทีละขั้นตอนเหมือนเครื่องจริง!</p>
+          </div>
+          <span class="stage-chip" id="vboxProgressChip">ติดตั้งสำเร็จ 0 / 5 ระบบ</span>
+        </div>
+
+        <div id="vboxAppRoot">
+          <!-- OS Lab Mission Picker -->
+          <div id="vboxMissionPicker" class="vbox-mission-bar"></div>
+
+          <!-- Active Mission Requirement Checklist -->
+          <div class="panel" style="margin-bottom:1rem;padding:1rem 1.15rem;">
+            <div id="vboxBriefText" style="font-size:0.9rem;margin-bottom:0.65rem;"></div>
+            <div id="vboxStepsBar" class="vbox-steps-bar"></div>
+          </div>
+
+          <!-- ORACLE VM VIRTUALBOX MANAGER WINDOW -->
+          <div id="vboxManagerFrame" class="vbox-window">
+            <div class="vbox-titlebar">
+              <div class="vbox-title-left"><span>🟦</span> <strong>Oracle VM VirtualBox Manager 7.0</strong></div>
+              <div class="vbox-win-btns"><span>—</span><span>▢</span><span>✕</span></div>
+            </div>
+            <div class="vbox-menubar">
+              <span>File</span><span>Machine</span><span>Tools</span><span>Help</span>
+            </div>
+            <div class="vbox-toolbar">
+              <button type="button" class="vbox-tool-btn" id="vboxNewBtn"><span>➕</span><small>New</small></button>
+              <button type="button" class="vbox-tool-btn" id="vboxSettingsBtn" disabled><span>⚙️</span><small>Settings</small></button>
+              <button type="button" class="vbox-tool-btn" id="vboxRemoveBtn" disabled><span>🗑️</span><small>Remove</small></button>
+              <div class="vbox-tool-sep"></div>
+              <button type="button" class="vbox-tool-btn start-btn" id="vboxStartBtn" disabled><span>▶️</span><small>Start</small></button>
+            </div>
+            <div class="vbox-body-split">
+              <aside class="vbox-sidebar" id="vboxVmList"></aside>
+              <div class="vbox-details" id="vboxVmDetails"></div>
+            </div>
+          </div>
+
+          <!-- VIRTUALBOX RUNNING GUEST MONITOR WINDOW -->
+          <div id="vboxGuestFrame" class="vbox-window hidden">
+            <div class="vbox-titlebar">
+              <div class="vbox-title-left"><span>🖥️</span> <strong id="vboxGuestTitle">VM [Running] — Oracle VM VirtualBox</strong></div>
+              <button type="button" class="btn btn-ghost btn-xs" id="vboxPowerOffBtn" style="color:#fca5a5;border-color:#ef4444;">🔌 Power Off (ปิดเครื่อง)</button>
+            </div>
+            <div class="vbox-menubar">
+              <span>Machine</span><span>View</span><span>Input (Ctrl+Alt+Del)</span><span>Devices (Optical Drives)</span>
+            </div>
+            <div id="vboxGuestScreen" class="vbox-guest-screen guest-bios"></div>
+            <div class="vbox-statusbar">
+              <span class="vbox-led-item">🟢 HDD Active</span>
+              <span class="vbox-led-item" id="vboxLedIso">💿 ISO</span>
+              <span class="vbox-led-item" id="vboxLedNet">🌐 Network</span>
+              <span class="vbox-led-item" style="margin-left:auto;">Host Key: Right Ctrl</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Developer Footer -->
       <footer class="site-footer no-print">
         <span>Develop by <strong>นายวัชรพงษ์ สุขแช่ม</strong> ครูวิทยาลัยเทคนิคจันทบุรี</span>
@@ -1163,6 +1225,9 @@
       </button>
       <button class="dock-btn" data-screen="cli">
         <span class="dock-icon">💻</span><span class="dock-label">CLI Arena</span>
+      </button>
+      <button class="dock-btn" data-screen="vbox">
+        <span class="dock-icon">💿</span><span class="dock-label">VirtualBox</span>
       </button>
       <button class="dock-btn" data-screen="defense">
         <span class="dock-icon">⚡</span><span class="dock-label">อาร์เคด</span>
@@ -1200,14 +1265,98 @@
     </div>
   </div>
 
+  <!-- Oracle VM VirtualBox Create / Settings Modal -->
+  <div id="vboxModal" class="modal-backdrop hidden no-print" role="dialog" aria-modal="true">
+    <div class="avatar-modal-card" style="max-width:620px;">
+      <div class="panel-header">
+        <h3 id="vboxModalTitle">➕ Create Virtual Machine</h3>
+        <button type="button" class="icon-btn" id="closeVboxModalBtn" aria-label="ปิด">✕</button>
+      </div>
+      <form id="vboxModalForm" class="auth-form">
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="vmNameInp">VM Name (ชื่อเครื่องเสมือน)</label>
+            <input type="text" id="vmNameInp" class="game-input left-input" required />
+          </div>
+          <div class="form-field">
+            <label for="vmOsTypeInp">Type (ประเภท OS)</label>
+            <select id="vmOsTypeInp" class="game-input left-input">
+              <option value="Linux">Linux</option>
+              <option value="Microsoft Windows">Microsoft Windows</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="vmOsVerInp">Version</label>
+            <select id="vmOsVerInp" class="game-input left-input">
+              <option value="Ubuntu (64-bit)">Ubuntu (64-bit)</option>
+              <option value="Red Hat (64-bit)">Red Hat / Rocky (64-bit)</option>
+              <option value="Debian (64-bit)">Debian (64-bit)</option>
+              <option value="Windows 2022 (64-bit)">Windows 2022 (64-bit)</option>
+              <option value="Windows 11 (64-bit)">Windows 11 (64-bit)</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="vmNetInp">Network Adapter 1 (โหมดเครือข่าย)</label>
+            <select id="vmNetInp" class="game-input left-input">
+              <option value="NAT">NAT (ออกเน็ตได้ผ่านเครื่อง Host)</option>
+              <option value="Bridged Adapter">Bridged Adapter (รับ IP วงแลนจริง)</option>
+              <option value="Internal Network">Internal Network (คุยกันเฉพาะในวง VM)</option>
+              <option value="Host-Only Adapter">Host-Only Adapter (คุยเฉพาะกับเครื่อง Host)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="vmIsoInp">💿 Optical Drive — เลือกไฟล์แผ่นติดตั้ง (.ISO Image)</label>
+          <select id="vmIsoInp" class="game-input left-input"></select>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="vmRamInp">Base Memory (RAM): <strong id="vmRamVal" style="color:var(--primary);">2048 MB</strong></label>
+            <input type="range" id="vmRamInp" min="512" max="8192" step="512" value="2048" />
+          </div>
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label for="vmCpuInp">Processors (vCPU)</label>
+              <input type="number" id="vmCpuInp" class="game-input left-input" min="1" max="8" value="2" />
+            </div>
+            <div class="form-field">
+              <label for="vmDiskInp">Virtual Disk (GB)</label>
+              <input type="number" id="vmDiskInp" class="game-input left-input" min="8" max="200" value="20" />
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;padding:0.5rem 0.75rem;border-radius:10px;background:var(--bg-elevated);border:1px solid var(--border);font-size:0.84rem;">
+          <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">
+            <input type="checkbox" id="vmEfiInp" /> <strong>Enable EFI (UEFI Boot)</strong>
+          </label>
+          <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">
+            <input type="checkbox" id="vmTpmInp" /> <strong>Enable TPM v2.0 (จำเป็นสำหรับ Win 11)</strong>
+          </label>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:0.6rem;margin-top:0.3rem;">
+          <button type="button" class="btn btn-ghost" id="vboxModalCancelBtn">ยกเลิก</button>
+          <button type="submit" class="btn btn-neon" id="vboxModalSaveBtn">✅ สร้างเครื่อง VM</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="cloud-config.js?v=3.8"></script>
-  <script src="audio.js?v=3.8"></script>
-  <script src="data.js?v=3.8"></script>
-  <script src="codex-data.js?v=3.8"></script>
-  <script src="auth.js?v=3.8"></script>
-  <script src="game.js?v=3.8"></script>
+  <script src="cloud-config.js?v=3.9"></script>
+  <script src="audio.js?v=3.9"></script>
+  <script src="data.js?v=3.9"></script>
+  <script src="codex-data.js?v=3.9"></script>
+  <script src="auth.js?v=3.9"></script>
+  <script src="vbox-sim.js?v=3.9"></script>
+  <script src="game.js?v=3.9"></script>
 </body>
 </html>
