@@ -17,9 +17,9 @@
   function loadPrefs() {
     try {
       const raw = localStorage.getItem(PREFS_KEY);
-      return raw ? { theme: 'dark', sound: true, ...JSON.parse(raw) } : { theme: 'dark', sound: true };
+      return raw ? { theme: 'dark', sound: true, bgm: true, ...JSON.parse(raw) } : { theme: 'dark', sound: true, bgm: true };
     } catch {
-      return { theme: 'dark', sound: true };
+      return { theme: 'dark', sound: true, bgm: true };
     }
   }
 
@@ -182,6 +182,13 @@
     $('hudSoundBtn').textContent = icon;
   }
 
+  function applyBgm() {
+    SoundFX.setBgmEnabled(prefs.bgm);
+    const icon = prefs.bgm ? '🎵' : '🔕';
+    $('titleBgmBtn').textContent = icon;
+    $('hudBgmBtn').textContent = icon;
+  }
+
   function toggleTheme() {
     prefs.theme = prefs.theme === 'dark' ? 'light' : 'dark';
     applyTheme();
@@ -194,6 +201,13 @@
     applySound();
     savePrefs();
     if (prefs.sound) SoundFX.click();
+  }
+
+  function toggleBgm() {
+    prefs.bgm = !prefs.bgm;
+    applyBgm();
+    savePrefs();
+    showToast(prefs.bgm ? '🎵 เปิดดนตรีพื้นหลังแล้ว' : '🔕 ปิดดนตรีพื้นหลังแล้ว');
   }
 
   /* ==================== AUTH GATE, TITLE SCREEN & HUD ==================== */
@@ -353,6 +367,7 @@
     SoundFX.click();
     stopDefenseTimer();
     stopBlitzTimer();
+    SoundFX.setBgmTrack('town');
     $('gameShell').classList.add('hidden');
     $('titleScreen').classList.remove('hidden');
     renderTitleScreen();
@@ -362,6 +377,7 @@
     SoundFX.click();
     stopDefenseTimer();
     stopBlitzTimer();
+    SoundFX.setBgmTrack('town');
     AuthSystem.logout();
     currentAccount = null;
     $('studentNameInput').value = '';
@@ -381,6 +397,15 @@
     if (screenName === 'teacher' && currentAccount?.role !== 'teacher') {
       showToast('⚠️ หน้านี้สงวนสิทธิ์เฉพาะบัญชีครูผู้สอนเท่านั้น');
       return;
+    }
+
+    // Adaptive BGM mood per screen
+    if (screenName === 'map' || screenName === 'shop' || screenName === 'leaderboard' || screenName === 'teacher') {
+      SoundFX.setBgmTrack('town');
+    } else if (screenName === 'codex' || screenName === 'cli' || screenName === 'puzzles' || screenName === 'exam') {
+      SoundFX.setBgmTrack('study');
+    } else if (screenName === 'defense') {
+      SoundFX.setBgmTrack('battle');
     }
 
     document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
@@ -896,6 +921,7 @@
     $('enemyBossTag').classList.toggle('hidden', !stage.isBoss);
 
     switchScreen('battle');
+    SoundFX.setBgmTrack(stage.isBoss ? 'boss' : 'battle');
     animateClass('playerCombatant', 'enter-left', 600);
     animateClass('enemyCombatant', 'enter-right', 600);
     playIntroBanner(
@@ -3233,6 +3259,8 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
   $('hudThemeBtn').addEventListener('click', toggleTheme);
   $('titleSoundBtn').addEventListener('click', toggleSound);
   $('hudSoundBtn').addEventListener('click', toggleSound);
+  $('titleBgmBtn').addEventListener('click', toggleBgm);
+  $('hudBgmBtn').addEventListener('click', toggleBgm);
 
   $('mapFreePlayToggle').addEventListener('change', (e) => {
     SoundFX.click();
@@ -3269,6 +3297,8 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
   (async () => {
     applyTheme();
     applySound();
+    applyBgm();
+    SoundFX.setBgmTrack('town');
     await AuthSystem.ensureSeedAccounts();
     hydrateFromCurrentAccount();
     renderTitleScreen();
