@@ -174,6 +174,8 @@
     if (state.stageStars['z6_boss']) unlock('final_boss');
     if (state.stageStars['z7_boss']) unlock('zone7_clear');
     if (state.stageStars['z8_boss']) unlock('zone8_clear');
+    if (state.stageStars['z9_boss']) unlock('zone9_clear');
+    if (state.stageStars['z10_boss']) unlock('zone10_clear');
     if (state.completedLabs.length >= 15) unlock('cli_hero');
     if (state.completedLabs.length >= CLI_LABS.length) unlock('cli_god');
     if (state.defenseHighScore >= 1500) unlock('port_defender');
@@ -2890,6 +2892,8 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     final_boss: 'map',
     zone7_clear: 'map',
     zone8_clear: 'map',
+    zone9_clear: 'map',
+    zone10_clear: 'map',
     cli_hero: 'cli',
     cli_god: 'cli',
     port_defender: 'defense',
