@@ -157,7 +157,7 @@
     if (state.stageStars['z6_boss']) unlock('final_boss');
     if (state.stageStars['z7_boss']) unlock('zone7_clear');
     if (state.stageStars['z8_boss']) unlock('zone8_clear');
-    if (state.completedLabs.length >= 9) unlock('cli_hero');
+    if (state.completedLabs.length >= 15) unlock('cli_hero');
     if (state.completedLabs.length >= CLI_LABS.length) unlock('cli_god');
     if (state.defenseHighScore >= 1500) unlock('port_defender');
     if (state.blitzHighScore >= 1200) unlock('blitz_flash');
@@ -1187,8 +1187,21 @@
       'backup.sh': '-rw-r--r--',
       'nginx.conf': '-rw-r--r--'
     },
-    firewall: ['22/tcp (SSH)', '80/tcp (HTTP)'],
-    users: ['root', 'admin', 'www-data']
+    webOwner: 'root:root',
+    sudoUsers: ['root', 'admin'],
+    roguePidKilled: false,
+    firewall: ['22/tcp (SSH)', '23/tcp (Telnet - INSECURE)', '80/tcp (HTTP)'],
+    users: ['root', 'admin', 'www-data'],
+    winAdUsers: [
+      { name: 'Administrator', dept: 'IT-Core' },
+      { name: 'somchai.k', dept: 'Accounting' },
+      { name: 'student01', dept: 'Computer-IT' }
+    ],
+    winFirewallPorts: ['53', '389', '445', '3389'],
+    dockerRunning: [
+      { id: 'a8f2c91b40e1', image: 'nginx:alpine', ports: '0.0.0.0:8080->80/tcp', name: 'web-frontend' },
+      { id: '3d19e7c2b0a4', image: 'mysql:8.0', ports: '3306/tcp', name: 'db-core' }
+    ]
   };
 
   function getActiveCliLab() {
@@ -1306,33 +1319,40 @@
       if (lab.os === 'windows') {
         appendTerm(
 `คำสั่ง Windows Server PowerShell / CMD ที่รองรับ:
-  ipconfig /all                          ดูข้อมูล IP, Subnet, Gateway, DNS ทั้งหมด
-  nslookup <domain>                      ตรวจสอบการแปลงชื่อ DNS
-  Get-Service [name]                     ดูสถานะ Windows Services (DNS, DHCP, NTDS)
-  Restart-Service <name>                 รีสตาร์ทบริการบน Windows Server
+  ipconfig /all | ipconfig /flushdns     ดูค่า IP/DNS และล้างแคช DNS
+  nslookup <domain> | netstat -ano       ตรวจ DNS และดูพอร์ตที่เปิดพร้อม PID
+  Get-Service / Restart-Service <name>   ดูและรีสตาร์ท Windows Services (DNS, DHCP, NTDS)
   gpupdate /force                        บังคับอัปเดต Group Policy (GPO) ทันที
-  Get-ADUser -Filter *                   แสดงรายชื่อผู้ใช้ใน Active Directory
-  Test-NetConnection <host> -Port <p>    ทดสอบการเชื่อมต่อพอร์ต TCP
-  netstat -ano                           ดูพอร์ตที่เปิดและ PID
+  Get-ADUser -Filter *                   ดูรายชื่อผู้ใช้ Active Directory
+  New-ADUser -Name <user>                สร้างบัญชีผู้ใช้ใหม่ใน Active Directory
+  Test-NetConnection <host> -Port <p>    ทดสอบพอร์ต TCP ปลายทาง
+  New-NetFirewallRule ... -LocalPort 443 สร้างกฎ Windows Firewall
+  Get-EventLog -LogName Security -InstanceId 4625  สืบสวน Event Log ล็อกอินพลาด
   cls                                    ล้างหน้าจอ`, 'term-line-muted');
       } else {
         appendTerm(
 `คำสั่ง Linux Server Bash ที่รองรับ:
-  whoami, hostname, uname -a             ข้อมูลผู้ใช้และระบบปฏิบัติการ
-  ip a | ifconfig | ping <host>          ตรวจสอบเครือข่ายและ IP
-  systemctl status|start|restart|enable <svc>
-  journalctl -u <svc>                    ดู Systemd Logs (เช่น nginx)
-  ss -tulnp | netstat -tulnp             ดูพอร์ตที่เปิด Listening อยู่
-  df -h | du -sh /var/* | free -h        ตรวจสอบดิสก์และหน่วยความจำ RAM
-  ls -l | chmod <mode> <file>            จัดการไฟล์และสิทธิ์ rwx
-  ufw status | ufw allow <port>          จัดการ Firewall UFW
-  useradd <name> | id <name> | cat /etc/passwd
-  clear                                  ล้างหน้าจอ`, 'term-line-muted');
+  whoami, hostname, uname -a, uptime     ข้อมูลผู้ใช้ ระบบปฏิบัติการ และ Load Average
+  ip a | ifconfig | ping | ss -tulnp     ตรวจเครือข่าย IP และพอร์ตที่เปิด Listening
+  systemctl status|start|restart|enable <svc>  จัดการบริการ (nginx, ssh, mysql, ufw)
+  journalctl -u <svc> | tail -f <log>    ดู Systemd Logs และเฝ้าดู Log แบบสด
+  grep Failed /var/log/auth.log          ค้นหาประวัติการบุกรุกในไฟล์ Log
+  df -h | du -sh /var/* | free -h        ตรวจสอบดิสก์ โฟลเดอร์ และ RAM
+  ps aux | kill -9 <pid>                 ตรวจสอบและยุติ Process ที่ค้าง/อันตราย
+  ls -l | chmod <mode> <f> | chown       จัดการสิทธิ์ rwx และเจ้าของไฟล์
+  useradd <name> | usermod -aG sudo <u>  สร้างผู้ใช้และมอบสิทธิ์ sudo
+  ufw status | ufw allow/deny <port>     จัดการ Firewall UFW
+  tar -czvf backup.tar.gz /var/www/html  บีบอัดไฟล์สำรองข้อมูล
+  docker ps | docker run -d -p 8080:80 nginx  จัดการ Docker Container
+  apt update | crontab -l | clear        อัปเดตแพ็กเกจ ดู Cron และล้างหน้าจอ`, 'term-line-muted');
       }
     }
     /* Windows Server Commands */
     else if (bin === 'ipconfig') {
-      appendTerm(
+      if (parts.some((p) => p.toLowerCase() === '/flushdns')) {
+        appendTerm('Windows IP Configuration\n\nSuccessfully flushed the DNS Resolver Cache.', 'term-line-ok');
+      } else {
+        appendTerm(
 `Windows IP Configuration
    Host Name . . . . . . . . . . . . : SRV-DC-01
    Primary Dns Suffix  . . . . . . . : college.local
@@ -1342,6 +1362,7 @@ Ethernet adapter Ethernet0:
    Subnet Mask . . . . . . . . . . . : 255.255.255.0
    Default Gateway . . . . . . . . . : 192.168.10.1
    DNS Servers . . . . . . . . . . . : 127.0.0.1`, 'term-line-ok');
+      }
     } else if (bin === 'nslookup') {
       const dom = parts[1] || 'college.ac.th';
       appendTerm(`Server:  srv-dc-01.college.local\nAddress:  192.168.10.2\n\nName:    ${dom}\nAddress:  203.150.10.25`);
@@ -1361,7 +1382,36 @@ Ethernet adapter Ethernet0:
     } else if (bin === 'gpupdate') {
       appendTerm('Updating policy...\n\nComputer Policy update has completed successfully.\nUser Policy update has completed successfully.', 'term-line-ok');
     } else if (bin === 'get-aduser') {
-      appendTerm(`SamAccountName   Enabled   Department\n--------------   -------   ----------\nAdministrator    True      IT-Core\nsomchai.k        True      Accounting\nstudent01        True      Computer-IT`);
+      const rows = simEnv.winAdUsers.map((u) => `${u.name.padEnd(17)}True      ${u.dept}`).join('\n');
+      appendTerm(`SamAccountName   Enabled   Department\n--------------   -------   ----------\n${rows}`);
+    } else if (bin === 'new-aduser') {
+      const nameIdx = parts.findIndex((p) => p.toLowerCase() === '-name');
+      const rawName = nameIdx !== -1 ? (parts[nameIdx + 1] || '').replace(/^["']|["']$/g, '') : '';
+      if (!rawName) {
+        appendTerm('Usage: New-ADUser -Name <username> (เช่น New-ADUser -Name suda.r)', 'term-line-err');
+      } else {
+        if (!simEnv.winAdUsers.some((u) => u.name.toLowerCase() === rawName.toLowerCase())) {
+          simEnv.winAdUsers.push({ name: rawName, dept: 'New-Student' });
+        }
+        appendTerm(`Active Directory user '${rawName}' created in CN=Users,DC=college,DC=local.`, 'term-line-ok');
+      }
+    } else if (bin === 'new-netfirewallrule') {
+      const portIdx = parts.findIndex((p) => p.toLowerCase() === '-localport');
+      const port = portIdx !== -1 ? parts[portIdx + 1] : '';
+      const allow = /allow/i.test(cmd);
+      if (!port) {
+        appendTerm('Usage: New-NetFirewallRule -DisplayName HTTPS -Direction Inbound -LocalPort 443 -Protocol TCP -Action Allow', 'term-line-err');
+      } else {
+        if (allow && !simEnv.winFirewallPorts.includes(port)) simEnv.winFirewallPorts.push(port);
+        appendTerm(`Windows Firewall Rule created:\n  DisplayName : Allow-Port-${port}\n  Direction   : Inbound\n  LocalPort   : ${port}/TCP\n  Action      : ${allow ? 'Allow' : 'Block'}\n  Enabled     : True`, 'term-line-ok');
+      }
+    } else if (bin === 'get-winevent' || bin === 'get-eventlog') {
+      appendTerm(
+`TimeCreated           Id     LevelDisplayName  Message
+-----------           --     ----------------  -------
+21/11/2026 03:14:02   4625   Audit Failure     An account failed to log on (User: Administrator, SrcIP: 185.220.101.4)
+21/11/2026 03:14:05   4625   Audit Failure     An account failed to log on (User: Administrator, SrcIP: 185.220.101.4)
+21/11/2026 03:14:08   4625   Audit Failure     An account failed to log on (User: root, SrcIP: 185.220.101.4)`, 'term-line-ok');
     } else if (bin === 'test-netconnection' || bin === 'tnc') {
       const host = parts[1] || '192.168.10.10';
       const portIdx = parts.findIndex((p) => p.toLowerCase() === '-port');
@@ -1443,9 +1493,18 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
         simEnv.files[file] = sym;
         appendTerm(`Updated '${file}' -> ${sym} (${mode})`, 'term-line-ok');
       }
+    } else if (bin === 'chown') {
+      const ownerArg = parts.find((p) => p.includes(':'));
+      const pathArg = parts[parts.length - 1];
+      if (!ownerArg || !pathArg || pathArg === ownerArg) {
+        appendTerm('Usage: chown -R www-data:www-data /var/www/html', 'term-line-err');
+      } else {
+        if (pathArg.includes('/var/www')) simEnv.webOwner = ownerArg;
+        appendTerm(`Changed ownership of '${pathArg}' to ${ownerArg}`, 'term-line-ok');
+      }
     } else if (bin === 'ufw') {
       if (parts[1] === 'status') {
-        appendTerm(`Status: active\n\nTo                     Action   From\n--                     ------   ----\n${simEnv.firewall.map((r) => r.padEnd(23) + 'ALLOW    Anywhere').join('\n')}`);
+        appendTerm(`Status: active\n\nTo                           Action   From\n--                           ------   ----\n${simEnv.firewall.map((r) => r.padEnd(29) + 'ALLOW    Anywhere').join('\n')}`);
       } else if (parts[1] === 'allow') {
         const t = (parts[2] || '').toLowerCase();
         let rule = null;
@@ -1457,8 +1516,19 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
           if (!simEnv.firewall.includes(rule)) simEnv.firewall.push(rule);
           appendTerm(`Rule added: ALLOW ${rule}`, 'term-line-ok');
         }
+      } else if (parts[1] === 'deny') {
+        const t = (parts[2] || '').toLowerCase();
+        if (t === '23' || t === '23/tcp' || t === 'telnet') {
+          simEnv.firewall = simEnv.firewall.filter((r) => !r.startsWith('23/tcp'));
+          appendTerm('Rule updated: DENY 23/tcp (Telnet blocked securely!)', 'term-line-ok');
+        } else if (/^\d+$/.test(t)) {
+          simEnv.firewall = simEnv.firewall.filter((r) => !r.startsWith(`${t}/tcp`));
+          appendTerm(`Rule added: DENY ${t}/tcp`, 'term-line-ok');
+        } else {
+          appendTerm('Usage: ufw deny <port> (เช่น ufw deny 23)', 'term-line-err');
+        }
       } else {
-        appendTerm('ใช้คำสั่ง ufw status หรือ ufw allow <port>', 'term-line-err');
+        appendTerm('ใช้คำสั่ง ufw status, ufw allow <port> หรือ ufw deny <port>', 'term-line-err');
       }
     } else if (bin === 'useradd' || bin === 'adduser') {
       const u = parts[1];
@@ -1468,22 +1538,61 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
         simEnv.users.push(u);
         appendTerm(`User '${u}' created successfully.`, 'term-line-ok');
       }
+    } else if (bin === 'usermod') {
+      const u = parts[parts.length - 1];
+      if (cmd.includes('-aG') && cmd.includes('sudo') && u && u !== 'sudo') {
+        if (!simEnv.users.includes(u)) simEnv.users.push(u);
+        if (!simEnv.sudoUsers.includes(u)) simEnv.sudoUsers.push(u);
+        appendTerm(`Added user '${u}' to supplementary group 'sudo'.`, 'term-line-ok');
+      } else {
+        appendTerm('Usage: usermod -aG sudo <username> (เช่น usermod -aG sudo student01)', 'term-line-err');
+      }
     } else if (bin === 'id') {
       const u = parts[1] || 'root';
-      if (simEnv.users.includes(u)) appendTerm(`uid=1002(${u}) gid=1002(${u}) groups=1002(${u}),users`);
-      else appendTerm(`id: '${u}': no such user`, 'term-line-err');
+      if (simEnv.users.includes(u)) {
+        const extra = simEnv.sudoUsers.includes(u) ? ',27(sudo)' : '';
+        appendTerm(`uid=1002(${u}) gid=1002(${u}) groups=1002(${u})${extra}`);
+      } else appendTerm(`id: '${u}': no such user`, 'term-line-err');
     } else if (bin === 'cat' && parts[1] === '/etc/passwd') {
       appendTerm(simEnv.users.map((u, i) => `${u}:x:${i === 0 ? 0 : 1000 + i}:1000::/home/${u}:/bin/bash`).join('\n'));
+    } else if (bin === 'grep') {
+      appendTerm(
+`Nov 21 03:11:04 srv-linux-01 sshd[2201]: Failed password for root from 185.220.101.4 port 51202 ssh2
+Nov 21 03:11:07 srv-linux-01 sshd[2201]: Failed password for root from 185.220.101.4 port 51204 ssh2
+Nov 21 03:11:10 srv-linux-01 sshd[2205]: Failed password for admin from 185.220.101.4 port 51209 ssh2`, 'term-line-ok');
+    } else if (bin === 'tar') {
+      const outFile = parts.find((p) => p.endsWith('.tar.gz')) || 'backup.tar.gz';
+      simEnv.files[outFile] = '-rw-r--r--';
+      appendTerm(`/var/www/html/\n/var/www/html/index.html\n/var/www/html/styles.css\nArchive '${outFile}' created successfully (1.2 MB).`, 'term-line-ok');
+    } else if (bin === 'ps') {
+      const rogueLine = simEnv.roguePidKilled ? '' : '\nwww-data  4099 99.4 14.2 812040 220400 ?  R    03:10  48:21 /tmp/miner_bot';
+      appendTerm(
+`USER       PID %CPU %MEM    VSZ   RSS TTY STAT START   TIME COMMAND
+root         1  0.0  0.2 168920 11200 ?   Ss   00:00   0:04 /sbin/init
+root       912  0.1  0.3  15420  6200 ?   Ss   00:01   0:02 sshd: /usr/sbin/sshd
+www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker process${rogueLine}`);
+    } else if (bin === 'kill') {
+      const pid = parts[parts.length - 1];
+      if (pid === '4099') {
+        simEnv.roguePidKilled = true;
+        appendTerm('Process 4099 (miner_bot) terminated (SIGKILL). CPU usage back to normal (3%).', 'term-line-ok');
+      } else {
+        appendTerm(`kill: (${pid || ''}) - ลองตรวจ PID ด้วย ps aux (โปรเซสมัลแวร์คือ 4099)`, 'term-line-err');
+      }
     } else if (bin === 'docker') {
       if (parts[1] === 'ps') {
-        appendTerm(
-`CONTAINER ID   IMAGE          COMMAND                  STATUS          PORTS                  NAMES
-a8f2c91b40e1   nginx:alpine   "/docker-entrypoint.…"   Up 4 days       0.0.0.0:8080->80/tcp   web-frontend
-3d19e7c2b0a4   mysql:8.0      "docker-entrypoint.s…"   Up 4 days       3306/tcp               db-core`, 'term-line-ok');
+        const rows = simEnv.dockerRunning.map((c) => `${c.id}   ${c.image.padEnd(14)} Up 4 days   ${c.ports.padEnd(23)} ${c.name}`).join('\n');
+        appendTerm(`CONTAINER ID   IMAGE          STATUS      PORTS                   NAMES\n${rows}`, 'term-line-ok');
+      } else if (parts[1] === 'run') {
+        const newId = 'f9c4e12a88b0';
+        if (!simEnv.dockerRunning.some((c) => c.id === newId)) {
+          simEnv.dockerRunning.push({ id: newId, image: 'nginx', ports: '0.0.0.0:8080->80/tcp', name: 'web01' });
+        }
+        appendTerm(`${newId}d4b91a82e01c7b9f8831\nContainer started in detached mode (0.0.0.0:8080->80/tcp).`, 'term-line-ok');
       } else if (parts[1] === 'images') {
         appendTerm(`REPOSITORY   TAG      IMAGE ID       SIZE\nnginx        alpine   4f380adfc10f   41.2MB\nmysql        8.0      91c95931e552   578MB`);
       } else {
-        appendTerm('รองรับคำสั่ง: docker ps, docker ps -a, docker images', 'term-line-muted');
+        appendTerm('รองรับคำสั่ง: docker ps, docker ps -a, docker images, docker run -d -p 8080:80 nginx', 'term-line-muted');
       }
     } else if (bin === 'apt') {
       if (parts[1] === 'update') {
