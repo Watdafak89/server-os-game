@@ -472,6 +472,7 @@
     }
     if (screenName === 'shop') renderShop();
     if (screenName === 'codex') renderCodexAndStats();
+    if (screenName === 'exam') renderExamGate();
     if (screenName === 'puzzles') {
       renderChmodVault();
       renderRaidChallenge();
@@ -2696,12 +2697,106 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
   /* ==================== SCREEN 8: GUILD CERTIFICATION EXAM ==================== */
   const EXAM_QUESTION_COUNT = 30;
+  const EXAM_REQUIRED_BADGES = BADGES.filter((b) => b.id !== 'certified');
+  const BADGE_SCREEN_MAP = {
+    first_blood: 'map',
+    zone1_clear: 'map',
+    zone2_clear: 'map',
+    zone3_clear: 'map',
+    zone4_clear: 'map',
+    zone5_clear: 'map',
+    final_boss: 'map',
+    zone7_clear: 'map',
+    zone8_clear: 'map',
+    cli_hero: 'cli',
+    cli_god: 'cli',
+    port_defender: 'defense',
+    blitz_flash: 'defense',
+    firewall_ace: 'puzzles',
+    subnet_guru: 'puzzles',
+    puzzle_master: 'puzzles',
+    vbox_master: 'vbox'
+  };
+
   let examQs = [];
   let examIdx = 0;
   let examAns = [];
   let examPick = null;
 
+  function getExamEligibility() {
+    checkBadges();
+    const total = EXAM_REQUIRED_BADGES.length;
+    const missing = EXAM_REQUIRED_BADGES.filter((b) => !state.unlockedBadges.includes(b.id));
+    const unlockedCount = total - missing.length;
+    return {
+      total,
+      unlockedCount,
+      missing,
+      eligible: missing.length === 0
+    };
+  }
+
+  function renderExamGate() {
+    const elig = getExamEligibility();
+    const pct = elig.total > 0 ? Math.round((elig.unlockedCount / elig.total) * 100) : 0;
+
+    $('examGateCountChip').textContent = `🏆 เหรียญตรา ${elig.unlockedCount} / ${elig.total}`;
+    $('examGateProgressBar').style.width = `${pct}%`;
+
+    const gateBox = $('examBadgeGate');
+    gateBox.classList.toggle('locked', !elig.eligible);
+    gateBox.classList.toggle('unlocked', elig.eligible);
+
+    const startBtn = $('startExamBtn');
+    if (elig.eligible) {
+      $('examGateEmoji').textContent = '🎓⚔️';
+      $('examGateStatus').textContent = '✅ ปลดล็อกสิทธิ์สอบรับรองแล้ว! คุณผ่านเหรียญตราความสำเร็จครบทุกเหรียญ';
+      $('examGateRemain').textContent = `ครบ ${elig.total}/${elig.total} เหรียญ ✓`;
+      startBtn.disabled = false;
+      startBtn.textContent = `▶ เริ่มทำแบบทดสอบ (${EXAM_QUESTION_COUNT} ข้อ)`;
+    } else {
+      $('examGateEmoji').textContent = '🔒🎓';
+      $('examGateStatus').textContent = '🔒 ยังไม่มีสิทธิ์ทำข้อสอบ — ต้องผ่านทุกเหรียญตราความสำเร็จก่อน';
+      $('examGateRemain').textContent = `ขาดอีก ${elig.missing.length} เหรียญ`;
+      startBtn.disabled = true;
+      startBtn.textContent = `🔒 ล็อกอยู่ — ต้องปลดล็อกเหรียญตราให้ครบก่อน (${elig.unlockedCount}/${elig.total})`;
+    }
+
+    const grid = $('examGateBadgesGrid');
+    grid.innerHTML = '';
+    EXAM_REQUIRED_BADGES.forEach((b) => {
+      const done = state.unlockedBadges.includes(b.id);
+      const targetScreen = BADGE_SCREEN_MAP[b.id] || 'map';
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = `exam-gate-badge ${done ? 'done' : 'missing'}`;
+      el.innerHTML = `
+        <span class="egb-ic">${done ? '✅' : '🔒'} ${b.emoji}</span>
+        <span class="egb-body">
+          <strong>${b.name}</strong>
+          <small>${b.desc}</small>
+        </span>
+        ${done ? '' : '<span class="egb-go">ไปทำ →</span>'}
+      `;
+      if (!done) {
+        el.title = `คลิกเพื่อไปทำภารกิจ: ${b.desc}`;
+        el.addEventListener('click', () => switchScreen(targetScreen));
+      } else {
+        el.disabled = true;
+      }
+      grid.appendChild(el);
+    });
+  }
+
   function startExam() {
+    const elig = getExamEligibility();
+    if (!elig.eligible) {
+      SoundFX.wrong();
+      renderExamGate();
+      showToast(`🔒 ยังไม่มีสิทธิ์ทำข้อสอบ! ต้องผ่านเหรียญตราความสำเร็จให้ครบทั้ง ${elig.total} เหรียญก่อน (ขาดอีก ${elig.missing.length} เหรียญ)`);
+      return;
+    }
+
     SoundFX.bossAlert();
     examQs = shuffle(EXAM_BANK).slice(0, EXAM_QUESTION_COUNT);
     examIdx = 0;
@@ -2811,6 +2906,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     SoundFX.click();
     $('examResult').classList.add('hidden');
     $('examIntro').classList.remove('hidden');
+    renderExamGate();
   });
   $('printCertBtn').addEventListener('click', () => window.print());
 

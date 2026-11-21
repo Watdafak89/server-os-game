@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=4.0" />
+  <link rel="stylesheet" href="styles.css?v=4.1" />
 </head>
 <body>
   <div class="cyber-bg" aria-hidden="true"></div>
@@ -874,7 +874,7 @@
             <div class="panel">
               <div class="panel-header">
                 <h3>🏆 เหรียญตราความสำเร็จ (Achievements)</h3>
-                <span class="stage-chip" id="badgeCountChip">0 / 16</span>
+                <span class="stage-chip" id="badgeCountChip">0 / 18</span>
               </div>
               <div id="badgesContainer" class="badges-grid"></div>
             </div>
@@ -905,19 +905,34 @@
         <div class="screen-header no-print">
           <div>
             <h2>🎓 Guild Certification Exam (สอบรับใบรับรอง SysAdmin)</h2>
-            <p class="muted-text">สุ่มข้อสอบ 30 ข้อจากคลัง 50 ข้อ ครอบคลุมทั้ง 10 บทเรียน สอบผ่าน 70% (21/30) ขึ้นไปรับเกียรติบัตรพิมพ์ PDF ได้ทันที!</p>
+            <p class="muted-text">เงื่อนไขเข้าสอบ: <strong>ต้องผ่านเหรียญตราความสำเร็จครบทุกเหรียญก่อน</strong> • สุ่มข้อสอบ 30 ข้อจากคลัง 50 ข้อ สอบผ่าน 70% (21/30) รับเกียรติบัตรพิมพ์ PDF ได้ทันที!</p>
           </div>
+          <span class="stage-chip" id="examGateCountChip">🏆 เหรียญตรา 0 / 17</span>
         </div>
 
         <div id="examIntro" class="panel center-splash no-print">
-          <div class="splash-emoji">🎓⚔️</div>
+          <div class="splash-emoji" id="examGateEmoji">🔒🎓</div>
           <h3>บททดสอบเลื่อนขั้น Certified Server Administrator</h3>
+
+          <!-- Exam Eligibility Badge Gate -->
+          <div id="examBadgeGate" class="exam-gate-box locked">
+            <div class="exam-gate-head">
+              <strong id="examGateStatus">🔒 ยังไม่มีสิทธิ์ทำข้อสอบ — ต้องปลดล็อกเหรียญตราความสำเร็จให้ครบก่อน</strong>
+              <span id="examGateRemain" class="exam-gate-remain">ขาดอีก 17 เหรียญ</span>
+            </div>
+            <div class="hud-xp-bar" style="height:10px;margin:0.55rem 0 0.85rem;">
+              <div class="hud-xp-fill" id="examGateProgressBar" style="width:0%"></div>
+            </div>
+            <p class="exam-gate-hint">คลิกที่เหรียญตราที่ยังล็อกอยู่เพื่อข้ามไปยังโหมดภารกิจนั้นได้ทันที (เหรียญตราสุดท้าย <strong>🎓 Certified SysAdmin</strong> จะได้รับเมื่อสอบผ่าน 70% ขึ้นไป)</p>
+            <div id="examGateBadgesGrid" class="exam-gate-grid"></div>
+          </div>
+
           <p class="muted-text">ระบุชื่อ-นามสกุล และรหัสนักศึกษาสำหรับพิมพ์ลงบนเกียรติบัตร</p>
           <div class="student-form">
             <input type="text" id="studentNameInput" class="game-input" placeholder="ชื่อ-นามสกุล (เช่น นายสมชาย ใจดี)" />
             <input type="text" id="studentIdInput" class="game-input" placeholder="รหัสนักศึกษา / ห้องเรียน (ไม่บังคับ)" />
           </div>
-          <button class="btn btn-neon btn-lg" id="startExamBtn">▶ เริ่มทำแบบทดสอบ (30 ข้อ)</button>
+          <button class="btn btn-neon btn-lg" id="startExamBtn" disabled>🔒 ล็อกอยู่ — ต้องผ่านทุกเหรียญตราความสำเร็จก่อน</button>
         </div>
 
         <div id="examRunner" class="panel hidden no-print">
@@ -1351,12 +1366,12 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="cloud-config.js?v=4.0"></script>
-  <script src="audio.js?v=4.0"></script>
-  <script src="data.js?v=4.0"></script>
-  <script src="codex-data.js?v=4.0"></script>
-  <script src="auth.js?v=4.0"></script>
-  <script src="vbox-sim.js?v=4.0"></script>
-  <script src="game.js?v=4.0"></script>
+  <script src="cloud-config.js?v=4.1"></script>
+  <script src="audio.js?v=4.1"></script>
+  <script src="data.js?v=4.1"></script>
+  <script src="codex-data.js?v=4.1"></script>
+  <script src="auth.js?v=4.1"></script>
+  <script src="vbox-sim.js?v=4.1"></script>
+  <script src="game.js?v=4.1"></script>
 </body>
 </html>
