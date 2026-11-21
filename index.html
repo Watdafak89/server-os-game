@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=4.1" />
+  <link rel="stylesheet" href="styles.css?v=4.2" />
 </head>
 <body>
   <div class="cyber-bg" aria-hidden="true"></div>
@@ -862,22 +862,12 @@
 
           <div id="codexChapters" class="bookshelf-grid"></div>
 
-          <h3 class="section-heading">📊 สถิติความเชี่ยวชาญ &amp; เหรียญตราความสำเร็จ</h3>
-          <div class="two-col-grid">
-            <div class="panel">
-              <div class="panel-header">
-                <h3>📊 ความเชี่ยวชาญ 10 หมวดวิชา (Skill Mastery)</h3>
-              </div>
-              <div id="analyticsContainer" class="analytics-list"></div>
+          <h3 class="section-heading">📊 สถิติความเชี่ยวชาญ 10 หมวดวิชา (Skill Mastery)</h3>
+          <div class="panel">
+            <div class="panel-header">
+              <h3>📊 ความเชี่ยวชาญ 10 หมวดวิชา (Skill Mastery)</h3>
             </div>
-
-            <div class="panel">
-              <div class="panel-header">
-                <h3>🏆 เหรียญตราความสำเร็จ (Achievements)</h3>
-                <span class="stage-chip" id="badgeCountChip">0 / 18</span>
-              </div>
-              <div id="badgesContainer" class="badges-grid"></div>
-            </div>
+            <div id="analyticsContainer" class="analytics-list"></div>
           </div>
         </div>
 
@@ -898,6 +888,32 @@
             <button class="btn btn-secondary" id="codexNextBottomBtn">อ่านบทถัดไป ▶</button>
           </div>
         </div>
+      </section>
+
+      <!-- ==================== SCREEN 7B: ACHIEVEMENT BADGES ==================== -->
+      <section id="screen-badges" class="screen">
+        <div class="screen-header">
+          <div>
+            <h2>🏅 เหรียญตราความสำเร็จ (Achievements)</h2>
+            <p class="muted-text">สะสมเหรียญตราจากการพิชิตแคมเปญ, CLI Arena, อาร์เคด, พัซเซิล และ VirtualBox ให้ครบทั้ง 17 เหรียญ เพื่อปลดล็อกสิทธิ์เข้าทำข้อสอบรับรอง!</p>
+          </div>
+          <span class="stage-chip" id="badgeCountChip">0 / 18</span>
+        </div>
+
+        <div class="panel badges-summary-card">
+          <div class="badges-summary-top">
+            <div>
+              <strong id="badgesExamReadyText">🔒 เก็บเหรียญตราให้ครบ 17 เหรียญเพื่อปลดล็อกสิทธิ์สอบรับรอง</strong>
+              <div class="muted-text" style="font-size:0.82rem;margin-top:0.2rem;">คลิกปุ่ม "ไปทำภารกิจ →" บนเหรียญตราที่ยังล็อกอยู่เพื่อข้ามไปยังโหมดนั้นได้ทันที</div>
+            </div>
+            <button type="button" class="btn btn-neon btn-sm" id="badgesGoExamBtn">🎓 ไปหน้าสอบรับรอง</button>
+          </div>
+          <div class="hud-xp-bar" style="height:10px;margin-top:0.75rem;">
+            <div class="hud-xp-fill" id="badgesProgressBar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div id="badgesContainer" class="badges-grid badges-page-grid"></div>
       </section>
 
       <!-- ==================== SCREEN 8: GUILD CERTIFICATION EXAM ==================== -->
@@ -1259,6 +1275,9 @@
       <button class="dock-btn" data-screen="codex">
         <span class="dock-icon">📖</span><span class="dock-label">คัมภีร์</span>
       </button>
+      <button class="dock-btn" data-screen="badges">
+        <span class="dock-icon">🏅</span><span class="dock-label">เหรียญตรา</span>
+      </button>
       <button class="dock-btn" data-screen="exam">
         <span class="dock-icon">🎓</span><span class="dock-label">สอบรับรอง</span>
       </button>
@@ -1366,12 +1385,12 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="cloud-config.js?v=4.1"></script>
-  <script src="audio.js?v=4.1"></script>
-  <script src="data.js?v=4.1"></script>
-  <script src="codex-data.js?v=4.1"></script>
-  <script src="auth.js?v=4.1"></script>
-  <script src="vbox-sim.js?v=4.1"></script>
-  <script src="game.js?v=4.1"></script>
+  <script src="cloud-config.js?v=4.2"></script>
+  <script src="audio.js?v=4.2"></script>
+  <script src="data.js?v=4.2"></script>
+  <script src="codex-data.js?v=4.2"></script>
+  <script src="auth.js?v=4.2"></script>
+  <script src="vbox-sim.js?v=4.2"></script>
+  <script src="game.js?v=4.2"></script>
 </body>
 </html>

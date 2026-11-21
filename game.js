@@ -445,7 +445,7 @@
     }
 
     // Adaptive BGM mood per screen
-    if (screenName === 'map' || screenName === 'shop' || screenName === 'leaderboard' || screenName === 'teacher') {
+    if (screenName === 'map' || screenName === 'shop' || screenName === 'leaderboard' || screenName === 'badges' || screenName === 'teacher') {
       SoundFX.setBgmTrack('town');
     } else if (screenName === 'codex' || screenName === 'cli' || screenName === 'vbox' || screenName === 'puzzles' || screenName === 'exam') {
       SoundFX.setBgmTrack('study');
@@ -472,6 +472,7 @@
     }
     if (screenName === 'shop') renderShop();
     if (screenName === 'codex') renderCodexAndStats();
+    if (screenName === 'badges') renderBadgesScreen();
     if (screenName === 'exam') renderExamGate();
     if (screenName === 'puzzles') {
       renderChmodVault();
@@ -2654,22 +2655,48 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       `;
       analyticsEl.appendChild(row);
     });
+  }
 
-    $('badgeCountChip').textContent = `${state.unlockedBadges.length} / ${BADGES.length}`;
+  /* ==================== SCREEN 7B: ACHIEVEMENT BADGES ==================== */
+  function renderBadgesScreen() {
+    const elig = getExamEligibility();
+    const unlockedTotal = state.unlockedBadges.length;
+    const pct = BADGES.length > 0 ? Math.round((unlockedTotal / BADGES.length) * 100) : 0;
+
+    $('badgeCountChip').textContent = `${unlockedTotal} / ${BADGES.length}`;
+    $('badgesProgressBar').style.width = `${pct}%`;
+
+    const readyEl = $('badgesExamReadyText');
+    if (elig.eligible) {
+      readyEl.textContent = `✅ ปลดล็อกสิทธิ์สอบรับรองแล้ว! (ครบ ${elig.total}/${elig.total} เหรียญตราบังคับ • สะสมรวม ${unlockedTotal}/${BADGES.length} เหรียญ)`;
+      readyEl.style.color = 'var(--accent)';
+    } else {
+      readyEl.textContent = `🔒 สะสมแล้ว ${elig.unlockedCount}/${elig.total} เหรียญบังคับ — ขาดอีก ${elig.missing.length} เหรียญจึงจะปลดล็อกสิทธิ์เข้าสอบรับรอง`;
+      readyEl.style.color = 'var(--gold)';
+    }
+
     const badgesEl = $('badgesContainer');
     badgesEl.innerHTML = '';
     BADGES.forEach((b) => {
       const unlocked = state.unlockedBadges.includes(b.id);
+      const targetScreen = b.id === 'certified' ? 'exam' : (BADGE_SCREEN_MAP[b.id] || 'map');
       const card = document.createElement('div');
-      card.className = `badge-item ${unlocked ? 'unlocked' : 'locked'}`;
+      card.className = `badge-item badge-card-full ${unlocked ? 'unlocked' : 'locked'}`;
       card.innerHTML = `
+        <div class="badge-status-pill ${unlocked ? 'ok' : ''}">${unlocked ? '✅ ปลดล็อกแล้ว' : '🔒 ยังไม่ปลดล็อก'}</div>
         <div class="badge-emoji">${b.emoji}</div>
         <div class="badge-name">${b.name}</div>
         <div class="badge-desc">${b.desc}</div>
+        ${!unlocked ? `<button type="button" class="btn btn-ghost btn-xs badge-action-btn">ไปทำภารกิจ →</button>` : ''}
       `;
+      if (!unlocked) {
+        card.querySelector('.badge-action-btn')?.addEventListener('click', () => switchScreen(targetScreen));
+      }
       badgesEl.appendChild(card);
     });
   }
+
+  $('badgesGoExamBtn')?.addEventListener('click', () => switchScreen('exam'));
 
   $('codexSearchInput').addEventListener('input', renderCodexBookshelf);
   $('codexBackBtn').addEventListener('click', closeCodexReader);
