@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=4.3" />
+  <link rel="stylesheet" href="styles.css?v=4.4" />
 </head>
 <body>
   <div class="cyber-bg" aria-hidden="true"></div>
@@ -15,7 +15,7 @@
   <!-- ==================== GAME TITLE / AUTH GATE SCREEN ==================== -->
   <section id="titleScreen" class="title-screen no-print">
     <div class="title-card">
-      <div class="title-badge">SERVER OS RPG • EDITION 3.4 • 24 STAGES • 30 CLI LABS • 10 BOOKS</div>
+      <div class="title-badge">SERVER OS RPG • 50 ZONES • 150 STAGES • 30 CLI LABS • 10 BOOKS</div>
       <h1 class="game-logo">
         <span class="logo-main">SERVEROPS</span>
         <span class="logo-sub">DATA CENTER DEFENDER</span>
@@ -218,9 +218,9 @@
       <section id="screen-map" class="screen active">
         <div class="map-banner">
           <div>
-            <div class="sector-kicker">CYBER-MIDGARD WORLD MAP • 8 REGIONS • 24 STAGES • 8 MVP BOSSES</div>
-            <h2>🗺️ แผนที่โลก Cyber-Midgard (Ragnarok Style)</h2>
-            <p class="muted-text">คลิกเข้าไปในแต่ละแมพบนทวีปเพื่อเดินสำรวจ ปราบมอนสเตอร์และ <strong>👑 MVP Boss</strong> เพื่อเปิดจุดวาร์ปสู่ดินแดนถัดไป!</p>
+            <div class="sector-kicker">CYBER-MIDGARD WORLD MAP • 5 CONTINENTS • 50 ZONES • 150 STAGES • 50 MVP BOSSES</div>
+            <h2>🗺️ แผนที่โลก Cyber-Midgard 50 โซน (5 ทวีป)</h2>
+            <p class="muted-text">เลือกทวีปด้านล่างแล้วคลิกเข้าแต่ละโซนเพื่อปราบมอนสเตอร์และ <strong>👑 MVP Boss</strong> ครบทั้ง 50 โซนสู่บัลลังก์ Grand Architect!</p>
           </div>
           <div class="map-controls" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
             <button class="btn btn-neon btn-sm" id="mapViewRoBtn">🗺️ แผนที่ Ragnarok</button>
@@ -241,11 +241,14 @@
           <div id="dailyQuestsGrid" class="daily-quests-grid"></div>
         </div>
 
+        <!-- 5 Continents Selector (50 Zones = 5 Continents x 10 Zones) -->
+        <div id="continentTabsBar" class="continent-tabs-bar"></div>
+
         <!-- RO WORLD MAP (CONTINENT VIEW) -->
         <div id="roWorldMapWrap" class="ro-map-frame">
           <div class="ro-map-topbar">
-            <span class="ro-map-title">🧭 WORLD MAP: CYBER-MIDGARD REALM</span>
-            <span class="ro-map-hint">คลิกที่เมือง/ดันเจี้ยนบนแผนที่เพื่อวาร์ปเข้าไปตะลุยด่าน</span>
+            <span class="ro-map-title" id="roMapTopTitle">🧭 WORLD MAP: CYBER-MIDGARD REALM</span>
+            <span class="ro-map-hint" id="roMapTopHint">คลิกที่เมือง/ดันเจี้ยนบนแผนที่เพื่อวาร์ปเข้าไปตะลุยด่าน</span>
           </div>
 
           <div class="ro-map-canvas" id="roWorldCanvas">
@@ -1385,13 +1388,14 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="cloud-config.js?v=4.3"></script>
-  <script src="audio.js?v=4.3"></script>
-  <script src="data.js?v=4.3"></script>
-  <script src="codex-data.js?v=4.3"></script>
-  <script src="auth.js?v=4.3"></script>
-  <script src="vbox-sim.js?v=4.3"></script>
-  <script src="anime-sprites.js?v=4.3"></script>
-  <script src="game.js?v=4.3"></script>
+  <script src="cloud-config.js?v=4.4"></script>
+  <script src="audio.js?v=4.4"></script>
+  <script src="data.js?v=4.4"></script>
+  <script src="zones-expansion.js?v=4.4"></script>
+  <script src="codex-data.js?v=4.4"></script>
+  <script src="auth.js?v=4.4"></script>
+  <script src="vbox-sim.js?v=4.4"></script>
+  <script src="anime-sprites.js?v=4.4"></script>
+  <script src="game.js?v=4.4"></script>
 </body>
 </html>

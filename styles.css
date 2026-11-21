@@ -4243,6 +4243,91 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   50% { transform: translateY(-7px) scale(1.04); }
 }
 
+/* ==================== 5 CONTINENTS SELECTOR BAR (50 ZONES WORLD MAP) ==================== */
+.continent-tabs-bar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.continent-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.16s, border-color 0.16s, box-shadow 0.16s;
+}
+
+.continent-tab:hover {
+  transform: translateY(-2px);
+  border-color: var(--cont-color, var(--primary));
+}
+
+.continent-tab.active {
+  border-color: var(--cont-color, var(--primary));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cont-color, #38bdf8) 20%, var(--bg-card)), var(--bg-card));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--cont-color, #38bdf8) 32%, transparent);
+}
+
+.continent-tab.locked-cont {
+  opacity: 0.8;
+}
+
+.cont-tab-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cont-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.1rem 0.42rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--cont-color, #38bdf8) 22%, transparent);
+  color: var(--cont-color, var(--primary));
+}
+
+.cont-range {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.cont-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.cont-stars {
+  font-size: 0.72rem;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* Distinct Continent Atmosphere Tints on RO World Map */
+.ro-map-canvas.continent-2 .ro-continent-svg { filter: hue-rotate(42deg) saturate(1.12); }
+.ro-map-canvas.continent-3 .ro-continent-svg { filter: hue-rotate(175deg) saturate(1.05); }
+.ro-map-canvas.continent-4 .ro-continent-svg { filter: hue-rotate(140deg) brightness(1.08); }
+.ro-map-canvas.continent-5 .ro-continent-svg { filter: hue-rotate(285deg) contrast(1.08); }
+
+@media (max-width: 1020px) {
+  .continent-tabs-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 900px) {
   .vbox-mission-bar,
   .vbox-steps-bar,

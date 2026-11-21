@@ -654,15 +654,289 @@ const AnimeSprites = (() => {
         <circle cx="60" cy="58" r="5" fill="#0f172a" stroke="none"/>
         <circle cx="56" cy="54" r="2.6" fill="#ffffff" stroke="none"/>
       </g>
+    `, true),
+
+    /* ---------- ZONE 50 GRAND APEX FINAL BOSS ---------- */
+    z50_boss: () => wrapSvg('z50b', '#92400e', '#090314', '#fbbf24', `
+      <!-- FINAL APEX BOSS: OMEGA-CORE ARCHITECT -->
+      <circle cx="60" cy="60" r="46" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="14 6"/>
+      <g stroke="#090314" stroke-width="2.3" stroke-linejoin="round">
+        <!-- 6 Radiant Cyber-Angel / Mecha Wings -->
+        <polygon points="4,22 44,44 36,64 10,48" fill="#fbbf24"/>
+        <polygon points="116,22 76,44 84,64 110,48" fill="#fbbf24"/>
+        <polygon points="8,74 42,64 36,92 14,94" fill="#38bdf8"/>
+        <polygon points="112,74 78,64 84,92 106,94" fill="#38bdf8"/>
+        <!-- Sovereign Holographic Crown -->
+        <polygon points="34,30 42,8 52,24 60,4 68,24 78,8 86,30" fill="#fde047"/>
+        <!-- Armored Cyber-Emperor Visage -->
+        <polygon points="34,30 86,30 84,80 60,104 36,80" fill="#0f172a" stroke="#fbbf24" stroke-width="2.4"/>
+        <polygon points="40,40 80,40 76,60 44,60" fill="#020617"/>
+        <!-- Omega Quantum Core -->
+        <polygon points="60,64 74,80 60,96 46,80" fill="#38bdf8" stroke="#fde047" stroke-width="2"/>
+        <circle cx="60" cy="80" r="5" fill="#ffffff" stroke="none"/>
+      </g>
+      ${animeEyes('#38bdf8', true, 49)}
     `, true)
   };
 
-  function getZoneIcon(zoneId) {
-    return ZONES[zoneId] ? ZONES[zoneId]() : ZONES.z1();
+  /* ==================== PROCEDURAL JAPANESE ANIME-CYBER GENERATOR (ZONES 9–50) ==================== */
+  const PALETTES = [
+    { bg1: '#0c4a6e', bg2: '#071326', acc: '#38bdf8', sub: '#34d399', eye: '#38bdf8' },
+    { bg1: '#065f46', bg2: '#051a14', acc: '#34d399', sub: '#fde047', eye: '#a3e635' },
+    { bg1: '#1e3a8a', bg2: '#090d26', acc: '#60a5fa', sub: '#c084fc', eye: '#38bdf8' },
+    { bg1: '#4c1d95', bg2: '#100724', acc: '#c084fc', sub: '#f472b6', eye: '#f472b6' },
+    { bg1: '#831843', bg2: '#1a0613', acc: '#f472b6', sub: '#38bdf8', eye: '#fde047' },
+    { bg1: '#7c2d12', bg2: '#170a05', acc: '#fb923c', sub: '#fde047', eye: '#fde047' },
+    { bg1: '#0e7490', bg2: '#06202b', acc: '#22d3ee', sub: '#fbbf24', eye: '#22d3ee' },
+    { bg1: '#7f1d1d', bg2: '#140509', acc: '#f87171', sub: '#fbbf24', eye: '#fde047' },
+    { bg1: '#365314', bg2: '#0e1706', acc: '#a3e635', sub: '#38bdf8', eye: '#bef264' },
+    { bg1: '#78350f', bg2: '#1c0f06', acc: '#fbbf24', sub: '#38bdf8', eye: '#fbbf24' }
+  ];
+
+  function buildProceduralZone(num, tag) {
+    const p = PALETTES[(num * 3) % PALETTES.length];
+    const uid = `z${num}`;
+    const label = (tag || `Z${num}`).slice(0, 7);
+
+    if (num === 50) {
+      return wrapSvg(uid, '#92400e', '#0c0519', '#fbbf24', `
+        <circle cx="60" cy="54" r="36" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="10 5"/>
+        <g stroke="#0c0519" stroke-width="2.2" stroke-linejoin="round">
+          <polygon points="24,96 34,40 46,56 60,14 74,56 86,40 96,96" fill="#fbbf24"/>
+          <polygon points="38,96 46,52 60,26 74,52 82,96" fill="#0f172a"/>
+          <polygon points="60,44 70,58 60,72 50,58" fill="#38bdf8" stroke="#fde047" stroke-width="1.8"/>
+          <rect x="30" y="80" width="60" height="16" rx="5" fill="#0f172a" stroke="#fbbf24"/>
+        </g>
+        <text x="60" y="92" text-anchor="middle" fill="#fde047" font-family="monospace" font-weight="900" font-size="10">APEX-50</text>
+      `, true);
+    }
+
+    const arch = num % 6;
+    let shape = '';
+    if (arch === 0) {
+      // Twin Server Citadel + Tech Badge
+      shape = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
+        <rect x="18" y="42" width="22" height="54" rx="4" fill="#1e293b"/>
+        <rect x="80" y="42" width="22" height="54" rx="4" fill="#1e293b"/>
+        <polygon points="60,14 82,38 82,96 38,96 38,38" fill="#e2e8f0"/>
+        <rect x="22" y="50" width="14" height="4" fill="${p.acc}" stroke="none"/>
+        <rect x="22" y="60" width="14" height="4" fill="${p.sub}" stroke="none"/>
+        <rect x="84" y="50" width="14" height="4" fill="${p.acc}" stroke="none"/>
+        <rect x="84" y="60" width="14" height="4" fill="${p.sub}" stroke="none"/>
+        <polygon points="60,40 70,52 60,64 50,52" fill="${p.acc}"/>
+      </g>`;
+    } else if (arch === 1) {
+      // Floating Cyber Orbital Spire
+      shape = `<ellipse cx="60" cy="48" rx="44" ry="13" fill="none" stroke="${p.acc}" stroke-width="2.4" transform="rotate(-14 60 48)"/>
+      <g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
+        <polygon points="60,12 76,42 80,94 40,94 44,42" fill="#1e293b"/>
+        <polygon points="60,12 76,42 60,42" fill="${p.acc}"/>
+        <circle cx="60" cy="54" r="10" fill="${p.sub}"/>
+        <circle cx="22" cy="56" r="4.5" fill="${p.sub}"/>
+        <circle cx="98" cy="40" r="4.5" fill="${p.acc}"/>
+      </g>`;
+    } else if (arch === 2) {
+      // Japanese Cyber Torii Gate + Core
+      shape = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
+        <path d="M16 32 Q60 20 104 32 L100 42 Q60 32 20 42 Z" fill="${p.acc}"/>
+        <rect x="26" y="45" width="68" height="7" rx="2" fill="${p.sub}"/>
+        <rect x="32" y="38" width="10" height="58" rx="2" fill="#1e293b"/>
+        <rect x="78" y="38" width="10" height="58" rx="2" fill="#1e293b"/>
+        <rect x="46" y="54" width="28" height="24" rx="6" fill="#0f172a" stroke="${p.acc}" stroke-width="2"/>
+        <circle cx="60" cy="66" r="6" fill="${p.acc}" stroke="none"/>
+      </g>`;
+    } else if (arch === 3) {
+      // Cyber Terminal Pyramid Fortress
+      shape = `<circle cx="88" cy="26" r="12" fill="${p.sub}" opacity="0.8"/>
+      <g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
+        <polygon points="60,16 100,94 20,94" fill="#1e293b"/>
+        <rect x="26" y="40" width="68" height="36" rx="7" fill="#020617" stroke="${p.acc}" stroke-width="2.2"/>
+        <polyline points="36,52 46,58 36,64" fill="none" stroke="${p.sub}" stroke-width="3" stroke-linecap="round"/>
+        <line x1="52" y1="64" x2="78" y2="64" stroke="${p.acc}" stroke-width="3" stroke-linecap="round"/>
+      </g>`;
+    } else if (arch === 4) {
+      // Winged Cyber Shield Bastion
+      shape = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
+        <polygon points="12,40 32,32 32,62 16,56" fill="${p.sub}"/>
+        <polygon points="108,40 88,32 88,62 104,56" fill="${p.sub}"/>
+        <path d="M60 16 L90 28 V54 C90 74 76 86 60 94 C44 86 30 74 30 54 V28 Z" fill="#0f172a" stroke="${p.acc}" stroke-width="2.5"/>
+        <polygon points="60,30 74,48 60,66 46,48" fill="${p.acc}"/>
+      </g>`;
+    } else {
+      // Floating Cloud Container Sky-Island
+      shape = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
+        <polygon points="24,68 96,68 78,90 60,98 42,90" fill="#1e293b"/>
+        <path d="M22 68 Q18 52 34 48 Q42 32 60 36 Q78 32 86 48 Q102 52 98 68 Z" fill="#e0f2fe"/>
+        <rect x="36" y="44" width="15" height="12" rx="2.5" fill="${p.acc}"/>
+        <rect x="53" y="44" width="15" height="12" rx="2.5" fill="${p.sub}"/>
+        <rect x="70" y="44" width="15" height="12" rx="2.5" fill="${p.acc}"/>
+      </g>`;
+    }
+
+    return wrapSvg(uid, p.bg1, p.bg2, p.acc, `
+      ${shape}
+      <rect x="26" y="84" width="68" height="17" rx="5" fill="#020617" stroke="${p.acc}" stroke-width="1.6"/>
+      <text x="60" y="96" text-anchor="middle" fill="#f8fafc" font-family="monospace" font-weight="900" font-size="10">${label}</text>
+    `);
+  }
+
+  function buildProceduralEnemy(num, slot) {
+    const isBoss = slot === 'boss';
+    const seed = num * 7 + (slot === 's1' ? 1 : slot === 's2' ? 3 : 5);
+    const p = PALETTES[seed % PALETTES.length];
+    const uid = `z${num}_${slot}`;
+
+    if (isBoss) {
+      const bType = num % 5;
+      let body = '';
+      if (bType === 0) {
+        // Horned Anime Mecha Gundam-Boss
+        body = `<g stroke="#090410" stroke-width="2.3" stroke-linejoin="round">
+          <rect x="10" y="28" width="18" height="42" rx="4" fill="#334155"/>
+          <circle cx="19" cy="34" r="5" fill="${p.sub}"/>
+          <rect x="92" y="28" width="18" height="42" rx="4" fill="#334155"/>
+          <circle cx="101" cy="34" r="5" fill="${p.sub}"/>
+          <polygon points="60,26 26,10 42,32" fill="${p.sub}"/>
+          <polygon points="60,26 94,10 78,32" fill="${p.sub}"/>
+          <polygon points="34,30 86,30 86,78 60,100 34,78" fill="#1e293b"/>
+          <rect x="38" y="42" width="44" height="18" rx="4" fill="#050814"/>
+          <polygon points="60,66 72,80 60,94 48,80" fill="${p.acc}" stroke="#ffffff" stroke-width="1.4"/>
+        </g>${animeEyes(p.eye, true, 50)}`;
+      } else if (bType === 1) {
+        // Japanese Cyber-Oni Samurai Boss
+        body = `<g stroke="#090410" stroke-width="2.3" stroke-linejoin="round">
+          <line x1="14" y1="98" x2="106" y2="18" stroke="${p.acc}" stroke-width="5.5" stroke-linecap="round"/>
+          <line x1="14" y1="98" x2="106" y2="18" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+          <polygon points="44,28 22,10 36,40" fill="${p.sub}"/>
+          <polygon points="76,28 98,10 84,40" fill="${p.sub}"/>
+          <path d="M26 52 Q60 16 94 52 L88 82 L60 100 L32 82 Z" fill="#0f172a"/>
+          <path d="M36 64 L60 56 L84 64 L78 86 L60 95 L42 86 Z" fill="${p.acc}"/>
+          <polygon points="48,74 52,83 56,74" fill="#ffffff" stroke="none"/>
+          <polygon points="64,74 68,83 72,74" fill="#ffffff" stroke="none"/>
+        </g>${animeEyes(p.eye, true, 48)}`;
+      } else if (bType === 2) {
+        // Winged Cyber-Dragon Hydra Boss
+        body = `<g stroke="#090410" stroke-width="2.3" stroke-linejoin="round">
+          <polygon points="8,30 38,44 32,78 12,70" fill="${p.acc}"/>
+          <polygon points="112,30 82,44 88,78 108,70" fill="${p.acc}"/>
+          <polygon points="36,30 44,12 52,24 60,10 68,24 76,12 84,30" fill="${p.sub}"/>
+          <polygon points="36,30 84,30 80,82 60,102 40,82" fill="#0f172a"/>
+          <circle cx="60" cy="78" r="10" fill="${p.acc}" stroke="${p.sub}" stroke-width="2"/>
+          <circle cx="60" cy="78" r="4" fill="#ffffff" stroke="none"/>
+        </g>${animeEyes(p.eye, true, 49)}`;
+      } else if (bType === 3) {
+        // Electric Cyber-Kraken Leviathan Boss
+        body = `<g stroke="#090410" stroke-width="2.3" stroke-linejoin="round">
+          <path d="M34 74 Q14 82 14 102" fill="none" stroke="${p.acc}" stroke-width="6.5" stroke-linecap="round"/>
+          <path d="M48 78 Q38 94 34 106" fill="none" stroke="${p.sub}" stroke-width="6.5" stroke-linecap="round"/>
+          <path d="M72 78 Q82 94 86 106" fill="none" stroke="${p.sub}" stroke-width="6.5" stroke-linecap="round"/>
+          <path d="M86 74 Q106 82 106 102" fill="none" stroke="${p.acc}" stroke-width="6.5" stroke-linecap="round"/>
+          <path d="M26 56 Q26 14 60 14 Q94 14 94 56 L84 80 H36 Z" fill="#1e293b"/>
+          <polygon points="44,24 60,10 76,24 68,36 52,36" fill="${p.sub}"/>
+        </g>${animeEyes(p.eye, true, 54)}`;
+      } else {
+        // Blazing Cyber-Seraph Arbiter Boss
+        body = `<g stroke="#090410" stroke-width="2.3" stroke-linejoin="round">
+          <polygon points="8,24 44,44 36,64 12,50" fill="${p.acc}"/>
+          <polygon points="112,24 76,44 84,64 108,50" fill="${p.acc}"/>
+          <polygon points="14,74 44,66 38,94 18,96" fill="${p.sub}"/>
+          <polygon points="106,74 76,66 82,94 102,96" fill="${p.sub}"/>
+          <ellipse cx="60" cy="20" rx="26" ry="7" fill="none" stroke="${p.sub}" stroke-width="3"/>
+          <polygon points="60,24 88,58 60,100 32,58" fill="#0f172a" stroke="${p.acc}" stroke-width="2.4"/>
+        </g>${animeEyes(p.eye, true, 56)}`;
+      }
+      return wrapSvg(uid, p.bg1, p.bg2, p.acc, body, true);
+    }
+
+    // 7 distinct Japanese Anime Cyber-Monster archetypes for regular stages
+    const mType = seed % 7;
+    let mBody = '';
+    if (mType === 0) {
+      // Hovering Anime CRT/Server Drone
+      mBody = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
+        <line x1="40" y1="30" x2="32" y2="15" stroke="${p.acc}" stroke-width="3"/>
+        <circle cx="32" cy="14" r="4" fill="${p.sub}"/>
+        <line x1="80" y1="30" x2="88" y2="15" stroke="${p.acc}" stroke-width="3"/>
+        <circle cx="88" cy="14" r="4" fill="${p.sub}"/>
+        <polygon points="12,54 26,46 26,70 12,64" fill="${p.acc}"/>
+        <polygon points="108,54 94,46 94,70 108,64" fill="${p.acc}"/>
+        <rect x="26" y="28" width="68" height="54" rx="14" fill="#e2e8f0"/>
+        <rect x="33" y="36" width="54" height="36" rx="9" fill="#0f172a"/>
+        <path d="M44 82 H76 L70 96 H50 Z" fill="#334155"/>
+      </g>${animeEyes(p.eye, false, 53)}`;
+    } else if (mType === 1) {
+      // Anime Cyber-Kitsune Phantom
+      mBody = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
+        <polygon points="28,46 22,14 48,30" fill="#f8fafc"/>
+        <polygon points="31,39 28,21 43,32" fill="${p.acc}" stroke="none"/>
+        <polygon points="92,46 98,14 72,30" fill="#f8fafc"/>
+        <polygon points="89,39 92,21 77,32" fill="${p.acc}" stroke="none"/>
+        <path d="M28 44 Q60 28 92 44 L84 82 L60 98 L36 82 Z" fill="#f8fafc"/>
+        <path d="M32 48 Q60 38 88 48 L82 66 Q60 60 38 66 Z" fill="#0f172a"/>
+        <path d="M36 74 L48 78 M84 74 L72 78" stroke="${p.sub}" stroke-width="3" stroke-linecap="round"/>
+      </g>${animeEyes(p.eye, true, 54)}`;
+    } else if (mType === 2) {
+      // Hooded Anime Cyber-Ninja Hacker
+      mBody = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
+        <path d="M22 94 L30 32 Q60 12 90 32 L98 94 Z" fill="#0f172a"/>
+        <path d="M34 42 Q60 32 86 42 L82 76 L60 86 L38 76 Z" fill="#1e293b"/>
+        <rect x="34" y="64" width="52" height="16" rx="6" fill="${p.acc}"/>
+        <polygon points="12,76 28,58 32,66 16,86" fill="${p.sub}"/>
+        <polygon points="108,76 92,58 88,66 104,86" fill="${p.sub}"/>
+      </g>${animeEyes(p.eye, true, 52)}`;
+    } else if (mType === 3) {
+      // Spiky Cyber-Virus Core
+      mBody = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
+        <polygon points="60,10 67,30 53,30" fill="${p.acc}"/>
+        <polygon points="60,110 67,90 53,90" fill="${p.acc}"/>
+        <polygon points="10,60 30,53 30,67" fill="${p.acc}"/>
+        <polygon points="110,60 90,53 90,67" fill="${p.acc}"/>
+        <polygon points="24,24 40,34 34,40" fill="${p.sub}"/>
+        <polygon points="96,24 80,34 86,40" fill="${p.sub}"/>
+        <circle cx="60" cy="60" r="30" fill="#1e293b"/>
+      </g>${animeEyes(p.eye, true, 56)}
+      <path d="M46 72 Q60 80 74 72" fill="none" stroke="${p.acc}" stroke-width="2.5" stroke-linecap="round"/>`;
+    } else if (mType === 4) {
+      // CPU-Pin Cyber Gremlin Imp
+      mBody = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
+        <path d="M28 48 Q30 18 48 28 Q58 10 68 28 Q86 16 88 46 Z" fill="${p.sub}"/>
+        <rect x="30" y="36" width="60" height="54" rx="14" fill="#1e293b"/>
+        <path d="M20 48 H30 M20 58 H30 M20 68 H30 M90 48 H100 M90 58 H100 M90 68 H100" stroke="${p.acc}" stroke-width="3.5" stroke-linecap="round"/>
+      </g>${animeEyes(p.eye, true, 56)}
+      <path d="M48 73 L54 69 L60 73 L66 69 L72 73" fill="none" stroke="${p.sub}" stroke-width="2.4" stroke-linecap="round"/>`;
+    } else if (mType === 5) {
+      // Anime Cyber-Arachnid Botnet Spider
+      mBody = `<g stroke="${p.acc}" stroke-width="3.2" stroke-linecap="round" fill="none">
+        <path d="M34 52 L14 38 L10 54"/><path d="M32 62 L12 64 L10 80"/><path d="M36 72 L18 86 L16 98"/>
+        <path d="M86 52 L106 38 L110 54"/><path d="M88 62 L108 64 L110 80"/><path d="M84 72 L102 86 L104 98"/>
+      </g><g stroke="#081020" stroke-width="2.2">
+        <ellipse cx="60" cy="60" rx="28" ry="26" fill="#1e293b"/>
+        <rect x="36" y="46" width="48" height="22" rx="9" fill="#090d1a"/>
+      </g>${animeEyes(p.eye, true, 56)}`;
+    } else {
+      // Anime Cyber-Slime + RAM/Circuit Core
+      mBody = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
+        <rect x="52" y="14" width="36" height="15" rx="3" fill="${p.sub}" transform="rotate(22 70 22)"/>
+        <path d="M18 82 Q16 40 60 36 Q104 40 102 82 Q102 98 60 98 Q18 98 18 82 Z" fill="${p.acc}"/>
+        <ellipse cx="40" cy="50" rx="10" ry="5" fill="#ffffff" stroke="none" opacity="0.5" transform="rotate(-22 40 50)"/>
+      </g>${animeEyes('#090d1a', false, 64)}
+      <path d="M52 78 Q60 84 68 78" fill="none" stroke="#090d1a" stroke-width="2.6" stroke-linecap="round"/>`;
+    }
+    return wrapSvg(uid, p.bg1, p.bg2, p.acc, mBody, false);
+  }
+
+  function getZoneIcon(zoneId, tag) {
+    if (ZONES[zoneId]) return ZONES[zoneId]();
+    const m = String(zoneId).match(/^z(\d+)$/);
+    if (m) return buildProceduralZone(Number(m[1]), tag);
+    return ZONES.z1();
   }
 
   function getEnemySprite(stageId) {
-    return ENEMIES[stageId] ? ENEMIES[stageId]() : ENEMIES.z1_s1();
+    if (ENEMIES[stageId]) return ENEMIES[stageId]();
+    const m = String(stageId).match(/^z(\d+)_(s1|s2|boss)$/);
+    if (m) return buildProceduralEnemy(Number(m[1]), m[2]);
+    return ENEMIES.z1_s1();
   }
 
   return {

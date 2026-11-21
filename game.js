@@ -547,6 +547,42 @@
 
   let mapViewMode = 'ro'; // 'ro' | 'list'
   let activeRoZoneId = null;
+  let activeContinentId = 1;
+
+  function renderContinentBar() {
+    const bar = $('continentTabsBar');
+    if (!bar || typeof WORLD_CONTINENTS === 'undefined') return;
+    bar.innerHTML = '';
+
+    WORLD_CONTINENTS.forEach((cont) => {
+      const cZones = CAMPAIGN_ZONES.map((z, idx) => ({ z, idx })).filter(({ z }) => (z.continent || 1) === cont.id);
+      const earned = cZones.reduce((sum, { z }) => sum + z.stages.reduce((s, st) => s + (state.stageStars[st.id] || 0), 0), 0);
+      const maxS = cZones.reduce((sum, { z }) => sum + z.stages.length * 3, 0);
+      const firstIdx = cZones[0]?.idx ?? 0;
+      const unlocked = isZoneUnlocked(firstIdx);
+      const active = cont.id === activeContinentId;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `continent-tab ${active ? 'active' : ''} ${unlocked ? '' : 'locked-cont'}`;
+      btn.style.setProperty('--cont-color', cont.theme);
+      btn.innerHTML = `
+        <div class="cont-tab-top">
+          <span class="cont-badge">${cont.badge}</span>
+          <span class="cont-range">${cont.range}</span>
+        </div>
+        <div class="cont-name">${cont.name.replace(/^ทวีปที่ \d+:\s*/, '')}</div>
+        <div class="cont-stars">${unlocked ? `⭐ ${earned}/${maxS}` : '🔒 ล็อกอยู่ (ดูตัวอย่างได้)'}</div>
+      `;
+      btn.addEventListener('click', () => {
+        SoundFX.click();
+        activeContinentId = cont.id;
+        activeRoZoneId = null;
+        renderWorldMap();
+      });
+      bar.appendChild(btn);
+    });
+  }
 
   function isStageUnlocked(flatIdx) {
     if (state.freePlay || flatIdx === 0) return true;
@@ -567,6 +603,19 @@
     routesLayer.innerHTML = '';
     pinsLayer.innerHTML = '';
 
+    const contInfo = (typeof WORLD_CONTINENTS !== 'undefined' && WORLD_CONTINENTS.find((c) => c.id === activeContinentId)) || null;
+    if (contInfo) {
+      $('roMapTopTitle').textContent = `🧭 ${contInfo.name} (${contInfo.range})`;
+      $('roMapTopHint').textContent = contInfo.subtitle;
+    }
+    const canvas = $('roWorldCanvas');
+    if (canvas) canvas.className = `ro-map-canvas continent-${activeContinentId}`;
+
+    // Filter the 10 zones belonging to the active continent
+    const continentEntries = CAMPAIGN_ZONES
+      .map((zone, zIdx) => ({ zone, zIdx }))
+      .filter(({ zone }) => (zone.continent || 1) === activeContinentId);
+
     // Find current frontier zone for hopping player avatar
     let currentTargetZoneId = CAMPAIGN_ZONES[CAMPAIGN_ZONES.length - 1].id;
     for (let i = 0; i < CAMPAIGN_ZONES.length; i++) {
@@ -578,15 +627,16 @@
       }
     }
 
-    // 1. Draw SVG travel routes connecting regions sequentially
-    for (let i = 0; i < CAMPAIGN_ZONES.length - 1; i++) {
-      const a = CAMPAIGN_ZONES[i];
-      const b = CAMPAIGN_ZONES[i + 1];
+    // 1. Draw SVG travel routes connecting the 10 regions on this continent
+    for (let i = 0; i < continentEntries.length - 1; i++) {
+      const a = continentEntries[i].zone;
+      const b = continentEntries[i + 1].zone;
+      const bIdx = continentEntries[i + 1].zIdx;
       const x1 = a.mapX * 10;
       const y1 = a.mapY * 6;
       const x2 = b.mapX * 10;
       const y2 = b.mapY * 6;
-      const unlockedRoute = isZoneUnlocked(i + 1);
+      const unlockedRoute = isZoneUnlocked(bIdx);
 
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
       line.setAttribute('x1', x1);
@@ -600,8 +650,8 @@
       routesLayer.appendChild(line);
     }
 
-    // 2. Render clickable RO Region Pins
-    CAMPAIGN_ZONES.forEach((zone, zIdx) => {
+    // 2. Render clickable RO Region Pins (10 per continent)
+    continentEntries.forEach(({ zone, zIdx }) => {
       const unlocked = isZoneUnlocked(zIdx);
       const earned = zone.stages.reduce((s, st) => s + (state.stageStars[st.id] || 0), 0);
       const maxS = zone.stages.length * 3;
@@ -619,19 +669,19 @@
       pin.innerHTML = `
         <div class="ro-pin-orb">
           ${isCurrent ? `<span class="ro-pin-player">${avatarHtml(state.avatar, 'map-pin')}</span>` : ''}
-          <span class="ro-pin-art">${unlocked ? AnimeSprites.getZoneIcon(zone.id) : '🔒'}</span>
+          <span class="ro-pin-art">${unlocked ? AnimeSprites.getZoneIcon(zone.id, zone.tag) : '🔒'}</span>
         </div>
         <div class="ro-pin-plate">
-          <span class="ro-pin-name">${zone.roName}</span>
+          <span class="ro-pin-name">${zone.code}: ${zone.roName}</span>
           <span class="ro-pin-meta">${zone.lvRange} • ⭐${earned}/${maxS}</span>
         </div>
       `;
 
       const updatePreview = () => {
-        $('roPreviewTitle').textContent = `[${zone.roCode}] ${zone.roName} — ${zone.name} (${zone.lvRange})`;
+        $('roPreviewTitle').textContent = `[${zone.code} • ${zone.roCode}] ${zone.roName} — ${zone.name} (${zone.lvRange})`;
         $('roPreviewDesc').textContent = unlocked
           ? `${zone.subtitle} • 👑 MVP: ${bossStage.enemy.name} • คลิกเพื่อวาร์ปเข้าแมพ!`
-          : `🔒 ล็อกอยู่ — ปราบ MVP ของโซนก่อนหน้าให้สำเร็จ (หรือเปิดโหมดปลดล็อกทุกแมพ)`;
+          : `🔒 ล็อกอยู่ — ปราบ MVP ของโซนก่อนหน้าให้สำเร็จ (หรือเปิดโหมด 🔓 ปลดล็อกทุกแมพ)`;
       };
 
       pin.addEventListener('mouseenter', updatePreview);
@@ -645,11 +695,14 @@
       pinsLayer.appendChild(pin);
     });
 
-    // Show current target zone info by default
-    const defZone = CAMPAIGN_ZONES.find((z) => z.id === currentTargetZoneId) || CAMPAIGN_ZONES[0];
-    const defBoss = defZone.stages[defZone.stages.length - 1];
-    $('roPreviewTitle').textContent = `[${defZone.roCode}] ${defZone.roName} — ${defZone.name} (${defZone.lvRange})`;
-    $('roPreviewDesc').textContent = `${defZone.subtitle} • 👑 MVP: ${defBoss.enemy.name} • คลิกที่ไอคอนเมืองบนแผนที่เพื่อเข้าไปตะลุยด่าน!`;
+    // Show current target zone (or first zone in this continent) info by default
+    const defEntry = continentEntries.find((e) => e.zone.id === currentTargetZoneId) || continentEntries[0];
+    if (defEntry) {
+      const defZone = defEntry.zone;
+      const defBoss = defZone.stages[defZone.stages.length - 1];
+      $('roPreviewTitle').textContent = `[${defZone.code} • ${defZone.roCode}] ${defZone.roName} — ${defZone.name} (${defZone.lvRange})`;
+      $('roPreviewDesc').textContent = `${defZone.subtitle} • 👑 MVP: ${defBoss.enemy.name} • คลิกที่ไอคอนเมืองบนแผนที่เพื่อเข้าไปตะลุยด่าน!`;
+    }
   }
 
   function openRoFieldMap(zoneId) {
@@ -724,6 +777,8 @@
       nextBtn.onclick = () => {
         if (!nextUnlocked) return;
         SoundFX.shield();
+        activeContinentId = nextZone.continent || 1;
+        renderContinentBar();
         openRoFieldMap(nextZone.id);
       };
     } else {
@@ -741,6 +796,7 @@
 
   function renderWorldMap() {
     renderDailyQuests();
+    renderContinentBar();
     $('mapFreePlayToggle').checked = state.freePlay;
 
     $('mapViewRoBtn').className = `btn btn-sm ${mapViewMode === 'ro' ? 'btn-neon' : 'btn-ghost'}`;
@@ -758,7 +814,7 @@
       return;
     }
 
-    // List View mode
+    // List View mode (filtered by active continent for fast, clean browsing across 50 zones)
     $('roWorldMapWrap').classList.add('hidden');
     $('roFieldView').classList.add('hidden');
     $('worldMapContainer').classList.remove('hidden');
@@ -771,6 +827,10 @@
 
     let globalIdx = 0;
     CAMPAIGN_ZONES.forEach((zone) => {
+      const zoneStartFlatIdx = globalIdx;
+      globalIdx += zone.stages.length;
+      if ((zone.continent || 1) !== activeContinentId) return;
+
       const zoneEarned = zone.stages.reduce((acc, st) => acc + (state.stageStars[st.id] || 0), 0);
       const zoneMax = zone.stages.length * 3;
 
@@ -778,8 +838,8 @@
       card.className = 'zone-card';
       card.style.setProperty('--zone-color', zone.themeColor);
 
-      const stagesHtml = zone.stages.map((stage) => {
-        const myFlatIdx = globalIdx++;
+      const stagesHtml = zone.stages.map((stage, sOffset) => {
+        const myFlatIdx = zoneStartFlatIdx + sOffset;
         const unlocked = isStageUnlocked(myFlatIdx);
         const stars = state.stageStars[stage.id] || 0;
         const isNext = stage.id === nextTargetId;
@@ -800,9 +860,9 @@
       card.innerHTML = `
         <div class="zone-header">
           <div class="zone-title-wrap">
-            <div class="zone-icon anime-zone-thumb">${AnimeSprites.getZoneIcon(zone.id)}</div>
+            <div class="zone-icon anime-zone-thumb">${AnimeSprites.getZoneIcon(zone.id, zone.tag)}</div>
             <div>
-              <div class="zone-code">${zone.roCode} • ${zone.roName}</div>
+              <div class="zone-code">${zone.code} • ${zone.roCode} • ${zone.roName}</div>
               <h3>${zone.name}</h3>
               <p class="muted-text" style="font-size:0.78rem;">${zone.subtitle}</p>
             </div>
