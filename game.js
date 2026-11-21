@@ -3098,8 +3098,13 @@ a8f2c91b40e1   nginx:alpine   "/docker-entrypoint.…"   Up 4 days       0.0.0.0
 
   $('demoStudentBtn').addEventListener('click', async () => {
     SoundFX.click();
-    const res = await AuthSystem.studentQuickLogin({ studentId: 'student01' });
+    const res = await AuthSystem.studentQuickLogin({ studentId: 'student01', password: '123456' });
     if (res.ok) enterGame();
+    else {
+      const fallback = await AuthSystem.login('student01', '123456');
+      if (fallback.ok) enterGame();
+      else showAuthError(fallback.error || res.error);
+    }
   });
 
   $('demoTeacherBtn').addEventListener('click', async () => {
