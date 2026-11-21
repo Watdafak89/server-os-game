@@ -4150,6 +4150,99 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   white-space: nowrap;
 }
 
+/* ==================== JAPANESE ANIME-CYBER SPRITES (MAP ZONES, MONSTERS & BOSSES) ==================== */
+.anime-svg-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 10px rgba(2, 6, 23, 0.55));
+  user-select: none;
+}
+
+.anime-svg-art.is-boss-art {
+  filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.55)) drop-shadow(0 6px 14px rgba(0, 0, 0, 0.65));
+}
+
+.ro-pin-art {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.ro-pin-art .anime-svg-art {
+  width: 104%;
+  height: 104%;
+  border-radius: 50%;
+}
+
+.zone-icon.anime-zone-thumb {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 2px solid var(--zone-color, var(--primary));
+  background: #0b1120;
+  flex-shrink: 0;
+}
+
+.ro-monster-sprite.has-anime-art {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 0.35rem;
+  display: grid;
+  place-items: center;
+  animation: animeMonsterFloat 2.4s ease-in-out infinite;
+}
+
+.mvp-card .ro-monster-sprite.has-anime-art {
+  width: 96px;
+  height: 96px;
+}
+
+.node-sprite.has-anime-art {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 0.35rem;
+  display: grid;
+  place-items: center;
+}
+
+.boss-node .node-sprite.has-anime-art {
+  width: 72px;
+  height: 72px;
+}
+
+#enemySprite {
+  display: inline-grid;
+  place-items: center;
+}
+
+#enemySprite .anime-svg-art {
+  width: 106px;
+  height: 106px;
+  animation: animeMonsterFloat 2.2s ease-in-out infinite;
+}
+
+#enemySprite.is-boss-sprite .anime-svg-art {
+  width: 122px;
+  height: 122px;
+  animation: animeBossHover 2s ease-in-out infinite;
+}
+
+@keyframes animeMonsterFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes animeBossHover {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-7px) scale(1.04); }
+}
+
 @media (max-width: 900px) {
   .vbox-mission-bar,
   .vbox-steps-bar,

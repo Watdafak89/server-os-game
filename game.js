@@ -619,7 +619,7 @@
       pin.innerHTML = `
         <div class="ro-pin-orb">
           ${isCurrent ? `<span class="ro-pin-player">${avatarHtml(state.avatar, 'map-pin')}</span>` : ''}
-          <span>${unlocked ? zone.icon : '🔒'}</span>
+          <span class="ro-pin-art">${unlocked ? AnimeSprites.getZoneIcon(zone.id) : '🔒'}</span>
         </div>
         <div class="ro-pin-plate">
           <span class="ro-pin-name">${zone.roName}</span>
@@ -692,7 +692,7 @@
       card.disabled = !unlocked;
       card.innerHTML = `
         ${stage.isBoss ? '<span class="ro-mvp-crown">👑 MVP BOSS</span>' : ''}
-        <div class="ro-monster-sprite">${unlocked ? stage.enemy.sprite : '🔒'}</div>
+        <div class="ro-monster-sprite ${unlocked ? 'has-anime-art' : ''}">${unlocked ? AnimeSprites.getEnemySprite(stage.id) : '🔒'}</div>
         <div class="ro-monster-name">${stage.enemy.name}</div>
         <div class="ro-monster-stage">${stage.title}</div>
         <div class="node-stars">${starStr}</div>
@@ -789,7 +789,7 @@
           <button type="button" class="stage-node ${stars > 0 ? 'cleared' : ''} ${stage.isBoss ? 'boss-node' : ''} ${isNext ? 'next-target-node' : ''} ${!unlocked ? 'locked' : ''}"
             data-stage-id="${stage.id}" ${!unlocked ? 'disabled' : ''}>
             ${isNext ? '<span class="next-badge">▶ NEXT</span>' : ''}
-            <div class="node-sprite">${unlocked ? stage.enemy.sprite : '🔒'}</div>
+            <div class="node-sprite ${unlocked ? 'has-anime-art' : ''}">${unlocked ? AnimeSprites.getEnemySprite(stage.id) : '🔒'}</div>
             <div class="node-name">${stage.title}</div>
             <div class="node-stars">${starStr}</div>
             <div class="node-reward">+${stage.xp}XP • 💰${stage.coins}</div>
@@ -800,7 +800,7 @@
       card.innerHTML = `
         <div class="zone-header">
           <div class="zone-title-wrap">
-            <div class="zone-icon">${zone.icon}</div>
+            <div class="zone-icon anime-zone-thumb">${AnimeSprites.getZoneIcon(zone.id)}</div>
             <div>
               <div class="zone-code">${zone.roCode} • ${zone.roName}</div>
               <h3>${zone.name}</h3>
@@ -966,7 +966,8 @@
     $('battleDialogueText').textContent = stage.dialogue;
     $('battlePlayerSprite').innerHTML = avatarHtml(state.avatar, 'battle');
     $('battlePlayerLabel').textContent = `${state.playerName}'s Server Core`;
-    $('enemySprite').textContent = stage.enemy.sprite;
+    $('enemySprite').innerHTML = AnimeSprites.getEnemySprite(stage.id);
+    $('enemySprite').classList.toggle('is-boss-sprite', Boolean(stage.isBoss));
     $('enemyName').textContent = stage.enemy.name;
     $('enemyBossTag').classList.toggle('hidden', !stage.isBoss);
 
