@@ -209,18 +209,20 @@
 
     <!-- MAIN GAME VIEWPORT -->
     <main class="game-stage">
-      <!-- ==================== SCREEN 1: CAMPAIGN WORLD MAP ==================== -->
+      <!-- ==================== SCREEN 1: RAGNAROK-STYLE WORLD MAP ==================== -->
       <section id="screen-map" class="screen active">
         <div class="map-banner">
           <div>
-            <div class="sector-kicker">CAMPAIGN OVERWORLD • 8 SECTORS • 24 STAGES • 72 STARS</div>
-            <h2>🗺️ แผนที่ภารกิจศูนย์ข้อมูล (Data Center World Map)</h2>
-            <p class="muted-text">พิชิตครบ 8 โซน (24 ด่าน + 8 บอสใหญ่) เก็บดาว ⭐⭐⭐ สะสมเหรียญซื้อไอเทม และทำภารกิจประจำวัน!</p>
+            <div class="sector-kicker">CYBER-MIDGARD WORLD MAP • 8 REGIONS • 24 STAGES • 8 MVP BOSSES</div>
+            <h2>🗺️ แผนที่โลก Cyber-Midgard (Ragnarok Style)</h2>
+            <p class="muted-text">คลิกเข้าไปในแต่ละแมพบนทวีปเพื่อเดินสำรวจ ปราบมอนสเตอร์และ <strong>👑 MVP Boss</strong> เพื่อเปิดจุดวาร์ปสู่ดินแดนถัดไป!</p>
           </div>
-          <div class="map-controls">
+          <div class="map-controls" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+            <button class="btn btn-neon btn-sm" id="mapViewRoBtn">🗺️ แผนที่ Ragnarok</button>
+            <button class="btn btn-ghost btn-sm" id="mapViewListBtn">📋 มุมมองรายการ</button>
             <label class="toggle-chip">
               <input type="checkbox" id="mapFreePlayToggle" />
-              <span>🔓 ปลดล็อกทุกด่าน (Free Play)</span>
+              <span>🔓 ปลดล็อกทุกแมพ</span>
             </label>
           </div>
         </div>
@@ -234,7 +236,149 @@
           <div id="dailyQuestsGrid" class="daily-quests-grid"></div>
         </div>
 
-        <div id="worldMapContainer" class="world-map-grid"></div>
+        <!-- RO WORLD MAP (CONTINENT VIEW) -->
+        <div id="roWorldMapWrap" class="ro-map-frame">
+          <div class="ro-map-topbar">
+            <span class="ro-map-title">🧭 WORLD MAP: CYBER-MIDGARD REALM</span>
+            <span class="ro-map-hint">คลิกที่เมือง/ดันเจี้ยนบนแผนที่เพื่อวาร์ปเข้าไปตะลุยด่าน</span>
+          </div>
+
+          <div class="ro-map-canvas" id="roWorldCanvas">
+            <!-- Illustrated Fantasy-Cyber Continent SVG -->
+            <svg class="ro-continent-svg" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <radialGradient id="oceanGrad" cx="50%" cy="50%" r="70%">
+                  <stop offset="0%" stop-color="#143a5c" />
+                  <stop offset="100%" stop-color="#081b30" />
+                </radialGradient>
+                <linearGradient id="landGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#3c6e47" />
+                  <stop offset="45%" stop-color="#4e7a48" />
+                  <stop offset="78%" stop-color="#8b7346" />
+                  <stop offset="100%" stop-color="#5c4b37" />
+                </linearGradient>
+                <linearGradient id="skyIslandGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#bae6fd" />
+                  <stop offset="100%" stop-color="#38bdf8" />
+                </linearGradient>
+                <filter id="landShadow" x="-10%" y="-10%" width="120%" height="120%">
+                  <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#020617" flood-opacity="0.65" />
+                </filter>
+              </defs>
+
+              <!-- Sea + Classic RO Grid Lines -->
+              <rect width="1000" height="600" fill="url(#oceanGrad)" />
+              <g stroke="rgba(186,230,253,0.12)" stroke-width="1">
+                <line x1="0" y1="120" x2="1000" y2="120" />
+                <line x1="0" y1="240" x2="1000" y2="240" />
+                <line x1="0" y1="360" x2="1000" y2="360" />
+                <line x1="0" y1="480" x2="1000" y2="480" />
+                <line x1="200" y1="0" x2="200" y2="600" />
+                <line x1="400" y1="0" x2="400" y2="600" />
+                <line x1="600" y1="0" x2="600" y2="600" />
+                <line x1="800" y1="0" x2="800" y2="600" />
+              </g>
+
+              <!-- Main Rune-Midgard-like Continent Landmass -->
+              <path filter="url(#landShadow)" fill="url(#landGrad)" stroke="#d4b475" stroke-width="4"
+                d="M 110,470 Q 85,370 135,280 Q 170,210 270,215 Q 370,190 480,220 Q 590,195 695,215 Q 845,210 895,300 Q 925,405 860,485 Q 765,545 640,520 Q 520,555 385,535 Q 245,555 155,515 Z" />
+
+              <!-- Desert Patch (Morroc Area) -->
+              <ellipse cx="790" cy="315" rx="95" ry="70" fill="rgba(217, 169, 98, 0.45)" />
+              <!-- Dark Castle Swamp (Glast Heim) -->
+              <ellipse cx="220" cy="275" rx="85" ry="55" fill="rgba(88, 28, 135, 0.38)" />
+
+              <!-- Northern Sky Islands (Juno & Thanatos) -->
+              <ellipse filter="url(#landShadow)" cx="340" cy="116" rx="108" ry="48" fill="url(#skyIslandGrad)" stroke="#e0f2fe" stroke-width="3" />
+              <ellipse filter="url(#landShadow)" cx="680" cy="112" rx="115" ry="50" fill="#312e81" stroke="#f59e0b" stroke-width="3" />
+
+              <!-- Decorative Mountains & Trees -->
+              <g fill="#2b4c32" opacity="0.65">
+                <polygon points="330,415 350,375 370,415" />
+                <polygon points="620,390 645,342 670,390" />
+                <polygon points="648,395 668,358 688,395" />
+                <polygon points="465,355 485,320 505,355" />
+              </g>
+
+              <!-- Dynamic Travel Routes Layer (rendered by JS) -->
+              <g id="roRoutesLayer"></g>
+
+              <!-- Compass Rose (Bottom Left) -->
+              <g transform="translate(62, 535)" opacity="0.78">
+                <circle cx="0" cy="0" r="28" fill="rgba(8,27,48,0.7)" stroke="#fbbf24" stroke-width="2" />
+                <polygon points="0,-24 6,-4 0,-9 -6,-4" fill="#fbbf24" />
+                <polygon points="0,24 6,4 0,9 -6,4" fill="#94a3b8" />
+                <polygon points="24,0 4,-6 9,0 4,6" fill="#94a3b8" />
+                <polygon points="-24,0 -4,-6 -9,0 -4,6" fill="#94a3b8" />
+                <text x="0" y="-32" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">N</text>
+              </g>
+            </svg>
+
+            <!-- Clickable Region Pins Overlay -->
+            <div id="roPinsLayer" class="ro-pins-layer"></div>
+          </div>
+
+          <!-- RO Bottom Region Info Preview Strip -->
+          <div class="ro-map-footer" id="roMapFooter">
+            <div class="ro-footer-left">
+              <strong id="roPreviewTitle">เลือกแมพบนแผนที่ Cyber-Midgard</strong>
+              <span class="muted-text" id="roPreviewDesc">เอาเมาส์ชี้หรือคลิกที่เมือง/ดันเจี้ยน เพื่อดูข้อมูลมอนสเตอร์และ MVP ประจำแมพ</span>
+            </div>
+            <div class="ro-footer-legend">
+              <span>🌀 จุดวาร์ป</span>
+              <span>👑 MVP Boss</span>
+              <span>⭐ ดาวสะสม</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RO INNER FIELD / DUNGEON MAP (WHEN CLICKING INTO A REGION!) -->
+        <div id="roFieldView" class="ro-field-frame hidden">
+          <div class="ro-field-header">
+            <button class="btn btn-secondary btn-sm" id="roBackToWorldBtn">← กลับแผนที่โลก Cyber-Midgard</button>
+            <div class="ro-field-title-wrap">
+              <span class="stage-chip" id="roFieldCode">prt_core01</span>
+              <strong id="roFieldName">Prontera Core</strong>
+              <span class="muted-text" id="roFieldLv">Lv.1–10</span>
+            </div>
+            <div class="zone-stars" id="roFieldStars">⭐ 0/9</div>
+          </div>
+
+          <div id="roFieldGround" class="ro-field-ground biome-prontera">
+            <div class="ro-field-trail" aria-hidden="true"></div>
+
+            <!-- Entry Warp Portal + Player Avatar -->
+            <div class="ro-field-entry">
+              <div class="warp-portal" title="จุดวาร์ปกลับแผนที่โลก" id="roEntryPortal">
+                <div class="warp-ring"></div>
+                <span>🌀</span>
+              </div>
+              <div class="ro-player-walker" id="roFieldPlayer">
+                <div class="walker-sprite" id="roFieldPlayerSprite">👨‍💻</div>
+                <div class="walker-tag" id="roFieldPlayerName">SysAdmin</div>
+              </div>
+            </div>
+
+            <!-- 3 Encounter Monsters (2 Normal + 1 MVP Boss) -->
+            <div id="roFieldMonsters" class="ro-field-monsters"></div>
+
+            <!-- Exit Warp Portal to Next Region -->
+            <div class="ro-field-exit">
+              <button type="button" class="warp-portal next-warp" id="roNextRegionPortal" title="วาร์ปไปยังแมพถัดไป">
+                <div class="warp-ring gold"></div>
+                <span>🌀</span>
+                <div class="warp-label" id="roNextPortalLabel">แมพถัดไป</div>
+              </button>
+            </div>
+          </div>
+
+          <div class="ro-field-tip" id="roFieldTip">
+            💡 คลิกที่มอนสเตอร์หรือ <strong>👑 MVP Boss</strong> ในแผนที่นี้ เพื่อเดินเข้าไปท้าสู้ทันที!
+          </div>
+        </div>
+
+        <!-- OPTIONAL LIST VIEW -->
+        <div id="worldMapContainer" class="world-map-grid hidden"></div>
       </section>
 
       <!-- ==================== SCREEN 2: RPG BATTLE ARENA ==================== -->

@@ -469,15 +469,224 @@
     });
   }
 
+  let mapViewMode = 'ro'; // 'ro' | 'list'
+  let activeRoZoneId = null;
+
   function isStageUnlocked(flatIdx) {
     if (state.freePlay || flatIdx === 0) return true;
     const prevStage = ALL_STAGES_FLAT[flatIdx - 1];
     return Boolean(state.stageStars[prevStage.id]);
   }
 
+  function isZoneUnlocked(zoneIdx) {
+    if (state.freePlay || zoneIdx === 0) return true;
+    const prevZone = CAMPAIGN_ZONES[zoneIdx - 1];
+    const prevBoss = prevZone.stages[prevZone.stages.length - 1];
+    return Boolean(state.stageStars[prevBoss.id]);
+  }
+
+  function renderRoWorldMap() {
+    const routesLayer = $('roRoutesLayer');
+    const pinsLayer = $('roPinsLayer');
+    routesLayer.innerHTML = '';
+    pinsLayer.innerHTML = '';
+
+    // Find current frontier zone for hopping player avatar
+    let currentTargetZoneId = CAMPAIGN_ZONES[CAMPAIGN_ZONES.length - 1].id;
+    for (let i = 0; i < CAMPAIGN_ZONES.length; i++) {
+      const z = CAMPAIGN_ZONES[i];
+      const allCleared = z.stages.every((s) => Boolean(state.stageStars[s.id]));
+      if (isZoneUnlocked(i) && !allCleared) {
+        currentTargetZoneId = z.id;
+        break;
+      }
+    }
+
+    // 1. Draw SVG travel routes connecting regions sequentially
+    for (let i = 0; i < CAMPAIGN_ZONES.length - 1; i++) {
+      const a = CAMPAIGN_ZONES[i];
+      const b = CAMPAIGN_ZONES[i + 1];
+      const x1 = a.mapX * 10;
+      const y1 = a.mapY * 6;
+      const x2 = b.mapX * 10;
+      const y2 = b.mapY * 6;
+      const unlockedRoute = isZoneUnlocked(i + 1);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('stroke', unlockedRoute ? '#fde047' : 'rgba(148,163,184,0.45)');
+      line.setAttribute('stroke-width', unlockedRoute ? '4.5' : '3');
+      line.setAttribute('stroke-dasharray', unlockedRoute ? '10 6' : '6 8');
+      line.setAttribute('stroke-linecap', 'round');
+      routesLayer.appendChild(line);
+    }
+
+    // 2. Render clickable RO Region Pins
+    CAMPAIGN_ZONES.forEach((zone, zIdx) => {
+      const unlocked = isZoneUnlocked(zIdx);
+      const earned = zone.stages.reduce((s, st) => s + (state.stageStars[st.id] || 0), 0);
+      const maxS = zone.stages.length * 3;
+      const cleared = zone.stages.every((st) => Boolean(state.stageStars[st.id]));
+      const isCurrent = zone.id === currentTargetZoneId;
+      const bossStage = zone.stages[zone.stages.length - 1];
+
+      const pin = document.createElement('button');
+      pin.type = 'button';
+      pin.className = `ro-pin ${cleared ? 'cleared' : ''} ${isCurrent ? 'current-target' : ''}`;
+      pin.style.left = `${zone.mapX}%`;
+      pin.style.top = `${zone.mapY}%`;
+      pin.style.setProperty('--zone-color', zone.themeColor);
+      pin.disabled = !unlocked;
+      pin.innerHTML = `
+        <div class="ro-pin-orb">
+          ${isCurrent ? `<span class="ro-pin-player">${state.avatar}</span>` : ''}
+          <span>${unlocked ? zone.icon : '🔒'}</span>
+        </div>
+        <div class="ro-pin-plate">
+          <span class="ro-pin-name">${zone.roName}</span>
+          <span class="ro-pin-meta">${zone.lvRange} • ⭐${earned}/${maxS}</span>
+        </div>
+      `;
+
+      const updatePreview = () => {
+        $('roPreviewTitle').textContent = `[${zone.roCode}] ${zone.roName} — ${zone.name} (${zone.lvRange})`;
+        $('roPreviewDesc').textContent = unlocked
+          ? `${zone.subtitle} • 👑 MVP: ${bossStage.enemy.name} • คลิกเพื่อวาร์ปเข้าแมพ!`
+          : `🔒 ล็อกอยู่ — ปราบ MVP ของโซนก่อนหน้าให้สำเร็จ (หรือเปิดโหมดปลดล็อกทุกแมพ)`;
+      };
+
+      pin.addEventListener('mouseenter', updatePreview);
+      pin.addEventListener('focus', updatePreview);
+      pin.addEventListener('click', () => {
+        if (!unlocked) return;
+        SoundFX.shield();
+        openRoFieldMap(zone.id);
+      });
+
+      pinsLayer.appendChild(pin);
+    });
+
+    // Show current target zone info by default
+    const defZone = CAMPAIGN_ZONES.find((z) => z.id === currentTargetZoneId) || CAMPAIGN_ZONES[0];
+    const defBoss = defZone.stages[defZone.stages.length - 1];
+    $('roPreviewTitle').textContent = `[${defZone.roCode}] ${defZone.roName} — ${defZone.name} (${defZone.lvRange})`;
+    $('roPreviewDesc').textContent = `${defZone.subtitle} • 👑 MVP: ${defBoss.enemy.name} • คลิกที่ไอคอนเมืองบนแผนที่เพื่อเข้าไปตะลุยด่าน!`;
+  }
+
+  function openRoFieldMap(zoneId) {
+    const zIdx = CAMPAIGN_ZONES.findIndex((z) => z.id === zoneId);
+    if (zIdx === -1) return;
+    const zone = CAMPAIGN_ZONES[zIdx];
+    activeRoZoneId = zoneId;
+
+    $('roWorldMapWrap').classList.add('hidden');
+    $('worldMapContainer').classList.add('hidden');
+    $('roFieldView').classList.remove('hidden');
+
+    const earned = zone.stages.reduce((s, st) => s + (state.stageStars[st.id] || 0), 0);
+    const maxS = zone.stages.length * 3;
+    $('roFieldCode').textContent = zone.roCode;
+    $('roFieldName').textContent = `${zone.roName} (${zone.name})`;
+    $('roFieldLv').textContent = zone.lvRange;
+    $('roFieldStars').textContent = `⭐ ${earned}/${maxS}`;
+
+    const ground = $('roFieldGround');
+    ground.className = `ro-field-ground ${zone.biome}`;
+    $('roFieldPlayerSprite').textContent = state.avatar;
+    $('roFieldPlayerName').textContent = state.playerName;
+    $('roFieldPlayer').classList.remove('dash-attack');
+
+    // Render 3 Monsters / MVP inside this field
+    const monstersWrap = $('roFieldMonsters');
+    monstersWrap.innerHTML = '';
+
+    zone.stages.forEach((stage) => {
+      const flatIdx = ALL_STAGES_FLAT.findIndex((s) => s.id === stage.id);
+      const flatStage = ALL_STAGES_FLAT[flatIdx];
+      const unlocked = isStageUnlocked(flatIdx);
+      const stars = state.stageStars[stage.id] || 0;
+      const starStr = stars > 0 ? '⭐'.repeat(stars) + '☆'.repeat(3 - stars) : (unlocked ? '☆☆☆' : '🔒 ล็อกอยู่');
+
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = `ro-monster-card ${stars > 0 ? 'cleared' : ''} ${stage.isBoss ? 'mvp-card' : ''}`;
+      card.disabled = !unlocked;
+      card.innerHTML = `
+        ${stage.isBoss ? '<span class="ro-mvp-crown">👑 MVP BOSS</span>' : ''}
+        <div class="ro-monster-sprite">${unlocked ? stage.enemy.sprite : '🔒'}</div>
+        <div class="ro-monster-name">${stage.enemy.name}</div>
+        <div class="ro-monster-stage">${stage.title}</div>
+        <div class="node-stars">${starStr}</div>
+        <div class="node-reward">+${stage.xp}XP • 💰${stage.coins}</div>
+        <div class="ro-fight-cta">${unlocked ? (stage.isBoss ? '⚔️ ท้าสู้ MVP!' : '⚔️ เข้าโจมตี!') : '🔒 ผ่านตัวก่อนหน้า'}</div>
+      `;
+
+      card.addEventListener('click', () => {
+        if (!unlocked) return;
+        SoundFX.attack();
+        $('roFieldPlayer').classList.add('dash-attack');
+        setTimeout(() => {
+          $('roFieldPlayer').classList.remove('dash-attack');
+          startBattle(flatStage);
+        }, 240);
+      });
+
+      monstersWrap.appendChild(card);
+    });
+
+    // Next Zone Warp Portal
+    const nextZone = CAMPAIGN_ZONES[zIdx + 1];
+    const nextBtn = $('roNextRegionPortal');
+    if (nextZone) {
+      const nextUnlocked = isZoneUnlocked(zIdx + 1);
+      nextBtn.classList.remove('hidden');
+      nextBtn.disabled = !nextUnlocked;
+      $('roNextPortalLabel').textContent = nextUnlocked ? `วาร์ปไป ${nextZone.roName}` : `🔒 ปราบ MVP ก่อน`;
+      nextBtn.onclick = () => {
+        if (!nextUnlocked) return;
+        SoundFX.shield();
+        openRoFieldMap(nextZone.id);
+      };
+    } else {
+      nextBtn.classList.add('hidden');
+    }
+
+    $('roFieldTip').innerHTML = `🗺️ <strong>${zone.roName}:</strong> ${zone.subtitle} — คลิกที่มอนสเตอร์หรือ <strong>👑 MVP Boss</strong> เพื่อเข้าต่อสู้!`;
+  }
+
+  function closeRoFieldMap() {
+    SoundFX.click();
+    activeRoZoneId = null;
+    renderWorldMap();
+  }
+
   function renderWorldMap() {
     renderDailyQuests();
     $('mapFreePlayToggle').checked = state.freePlay;
+
+    $('mapViewRoBtn').className = `btn btn-sm ${mapViewMode === 'ro' ? 'btn-neon' : 'btn-ghost'}`;
+    $('mapViewListBtn').className = `btn btn-sm ${mapViewMode === 'list' ? 'btn-neon' : 'btn-ghost'}`;
+
+    if (mapViewMode === 'ro') {
+      $('worldMapContainer').classList.add('hidden');
+      if (activeRoZoneId) {
+        openRoFieldMap(activeRoZoneId);
+      } else {
+        $('roFieldView').classList.add('hidden');
+        $('roWorldMapWrap').classList.remove('hidden');
+        renderRoWorldMap();
+      }
+      return;
+    }
+
+    // List View mode
+    $('roWorldMapWrap').classList.add('hidden');
+    $('roFieldView').classList.add('hidden');
+    $('worldMapContainer').classList.remove('hidden');
+
     const container = $('worldMapContainer');
     container.innerHTML = '';
 
@@ -517,7 +726,7 @@
           <div class="zone-title-wrap">
             <div class="zone-icon">${zone.icon}</div>
             <div>
-              <div class="zone-code">${zone.code}</div>
+              <div class="zone-code">${zone.roCode} • ${zone.roName}</div>
               <h3>${zone.name}</h3>
               <p class="muted-text" style="font-size:0.78rem;">${zone.subtitle}</p>
             </div>
@@ -537,6 +746,20 @@
       container.appendChild(card);
     });
   }
+
+  $('roBackToWorldBtn').addEventListener('click', closeRoFieldMap);
+  $('roEntryPortal').addEventListener('click', closeRoFieldMap);
+  $('mapViewRoBtn').addEventListener('click', () => {
+    SoundFX.click();
+    mapViewMode = 'ro';
+    activeRoZoneId = null;
+    renderWorldMap();
+  });
+  $('mapViewListBtn').addEventListener('click', () => {
+    SoundFX.click();
+    mapViewMode = 'list';
+    renderWorldMap();
+  });
 
   /* ==================== SCREEN 2: RPG BATTLE ENGINE + VFX ==================== */
   let battle = null;
@@ -641,6 +864,9 @@
   function startBattle(stage) {
     if (stage.isBoss) SoundFX.bossAlert();
     else SoundFX.click();
+    if (mapViewMode === 'ro' && stage.zoneId) {
+      activeRoZoneId = stage.zoneId;
+    }
 
     battle = {
       stage,
@@ -2744,7 +2970,10 @@ a8f2c91b40e1   nginx:alpine   "/docker-entrypoint.…"   Up 4 days       0.0.0.0
   });
 
   document.querySelectorAll('.dock-btn').forEach((btn) => {
-    btn.addEventListener('click', () => switchScreen(btn.dataset.screen));
+    btn.addEventListener('click', () => {
+      if (btn.dataset.screen === 'map') activeRoZoneId = null;
+      switchScreen(btn.dataset.screen);
+    });
   });
 
   $('resetSaveBtn').addEventListener('click', () => {
