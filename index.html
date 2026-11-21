@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=3.4" />
+  <link rel="stylesheet" href="styles.css?v=3.5" />
 </head>
 <body>
   <div class="cyber-bg" aria-hidden="true"></div>
@@ -900,7 +900,7 @@
         <div class="screen-header no-print">
           <div>
             <h2>🎓 Guild Certification Exam (สอบรับใบรับรอง SysAdmin)</h2>
-            <p class="muted-text">สุ่มข้อสอบ 15 ข้อจากคลัง 40 ข้อ ครอบคลุมทั้ง 10 บทเรียน สอบผ่าน 70% ขึ้นไปรับเกียรติบัตรพิมพ์ PDF ได้ทันที!</p>
+            <p class="muted-text">สุ่มข้อสอบ 30 ข้อจากคลัง 50 ข้อ ครอบคลุมทั้ง 10 บทเรียน สอบผ่าน 70% (21/30) ขึ้นไปรับเกียรติบัตรพิมพ์ PDF ได้ทันที!</p>
           </div>
         </div>
 
@@ -912,15 +912,15 @@
             <input type="text" id="studentNameInput" class="game-input" placeholder="ชื่อ-นามสกุล (เช่น นายสมชาย ใจดี)" />
             <input type="text" id="studentIdInput" class="game-input" placeholder="รหัสนักศึกษา / ห้องเรียน (ไม่บังคับ)" />
           </div>
-          <button class="btn btn-neon btn-lg" id="startExamBtn">▶ เริ่มทำแบบทดสอบ (15 ข้อ)</button>
+          <button class="btn btn-neon btn-lg" id="startExamBtn">▶ เริ่มทำแบบทดสอบ (30 ข้อ)</button>
         </div>
 
         <div id="examRunner" class="panel hidden no-print">
           <div class="runner-top">
             <span class="stage-chip" id="examCategory">หมวดวิชา</span>
-            <strong id="examProgressText">ข้อที่ 1 / 15</strong>
+            <strong id="examProgressText">ข้อที่ 1 / 30</strong>
           </div>
-          <div class="hud-xp-bar" style="height:10px;margin:0.65rem 0 1rem;"><div class="hud-xp-fill" id="examProgressBar" style="width:7%"></div></div>
+          <div class="hud-xp-bar" style="height:10px;margin:0.65rem 0 1rem;"><div class="hud-xp-fill" id="examProgressBar" style="width:4%"></div></div>
           <h3 id="examQuestionText" class="battle-question"></h3>
           <div id="examOptions" class="options-grid"></div>
           <div class="battle-footer">
@@ -935,7 +935,7 @@
                 <h3 id="examResultHeading">สรุปผลคะแนน</h3>
                 <p id="examResultSub" class="muted-text"></p>
               </div>
-              <div class="exam-score-circle" id="examScoreCircle">0/15</div>
+              <div class="exam-score-circle" id="examScoreCircle">0/30</div>
             </div>
             <div id="examReviewList" class="exam-review-list"></div>
             <div class="exam-actions">
@@ -955,7 +955,7 @@
               <p class="cert-body">
                 ได้ผ่านการฝึกปฏิบัติและทดสอบความรู้จากเกมสื่อการสอนเชิงโต้ตอบ<br />
                 <strong>รายวิชาระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น (Introduction to Server Operating Systems)</strong><br />
-                ด้วยผลคะแนน <strong id="certScore">0/15 (0%)</strong> • ระดับ <strong id="certRank">SysAdmin</strong>
+                ด้วยผลคะแนน <strong id="certScore">0/30 (0%)</strong> • ระดับ <strong id="certRank">SysAdmin</strong>
               </p>
               <div class="cert-footer">
                 <div>
@@ -1084,7 +1084,7 @@
                   <th>ดาว (/72)</th>
                   <th>CLI (/30)</th>
                   <th>Defense</th>
-                  <th>สอบ (/15)</th>
+                  <th>สอบ (/30)</th>
                   <th>เกียรติบัตร</th>
                   <th>จัดการ</th>
                 </tr>
@@ -1181,11 +1181,11 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="cloud-config.js?v=3.4"></script>
-  <script src="audio.js?v=3.4"></script>
-  <script src="data.js?v=3.4"></script>
-  <script src="codex-data.js?v=3.4"></script>
-  <script src="auth.js?v=3.4"></script>
-  <script src="game.js?v=3.4"></script>
+  <script src="cloud-config.js?v=3.5"></script>
+  <script src="audio.js?v=3.5"></script>
+  <script src="data.js?v=3.5"></script>
+  <script src="codex-data.js?v=3.5"></script>
+  <script src="auth.js?v=3.5"></script>
+  <script src="game.js?v=3.5"></script>
 </body>
 </html>

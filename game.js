@@ -2621,6 +2621,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
   });
 
   /* ==================== SCREEN 8: GUILD CERTIFICATION EXAM ==================== */
+  const EXAM_QUESTION_COUNT = 30;
   let examQs = [];
   let examIdx = 0;
   let examAns = [];
@@ -2628,7 +2629,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
   function startExam() {
     SoundFX.bossAlert();
-    examQs = shuffle(EXAM_BANK).slice(0, 15);
+    examQs = shuffle(EXAM_BANK).slice(0, EXAM_QUESTION_COUNT);
     examIdx = 0;
     examAns = [];
     examPick = null;
@@ -2781,7 +2782,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     accounts.slice(0, 3).forEach((entry, idx) => {
       const metricStr = lbSortBy === 'stars' ? `⭐ ${entry.m.stars}/${maxStars}`
         : lbSortBy === 'defense' ? `🛡️ ${entry.m.defense.toLocaleString()}`
-        : lbSortBy === 'exam' ? `🎓 ${entry.m.exam}/15`
+        : lbSortBy === 'exam' ? `🎓 ${entry.m.exam}/${EXAM_QUESTION_COUNT}`
         : `⚡ ${entry.m.xp.toLocaleString()} XP`;
       const card = document.createElement('div');
       card.className = `podium-card rank-${idx + 1}`;
@@ -2811,7 +2812,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
         <td>⭐ ${entry.m.stars}/${maxStars}</td>
         <td>💻 ${entry.m.labs}/${maxLabs}</td>
         <td>${entry.m.defense.toLocaleString()}</td>
-        <td>${entry.m.exam}/15 ${entry.m.passed ? '✅' : ''}</td>
+        <td>${entry.m.exam}/${EXAM_QUESTION_COUNT} ${entry.m.passed ? '✅' : ''}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -2908,7 +2909,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
           <td>⭐ ${m.stars}/${maxStars}</td>
           <td>💻 ${m.labs}/${maxLabs}</td>
           <td>${m.defense.toLocaleString()}</td>
-          <td>${m.exam}/15</td>
+          <td>${m.exam}/${EXAM_QUESTION_COUNT}</td>
           <td>${m.passed ? '<span class="role-badge">ผ่าน ✓</span>' : '<span class="muted-text">ยังไม่ผ่าน</span>'}</td>
           <td>
             <button class="btn btn-ghost btn-xs t-reset-pw" data-u="${acc.username}" title="รีเซ็ตรหัสผ่านเป็น 123456">🔑 รีเซ็ตรหัส</button>
