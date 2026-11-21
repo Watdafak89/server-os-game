@@ -205,9 +205,23 @@
     });
   }
 
+  function updateCloudBadges() {
+    const hasCloud = Boolean(AuthSystem.getCloudUrl());
+    const hudBadge = $('hudCloudBadge');
+    const titleBadge = $('titleCloudStatus');
+    if (hudBadge) {
+      hudBadge.classList.toggle('connected', hasCloud);
+      hudBadge.innerHTML = hasCloud ? '<span>☁️ Cloud</span>' : '<span>💾 Local</span>';
+    }
+    if (titleBadge) {
+      titleBadge.textContent = hasCloud ? '☁️ Cloud Sync Active' : '💾 Local Mode';
+    }
+  }
+
   function renderTitleScreen() {
     renderAvatarPicker();
     showAuthError('');
+    updateCloudBadges();
     const loggedIn = hydrateFromCurrentAccount();
     $('titleFreePlayToggle').checked = state.freePlay;
 
@@ -254,6 +268,7 @@
     $('hudBoostBadge').classList.toggle('hidden', !state.xpBoostActive);
     $('shopCoinsDisplay').textContent = state.coins.toLocaleString();
     $('dockTeacherBtn').classList.toggle('hidden', !isTeacher);
+    updateCloudBadges();
 
     // Auto-fill Exam name/studentId from logged-in account
     if (currentAccount) {
@@ -332,8 +347,18 @@
     if (screenName === 'defense') {
       $('defHigh').textContent = state.defenseHighScore.toLocaleString();
     }
-    if (screenName === 'leaderboard') renderLeaderboard();
-    if (screenName === 'teacher') renderTeacherDashboard();
+    if (screenName === 'leaderboard') {
+      renderLeaderboard();
+      if (AuthSystem.getCloudUrl()) {
+        AuthSystem.pullAllFromCloud().then((res) => { if (res.ok) renderLeaderboard(); });
+      }
+    }
+    if (screenName === 'teacher') {
+      renderTeacherDashboard();
+      if (AuthSystem.getCloudUrl()) {
+        AuthSystem.pullAllFromCloud().then((res) => { if (res.ok) renderTeacherDashboard(); });
+      }
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -1845,10 +1870,10 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
       });
 
       tbody.querySelectorAll('.t-del-u').forEach((btn) => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
           const u = btn.dataset.u;
-          if (confirm(`ต้องการลบบัญชีนักศึกษา "${u}" ออกจากเครื่องนี้ใช่หรือไม่?`)) {
-            AuthSystem.deleteAccount(u);
+          if (confirm(`ต้องการลบบัญชีนักศึกษา "${u}" ออกจากระบบใช่หรือไม่?`)) {
+            await AuthSystem.deleteAccount(u);
             showToast(`🗑️ ลบบัญชี ${u} เรียบร้อยแล้ว`);
             renderTeacherDashboard();
           }
@@ -1856,12 +1881,21 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
       });
     }
 
-    // Cloud URL display
+    // Cloud URL & Share Link display
     const savedUrl = AuthSystem.getCloudUrl();
     $('cloudUrlInput').value = savedUrl;
     $('cloudStatusText').textContent = savedUrl
-      ? `สถานะ: 🟢 เชื่อมต่อ Cloud Sync (${savedUrl})`
+      ? `สถานะ: 🟢 เชื่อมต่อ Cloud Sync แล้ว (${savedUrl})`
       : 'สถานะ: 🟡 ทำงานแบบ Local/Offline (ยังไม่ตั้งค่า Firebase URL)';
+
+    const shareBox = $('shareLinkBox');
+    if (savedUrl) {
+      shareBox.classList.remove('hidden');
+      $('shareLinkPreview').value = AuthSystem.buildClassroomShareUrl();
+    } else {
+      shareBox.classList.add('hidden');
+    }
+    updateCloudBadges();
   }
 
   $('teacherSearchInput').addEventListener('input', renderTeacherDashboard);
@@ -1903,11 +1937,53 @@ tcp    127.0.0.1:3306       LISTEN      mysqld (1104)`);
     }
   });
 
-  $('saveCloudUrlBtn').addEventListener('click', () => {
+  $('testCloudBtn').addEventListener('click', async () => {
     SoundFX.click();
-    const url = AuthSystem.setCloudUrl($('cloudUrlInput').value);
+    $('cloudStatusText').textContent = '⏳ กำลังทดสอบเชื่อมต่อและสิทธิ์อ่าน/เขียน Firebase...';
+    const res = await AuthSystem.testCloudConnection($('cloudUrlInput').value);
+    if (res.ok) {
+      SoundFX.correct();
+      $('cloudStatusText').textContent = `✅ เชื่อมต่อสำเร็จ! อ่านและเขียนฐานข้อมูลได้ปกติ (${res.url})`;
+      showToast('✅ ทดสอบเชื่อมต่อ Firebase สำเร็จ!');
+    } else {
+      SoundFX.wrong();
+      $('cloudStatusText').textContent = `❌ ${res.error}`;
+      showToast(`❌ ${res.error}`);
+    }
+  });
+
+  $('saveCloudUrlBtn').addEventListener('click', async () => {
+    SoundFX.click();
+    const inputUrl = $('cloudUrlInput').value.trim();
+    if (!inputUrl) {
+      AuthSystem.setCloudUrl('');
+      renderTeacherDashboard();
+      showToast('ปิดการใช้งาน Cloud Sync แล้ว (กลับสู่ Local Mode)');
+      return;
+    }
+    $('cloudStatusText').textContent = '⏳ กำลังตรวจสอบและซิงค์ข้อมูลขึ้น Cloud...';
+    const test = await AuthSystem.testCloudConnection(inputUrl);
+    if (!test.ok) {
+      SoundFX.wrong();
+      $('cloudStatusText').textContent = `❌ ${test.error}`;
+      showToast(`❌ ${test.error}`);
+      return;
+    }
+    AuthSystem.setCloudUrl(test.url);
+    await AuthSystem.pushAllToCloud();
+    const pulled = await AuthSystem.pullAllFromCloud();
+    SoundFX.levelUp();
     renderTeacherDashboard();
-    showToast(url ? '💾 บันทึก Firebase Cloud URL แล้ว!' : 'ปิดการใช้งาน Cloud Sync แล้ว');
+    showToast(`☁️ เชื่อมต่อและซิงค์ Firebase สำเร็จ! (${pulled.count || 0} บัญชี)`);
+  });
+
+  $('copyShareLinkBtn').addEventListener('click', () => {
+    const link = $('shareLinkPreview').value;
+    if (!link) return;
+    navigator.clipboard?.writeText(link).then(
+      () => { SoundFX.coin(); showToast('🔗 คัดลอกลิงก์ห้องเรียนแล้ว! ส่งให้นักศึกษาเปิดเล่นได้เลย'); },
+      () => { $('shareLinkPreview').select(); document.execCommand('copy'); showToast('🔗 คัดลอกลิงก์ห้องเรียนแล้ว!'); }
+    );
   });
 
   $('pullCloudBtn').addEventListener('click', async () => {

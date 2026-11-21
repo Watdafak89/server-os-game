@@ -125,10 +125,13 @@
       </div>
 
       <div class="title-footer-bar">
-        <label class="toggle-chip">
-          <input type="checkbox" id="titleFreePlayToggle" />
-          <span>🔓 โหมดอิสระ (ปลดล็อกทุกด่าน)</span>
-        </label>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+          <label class="toggle-chip">
+            <input type="checkbox" id="titleFreePlayToggle" />
+            <span>🔓 โหมดอิสระ (ปลดล็อกทุกด่าน)</span>
+          </label>
+          <span class="stage-chip" id="titleCloudStatus">💾 Local Mode</span>
+        </div>
         <div class="title-mini-btns">
           <button class="icon-btn" id="titleSoundBtn" title="เปิด/ปิดเสียง">🔊</button>
           <button class="icon-btn" id="titleThemeBtn" title="สลับโหมดมืด/สว่าง">☀️</button>
@@ -166,6 +169,9 @@
         </div>
         <div id="hudBoostBadge" class="res-pill boost-pill hidden" title="XP & Coins x2 กำลังทำงาน">
           <span>🔥 x2</span>
+        </div>
+        <div id="hudCloudBadge" class="res-pill cloud-pill" title="สถานะการซิงค์ข้อมูล">
+          <span>💾 Local</span>
         </div>
       </div>
 
@@ -774,16 +780,41 @@
           </div>
 
           <div class="panel">
-            <h3>☁️ ตั้งค่า Cloud Sync ข้ามอุปกรณ์ (Firebase RTDB — เสริม)</h3>
-            <p class="muted-text" style="margin:0.35rem 0 0.75rem;">
-              หากต้องการให้คะแนนและ Leaderboard ซิงค์อัตโนมัติข้ามเครื่องทั้งห้อง วาง URL ของ Firebase Realtime Database (เช่น <code>https://your-app.firebaseio.com</code>)
+            <h3>☁️ Cloud Sync ข้ามอุปกรณ์ (Firebase Realtime Database)</h3>
+            <p class="muted-text" style="margin:0.35rem 0 0.7rem;">
+              วาง URL ของ Firebase RTDB แล้วกด <strong>ทดสอบ</strong> และ <strong>บันทึก &amp; ซิงค์</strong> เพื่อซิงค์คะแนนและ Leaderboard ข้ามทุกอุปกรณ์แบบเรียลไทม์!
             </p>
             <input type="url" id="cloudUrlInput" class="game-input left-input" style="max-width:100%;margin-bottom:0.65rem;" placeholder="https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app" />
-            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-              <button class="btn btn-neon btn-sm" id="saveCloudUrlBtn">💾 บันทึก URL</button>
-              <button class="btn btn-secondary btn-sm" id="pullCloudBtn">⬇️ ดึงข้อมูลจาก Cloud ตอนนี้</button>
+            <div style="display:flex;gap:0.45rem;flex-wrap:wrap;margin-bottom:0.65rem;">
+              <button class="btn btn-secondary btn-sm" id="testCloudBtn">🧪 ทดสอบเชื่อมต่อ</button>
+              <button class="btn btn-neon btn-sm" id="saveCloudUrlBtn">💾 บันทึก &amp; ซิงค์</button>
+              <button class="btn btn-ghost btn-sm" id="pullCloudBtn">⬇️ ดึงข้อมูลล่าสุด</button>
             </div>
-            <div id="cloudStatusText" class="muted-text" style="margin-top:0.6rem;"></div>
+            <div id="cloudStatusText" class="muted-text" style="margin-bottom:0.75rem;"></div>
+
+            <!-- Share Classroom Link -->
+            <div id="shareLinkBox" class="vault-mission-box hidden" style="margin-bottom:0.75rem;">
+              <div class="sector-kicker">🔗 ลิงก์ห้องเรียนสำหรับส่งให้นักศึกษา (เชื่อมต่อ Cloud อัตโนมัติ)</div>
+              <input type="text" id="shareLinkPreview" class="game-input left-input sm-input" style="margin:0.4rem 0;" readonly />
+              <button class="btn btn-neon btn-xs" id="copyShareLinkBtn">📋 คัดลอกลิงก์ส่งให้นักศึกษา</button>
+            </div>
+
+            <details class="cloud-guide">
+              <summary>📖 วิธีสร้าง Firebase RTDB URL ฟรีใน 2 นาที (คลิกเพื่อดู)</summary>
+              <ol style="padding-left:1.2rem;margin-top:0.5rem;font-size:0.82rem;color:var(--text-muted);display:flex;flex-direction:column;gap:0.3rem;">
+                <li>เข้า <a href="https://console.firebase.google.com" target="_blank" rel="noopener" style="color:var(--primary);">console.firebase.google.com</a> ล็อกอิน Google แล้วกด <strong>Add project</strong></li>
+                <li>เมนูซ้ายเลือก <strong>Build → Realtime Database → Create Database</strong> (เลือกโซน Singapore <code>asia-southeast1</code> และเลือก <strong>Start in test mode</strong>)</li>
+                <li>คัดลอกลิงก์ URL ด้านบน (ลงท้ายด้วย <code>.firebasedatabase.app</code>) มาวางช่องด้านบน หรือวางถาวรในไฟล์ <code>cloud-config.js</code></li>
+                <li>ตั้งค่าแท็บ <strong>Rules</strong> ของ Firebase เป็น:
+                  <pre class="code-snippet" style="margin:0.35rem 0 0;padding:0.55rem;">{
+  "rules": {
+    "serverops_accounts": { ".read": true, ".write": true },
+    "serverops_healthcheck": { ".read": true, ".write": true }
+  }
+}</pre>
+                </li>
+              </ol>
+            </details>
           </div>
         </div>
       </section>
@@ -824,6 +855,7 @@
   <!-- Toast Notification -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
+  <script src="cloud-config.js"></script>
   <script src="audio.js"></script>
   <script src="data.js"></script>
   <script src="auth.js"></script>

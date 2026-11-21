@@ -1,4 +1,4 @@
-/* ServerOps: Data Center Defender — Authentication, Role Management, Leaderboard & Teacher Sync */
+/* ServerOps: Data Center Defender — Authentication, Role Management, Leaderboard & Firebase Cloud Sync */
 const AuthSystem = (() => {
   const ACCOUNTS_KEY = 'serverops_accounts_v2';
   const SESSION_KEY = 'serverops_session_v2';
@@ -31,6 +31,68 @@ const AuthSystem = (() => {
       // fallback below
     }
     return fallbackHash(text);
+  }
+
+  function sanitizeCloudUrl(url) {
+    let clean = (url || '').trim().replace(/\/+$/, '');
+    if (!clean) return '';
+    if (!/^https?:\/\//i.test(clean)) clean = 'https://' + clean;
+    return clean;
+  }
+
+  /* Auto-capture ?cloud=... share link from URL on startup */
+  function captureCloudUrlFromQuery() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const qCloud = params.get('cloud');
+      if (qCloud && qCloud.trim()) {
+        const clean = sanitizeCloudUrl(qCloud);
+        localStorage.setItem(CLOUD_URL_KEY, clean);
+        params.delete('cloud');
+        const newSearch = params.toString();
+        const nextUrl = window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash;
+        window.history.replaceState({}, '', nextUrl);
+      }
+    } catch {
+      // ignore
+    }
+  }
+  captureCloudUrlFromQuery();
+
+  function getCloudUrl() {
+    try {
+      const stored = sanitizeCloudUrl(localStorage.getItem(CLOUD_URL_KEY) || '');
+      if (stored) return stored;
+    } catch {
+      // ignore
+    }
+    const cfgUrl = sanitizeCloudUrl(window.SERVEROPS_CLOUD_CONFIG?.firebaseRtdbUrl || '');
+    return cfgUrl;
+  }
+
+  function setCloudUrl(url) {
+    const clean = sanitizeCloudUrl(url);
+    try {
+      if (clean) localStorage.setItem(CLOUD_URL_KEY, clean);
+      else localStorage.removeItem(CLOUD_URL_KEY);
+    } catch {
+      // ignore
+    }
+    return clean;
+  }
+
+  function buildClassroomShareUrl() {
+    const cloud = getCloudUrl();
+    if (!cloud) return '';
+    const isFile = window.location.protocol === 'file:';
+    const base = isFile
+      ? 'https://watdafak89.github.io/server-os-game/'
+      : (window.location.origin + window.location.pathname);
+    return `${base}?cloud=${encodeURIComponent(cloud)}`;
+  }
+
+  function safeFirebaseKey(username) {
+    return String(username || '').toLowerCase().replace(/[.#$\[\]\/]/g, '_');
   }
 
   function createEmptyGameData(fullName, avatar) {
@@ -126,6 +188,125 @@ const AuthSystem = (() => {
     return accounts;
   }
 
+  /* ==================== FIREBASE RTDB REST SYNC ==================== */
+  async function syncAccountToCloud(account) {
+    const base = getCloudUrl();
+    if (!base || !account?.username) return { ok: false, skipped: true };
+    try {
+      const key = safeFirebaseKey(account.username);
+      const res = await fetch(`${base}/serverops_accounts/${key}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(account)
+      });
+      return { ok: res.ok, status: res.status };
+    } catch {
+      return { ok: false, status: 0 };
+    }
+  }
+
+  async function fetchSingleCloudAccount(username) {
+    const base = getCloudUrl();
+    if (!base || !username) return null;
+    try {
+      const key = safeFirebaseKey(username);
+      const res = await fetch(`${base}/serverops_accounts/${key}.json`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data && data.username ? data : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function deleteCloudAccount(username) {
+    const base = getCloudUrl();
+    if (!base || !username) return false;
+    try {
+      const key = safeFirebaseKey(username);
+      const res = await fetch(`${base}/serverops_accounts/${key}.json`, { method: 'DELETE' });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async function pullAllFromCloud() {
+    const base = getCloudUrl();
+    if (!base) return { ok: false, error: 'ยังไม่ได้ตั้งค่า Firebase Realtime DB URL' };
+    try {
+      const res = await fetch(`${base}/serverops_accounts.json`);
+      if (res.status === 401 || res.status === 403) {
+        return { ok: false, error: 'ติดสิทธิ์ Firebase Rules (401/403) — กรุณาเปิดสิทธิ์ .read และ .write ที่เมนู Rules ใน Firebase' };
+      }
+      if (!res.ok) {
+        return { ok: false, error: `เชื่อมต่อไม่สำเร็จ (HTTP ${res.status}) — ตรวจสอบ URL อีกครั้ง` };
+      }
+      const cloudData = await res.json();
+      if (!cloudData || typeof cloudData !== 'object') {
+        return { ok: true, count: 0 };
+      }
+      const local = loadAccounts();
+      let count = 0;
+      Object.values(cloudData).forEach((acc) => {
+        if (!acc || !acc.username) return;
+        const prev = local[acc.username];
+        const prevTime = prev?.updatedAt ? new Date(prev.updatedAt).getTime() : 0;
+        const cloudTime = acc?.updatedAt ? new Date(acc.updatedAt).getTime() : 0;
+        if (!prev || cloudTime >= prevTime || (acc.gameData?.xp || 0) > (prev.gameData?.xp || 0)) {
+          local[acc.username] = acc;
+          count += 1;
+        }
+      });
+      saveAccounts(local);
+      return { ok: true, count };
+    } catch {
+      return { ok: false, error: 'ไม่สามารถเชื่อมต่อ Firebase ได้ (ตรวจสอบอินเทอร์เน็ตหรือ URL)' };
+    }
+  }
+
+  async function pushAllToCloud() {
+    const base = getCloudUrl();
+    if (!base) return { ok: false, error: 'ยังไม่ได้ตั้งค่า Firebase URL' };
+    const list = Object.values(loadAccounts());
+    let synced = 0;
+    for (const acc of list) {
+      const r = await syncAccountToCloud(acc);
+      if (r.ok) synced += 1;
+      else if (r.status === 401 || r.status === 403) {
+        return { ok: false, error: 'ติดสิทธิ์เขียนข้อมูล Firebase Rules (401/403)' };
+      }
+    }
+    return { ok: true, synced };
+  }
+
+  async function testCloudConnection(inputUrl) {
+    const base = sanitizeCloudUrl(inputUrl || getCloudUrl());
+    if (!base) return { ok: false, error: 'กรุณากรอก Firebase Realtime Database URL ก่อนทดสอบ' };
+    try {
+      const pingUrl = `${base}/serverops_healthcheck.json`;
+      const putRes = await fetch(pingUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ok', checkedAt: new Date().toISOString() })
+      });
+      if (putRes.status === 401 || putRes.status === 403) {
+        return { ok: false, error: 'เชื่อมต่อเซิร์ฟเวอร์ได้ แต่ติดสิทธิ์ Rules (401/403) กรุณาตั้งค่า Rules ตามตัวอย่างด้านล่าง' };
+      }
+      if (!putRes.ok) {
+        return { ok: false, error: `URL ไม่ถูกต้องหรือไม่พบฐานข้อมูล (HTTP ${putRes.status})` };
+      }
+      const getRes = await fetch(pingUrl);
+      if (!getRes.ok) {
+        return { ok: false, error: `เขียนได้แต่อ่านไม่ได้ (HTTP ${getRes.status})` };
+      }
+      return { ok: true, url: base };
+    } catch {
+      return { ok: false, error: 'เชื่อมต่อไม่สำเร็จ กรุณาตรวจสอบรูปแบบ URL (ต้องลงท้ายด้วย firebaseio.com หรือ firebasedatabase.app)' };
+    }
+  }
+
+  /* ==================== REGISTER & LOGIN ==================== */
   async function register({ username, fullName, classroom, password, role, teacherCode, avatar }) {
     const cleanUser = (username || '').trim().toLowerCase();
     const cleanName = (fullName || '').trim();
@@ -145,19 +326,31 @@ const AuthSystem = (() => {
     }
 
     const accounts = await ensureSeedAccounts();
+
+    // Check duplicate on Cloud too if configured
+    if (getCloudUrl()) {
+      const cloudExisting = await fetchSingleCloudAccount(cleanUser);
+      if (cloudExisting) {
+        accounts[cleanUser] = cloudExisting;
+        saveAccounts(accounts);
+      }
+    }
+
     if (accounts[cleanUser]) {
       return { ok: false, error: `บัญชี "${cleanUser}" ถูกใช้งานแล้ว กรุณาใช้รหัสอื่นหรือเข้าสู่ระบบ` };
     }
 
     const passwordHash = await hashPassword(password, cleanUser);
+    const now = new Date().toISOString();
     const newAccount = {
       username: cleanUser,
       fullName: cleanName,
       classroom: cleanClass,
       role: role === 'teacher' ? 'teacher' : 'student',
       passwordHash,
-      createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
+      lastLogin: now,
       gameData: {
         ...createEmptyGameData(cleanName, avatar || (role === 'teacher' ? '🛡️' : '👨‍💻')),
         freePlay: role === 'teacher'
@@ -167,7 +360,7 @@ const AuthSystem = (() => {
     accounts[cleanUser] = newAccount;
     saveAccounts(accounts);
     setSession(cleanUser);
-    syncAccountToCloud(newAccount).catch(() => {});
+    await syncAccountToCloud(newAccount);
     return { ok: true, account: newAccount };
   }
 
@@ -175,9 +368,18 @@ const AuthSystem = (() => {
     const cleanUser = (username || '').trim().toLowerCase();
     const accounts = await ensureSeedAccounts();
 
-    // Try pulling fresh account from optional cloud if not found locally
-    if (!accounts[cleanUser] && getCloudUrl()) {
-      await pullAllFromCloud().catch(() => {});
+    // Sync latest account from Cloud so user can seamlessly continue on another device
+    if (getCloudUrl()) {
+      const cloudAcc = await fetchSingleCloudAccount(cleanUser);
+      if (cloudAcc) {
+        const localAcc = accounts[cleanUser];
+        const localXp = localAcc?.gameData?.xp || 0;
+        const cloudXp = cloudAcc?.gameData?.xp || 0;
+        if (!localAcc || cloudXp >= localXp) {
+          accounts[cleanUser] = cloudAcc;
+          saveAccounts(accounts);
+        }
+      }
     }
 
     const latestAccounts = loadAccounts();
@@ -242,11 +444,12 @@ const AuthSystem = (() => {
     return Object.values(accounts);
   }
 
-  function deleteAccount(username) {
+  async function deleteAccount(username) {
     const accounts = loadAccounts();
     if (!accounts[username] || username === getSessionUsername()) return false;
     delete accounts[username];
     saveAccounts(accounts);
+    await deleteCloudAccount(username);
     return true;
   }
 
@@ -254,7 +457,9 @@ const AuthSystem = (() => {
     const accounts = loadAccounts();
     if (!accounts[username]) return false;
     accounts[username].passwordHash = await hashPassword(newPassword, username);
+    accounts[username].updatedAt = new Date().toISOString();
     saveAccounts(accounts);
+    await syncAccountToCloud(accounts[username]);
     return true;
   }
 
@@ -296,7 +501,6 @@ const AuthSystem = (() => {
       const existing = accounts[p.u];
       const baseGame = existing?.gameData || createEmptyGameData(p.n, p.av);
 
-      // Build synthetic stars map only if imported externally without full details
       const existingStars = Object.values(baseGame.stageStars || {}).reduce((a, b) => a + b, 0);
       const mergedData = {
         ...baseGame,
@@ -319,11 +523,13 @@ const AuthSystem = (() => {
         role: p.r === 'teacher' ? 'teacher' : 'student',
         passwordHash: existing?.passwordHash || fallbackHash('imported:' + p.u),
         createdAt: existing?.createdAt || p.ts,
+        updatedAt: p.ts,
         lastLogin: p.ts,
         gameData: mergedData
       };
 
       saveAccounts(accounts);
+      syncAccountToCloud(accounts[p.u]).catch(() => {});
       return { ok: true, studentName: p.n, username: p.u };
     } catch {
       return { ok: false, error: 'ไม่สามารถถอดรหัสคะแนนได้ กรุณาตรวจสอบว่าคัดลอกมาครบทุกตัวอักษร' };
@@ -381,65 +587,6 @@ const AuthSystem = (() => {
     return rows.length;
   }
 
-  /* ==================== OPTIONAL FIREBASE RTDB REST CLOUD SYNC ==================== */
-  function getCloudUrl() {
-    try {
-      return (localStorage.getItem(CLOUD_URL_KEY) || '').trim().replace(/\/+$/, '');
-    } catch {
-      return '';
-    }
-  }
-
-  function setCloudUrl(url) {
-    const clean = (url || '').trim().replace(/\/+$/, '');
-    try {
-      if (clean) localStorage.setItem(CLOUD_URL_KEY, clean);
-      else localStorage.removeItem(CLOUD_URL_KEY);
-    } catch {
-      // ignore
-    }
-    return clean;
-  }
-
-  async function syncAccountToCloud(account) {
-    const base = getCloudUrl();
-    if (!base || !account?.username) return false;
-    const safeKey = account.username.replace(/[.#$\[\]]/g, '_');
-    const res = await fetch(`${base}/serverops_accounts/${safeKey}.json`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(account)
-    });
-    return res.ok;
-  }
-
-  async function pullAllFromCloud() {
-    const base = getCloudUrl();
-    if (!base) return { ok: false, error: 'ยังไม่ได้ตั้งค่า Firebase Realtime DB URL' };
-    try {
-      const res = await fetch(`${base}/serverops_accounts.json`);
-      if (!res.ok) return { ok: false, error: `เชื่อมต่อไม่สำเร็จ (HTTP ${res.status})` };
-      const cloudData = await res.json();
-      if (!cloudData || typeof cloudData !== 'object') {
-        return { ok: true, count: 0 };
-      }
-      const local = loadAccounts();
-      let count = 0;
-      Object.values(cloudData).forEach((acc) => {
-        if (!acc || !acc.username) return;
-        const prev = local[acc.username];
-        if (!prev || (acc.gameData?.xp || 0) >= (prev.gameData?.xp || 0)) {
-          local[acc.username] = acc;
-          count += 1;
-        }
-      });
-      saveAccounts(local);
-      return { ok: true, count };
-    } catch {
-      return { ok: false, error: 'ไม่สามารถเชื่อมต่อ Cloud ได้ (ตรวจสอบอินเทอร์เน็ตหรือสิทธิ์ Rules ของ Firebase)' };
-    }
-  }
-
   return {
     TEACHER_SIGNUP_CODE,
     ensureSeedAccounts,
@@ -457,7 +604,10 @@ const AuthSystem = (() => {
     exportScoresCsv,
     getCloudUrl,
     setCloudUrl,
+    buildClassroomShareUrl,
+    testCloudConnection,
     syncAccountToCloud,
-    pullAllFromCloud
+    pullAllFromCloud,
+    pushAllToCloud
   };
 })();
