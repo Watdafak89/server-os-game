@@ -37,9 +37,25 @@
   let defIntervalId = null;
   let blitzIntervalId = null;
 
-  function avatarHtml(val, sizeCls = 'hud-fit') {
+  function getAvatarTierClass(level, role) {
+    if (role === 'teacher') return 'av-tier-teacher';
+    const lv = Math.max(1, Math.min(10, Number(level) || 1));
+    return `av-tier-lv${lv}`;
+  }
+
+  function applyAvatarFrame(el, level, role) {
+    if (!el) return;
+    el.className = el.className
+      .split(/\s+/)
+      .filter((c) => c && !c.startsWith('av-tier-') && c !== 'av-framed')
+      .join(' ');
+    el.classList.add('av-framed', getAvatarTierClass(level, role));
+  }
+
+  function avatarHtml(val, sizeCls = 'hud-fit', tierCls = '') {
     const av = resolveAvatar(val);
-    return `<img src="${av.src}" alt="${av.name}" class="avatar-img ${sizeCls}" />`;
+    const extra = tierCls ? ` ${tierCls}` : '';
+    return `<img src="${av.src}" alt="${av.name}" class="avatar-img ${sizeCls}${extra}" />`;
   }
 
   function loadPrefs() {
@@ -445,14 +461,15 @@
     if (loggedIn && currentAccount) {
       $('authGate').classList.add('hidden');
       $('loggedInGate').classList.remove('hidden');
-      $('resumeAvatar').innerHTML = avatarHtml(state.avatar, 'hud-fit');
+      const rank = getRankInfo(state.xp);
+      $('resumeAvatar').innerHTML = `<div class="av-frame-inner">${avatarHtml(state.avatar, 'hud-fit')}</div>`;
+      applyAvatarFrame($('resumeAvatar'), rank.level, currentAccount.role);
       $('resumeFullName').textContent = currentAccount.fullName;
       const rBadge = $('resumeRoleBadge');
       rBadge.textContent = currentAccount.role === 'teacher' ? '👨‍🏫 ครูผู้สอน' : '🎓 นักศึกษา';
       rBadge.className = `role-badge ${currentAccount.role === 'teacher' ? 'teacher' : ''}`;
       $('resumeMeta').textContent = `@${currentAccount.username} • ห้อง: ${currentAccount.classroom || '-'}`;
 
-      const rank = getRankInfo(state.xp);
       const maxStars = ALL_STAGES_FLAT.length * 3;
       const unlockedList = BADGES
         .filter((b) => state.unlockedBadges.includes(b.id))
@@ -481,7 +498,8 @@
     const maxStars = ALL_STAGES_FLAT.length * 3;
     const isTeacher = currentAccount?.role === 'teacher';
 
-    $('hudAvatar').innerHTML = avatarHtml(state.avatar, 'hud-fit');
+    $('hudAvatar').innerHTML = `<div class="av-frame-inner">${avatarHtml(state.avatar, 'hud-fit')}</div>`;
+    applyAvatarFrame($('hudAvatar'), rank.level, currentAccount?.role);
     $('hudPlayerName').textContent = currentAccount ? currentAccount.fullName : state.playerName;
     $('hudLevel').textContent = `LV.${rank.level}`;
     const hudRole = $('hudRoleBadge');
@@ -1325,7 +1343,8 @@
 
     const ground = $('roFieldGround');
     ground.className = `ro-field-ground ${zone.biome}`;
-    $('roFieldPlayerSprite').innerHTML = avatarHtml(state.avatar, 'walker');
+    const playerTierCls = getAvatarTierClass(getRankInfo(state.xp).level, currentAccount?.role);
+    $('roFieldPlayerSprite').innerHTML = avatarHtml(state.avatar, 'walker', playerTierCls);
     $('roFieldPlayerName').textContent = state.playerName;
     $('roFieldPlayer').classList.remove('dash-attack');
 
@@ -2066,7 +2085,8 @@
     $('battleZoneChip').textContent = stage.zoneCode;
     $('battleStageTitle').textContent = stage.title;
     $('battleDialogueText').textContent = stage.dialogue;
-    $('battlePlayerSprite').innerHTML = avatarHtml(state.avatar, 'battle');
+    const battleTierCls = getAvatarTierClass(getRankInfo(state.xp).level, currentAccount?.role);
+    $('battlePlayerSprite').innerHTML = avatarHtml(state.avatar, 'battle', battleTierCls);
     $('battlePlayerLabel').textContent = `${state.playerName}'s Server Core`;
     $('enemySprite').innerHTML = AnimeSprites.getEnemySprite(stage.id);
     $('enemySprite').classList.toggle('is-boss-sprite', Boolean(stage.isBoss));
@@ -4330,9 +4350,10 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       const isMe = currentAccount && entry.acc.username === currentAccount.username;
       const tr = document.createElement('tr');
       if (isMe) tr.className = 'me-row';
+      const rowTierCls = getAvatarTierClass(entry.m.rank.level, entry.acc.role);
       tr.innerHTML = `
         <td><strong>#${idx + 1}</strong></td>
-        <td>${avatarHtml(entry.m.avatar, 'xs')} <strong>${entry.acc.fullName}</strong> ${isMe ? '<span class="stage-chip">คุณ</span>' : ''}</td>
+        <td>${avatarHtml(entry.m.avatar, 'xs', rowTierCls)} <strong>${entry.acc.fullName}</strong> ${isMe ? '<span class="stage-chip">คุณ</span>' : ''}</td>
         <td>${entry.acc.classroom || '-'}</td>
         <td><strong>${entry.m.xp.toLocaleString()} XP</strong> <span class="muted-text">(LV.${entry.m.rank.level})</span></td>
         <td>⭐ ${entry.m.stars}/${maxStars}</td>

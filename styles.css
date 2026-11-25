@@ -5903,3 +5903,151 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
     padding-top: 0.55rem;
   }
 }
+
+/* ==================== PROGRESSIVE LEVEL AVATAR FRAMES (LV.1–10) & EXCLUSIVE TEACHER FRAME ==================== */
+.hud-avatar.av-framed,
+.resume-avatar.av-framed {
+  position: relative;
+  overflow: visible !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 3px !important;
+  border-radius: 50% !important;
+  isolation: isolate;
+}
+
+.hud-avatar.av-framed {
+  width: 50px;
+  height: 50px;
+}
+
+.resume-avatar.av-framed {
+  width: 68px;
+  height: 68px;
+  padding: 4px !important;
+}
+
+.av-frame-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  padding: 2px;
+}
+
+.av-frame-inner .avatar-img {
+  border-radius: 50% !important;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.av-framed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* LV.1 — Novice Steel */
+.av-framed.av-tier-lv1::before { background: linear-gradient(135deg, #cbd5e1, #64748b); }
+.av-framed.av-tier-lv1 { box-shadow: 0 0 8px rgba(148, 163, 184, 0.35); }
+.avatar-img.av-tier-lv1 { border-color: #94a3b8 !important; box-shadow: 0 0 8px rgba(148, 163, 184, 0.4) !important; }
+
+/* LV.2 — Cyber Emerald */
+.av-framed.av-tier-lv2::before { background: linear-gradient(135deg, #6ee7b7, #10b981, #047857); }
+.av-framed.av-tier-lv2 { box-shadow: 0 0 12px rgba(52, 211, 153, 0.48); }
+.avatar-img.av-tier-lv2 { border-color: #34d399 !important; box-shadow: 0 0 10px rgba(52, 211, 153, 0.5) !important; }
+
+/* LV.3 — Azure Sentinel */
+.av-framed.av-tier-lv3::before { background: linear-gradient(135deg, #7dd3fc, #38bdf8, #0284c7); }
+.av-framed.av-tier-lv3 { box-shadow: 0 0 14px rgba(56, 189, 248, 0.55); }
+.avatar-img.av-tier-lv3 { border-color: #38bdf8 !important; box-shadow: 0 0 12px rgba(56, 189, 248, 0.55) !important; }
+
+/* LV.4 — Cobalt Pulse */
+.av-framed.av-tier-lv4::before { background: conic-gradient(from 0deg, #3b82f6, #22d3ee, #60a5fa, #1d4ed8, #3b82f6); animation: podiumRingSpin 7s linear infinite; }
+.av-framed.av-tier-lv4 { box-shadow: 0 0 16px rgba(59, 130, 246, 0.58); }
+.avatar-img.av-tier-lv4 { border-color: #60a5fa !important; box-shadow: 0 0 12px rgba(34, 211, 238, 0.55) !important; }
+
+/* LV.5 — Amethyst Vanguard */
+.av-framed.av-tier-lv5::before { background: conic-gradient(from 0deg, #c084fc, #ec4899, #a855f7, #7e22ce, #c084fc); animation: podiumRingSpin 6s linear infinite; }
+.av-framed.av-tier-lv5 { box-shadow: 0 0 18px rgba(168, 85, 247, 0.62); }
+.avatar-img.av-tier-lv5 { border-color: #c084fc !important; box-shadow: 0 0 14px rgba(168, 85, 247, 0.6) !important; }
+
+/* LV.6 — Solar Blaze */
+.av-framed.av-tier-lv6::before { background: conic-gradient(from 0deg, #fde047, #f97316, #fb923c, #c2410c, #fde047); animation: podiumRingSpin 5.2s linear infinite; }
+.av-framed.av-tier-lv6 { box-shadow: 0 0 20px rgba(249, 115, 22, 0.65); }
+.avatar-img.av-tier-lv6 { border-color: #fb923c !important; box-shadow: 0 0 14px rgba(249, 115, 22, 0.65) !important; }
+
+/* LV.7 — Crimson Overlord */
+.av-framed.av-tier-lv7::before { background: conic-gradient(from 0deg, #fca5a5, #ef4444, #fbbf24, #991b1b, #fca5a5); animation: podiumRingSpin 4.4s linear infinite; }
+.av-framed.av-tier-lv7 { box-shadow: 0 0 22px rgba(239, 68, 68, 0.72), 0 0 34px rgba(251, 191, 36, 0.3); }
+.avatar-img.av-tier-lv7 { border-color: #f87171 !important; box-shadow: 0 0 16px rgba(239, 68, 68, 0.7) !important; }
+
+/* LV.8 — Astral Diamond */
+.av-framed.av-tier-lv8::before { background: conic-gradient(from 0deg, #ffffff, #38bdf8, #c084fc, #67e8f9, #818cf8, #ffffff); animation: podiumRingSpin 3.8s linear infinite; }
+.av-framed.av-tier-lv8 { animation: podiumAuraSilver 2.8s ease-in-out infinite; }
+.avatar-img.av-tier-lv8 { border-color: #67e8f9 !important; box-shadow: 0 0 18px rgba(103, 232, 249, 0.78) !important; }
+
+/* LV.9 — Imperial Gold */
+.av-framed.av-tier-lv9::before { background: conic-gradient(from 0deg, #fef08a, #f59e0b, #ffffff, #fbbf24, #b45309, #fde047, #fef08a); animation: podiumRingSpin 3.2s linear infinite; }
+.av-framed.av-tier-lv9 { animation: podiumAuraGold 2.4s ease-in-out infinite; }
+.avatar-img.av-tier-lv9 { border-color: #fbbf24 !important; box-shadow: 0 0 18px rgba(251, 191, 36, 0.85) !important; }
+
+/* LV.10 — Mythic Prismatic Legend */
+.av-framed.av-tier-lv10::before {
+  background: conic-gradient(from 0deg, #f43f5e, #fbbf24, #34d399, #38bdf8, #a855f7, #ec4899, #f43f5e);
+  animation: podiumRingSpin 2.6s linear infinite;
+}
+.av-framed.av-tier-lv10 {
+  animation: avMythicPulse 2.4s ease-in-out infinite;
+}
+.avatar-img.av-tier-lv10 {
+  border-color: #f472b6 !important;
+  box-shadow: 0 0 16px rgba(244, 114, 182, 0.8), 0 0 28px rgba(56, 189, 248, 0.65) !important;
+}
+
+/* EXCLUSIVE TEACHER SOVEREIGN FRAME (Gold + Emerald-Cyan Royal Halo + Floating Crown) */
+.av-framed.av-tier-teacher {
+  padding: 4px !important;
+  animation: avTeacherAura 2.4s ease-in-out infinite;
+}
+.av-framed.av-tier-teacher::before {
+  background: conic-gradient(from 0deg, #fef08a, #fbbf24, #34d399, #38bdf8, #ffffff, #f59e0b, #a855f7, #fef08a);
+  animation: podiumRingSpin 2.8s linear infinite;
+}
+.av-framed.av-tier-teacher::after {
+  content: '👑';
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.92rem;
+  z-index: 5;
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.95));
+  animation: podiumCrownFloat 2.2s ease-in-out infinite;
+}
+.resume-avatar.av-framed.av-tier-teacher::after {
+  top: -16px;
+  font-size: 1.15rem;
+}
+.avatar-img.av-tier-teacher {
+  border-color: #fbbf24 !important;
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.9), 0 0 28px rgba(52, 211, 153, 0.55) !important;
+}
+
+@keyframes avMythicPulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(244, 63, 94, 0.65), 0 0 32px rgba(56, 189, 248, 0.45); }
+  50% { box-shadow: 0 0 24px rgba(168, 85, 247, 0.85), 0 0 42px rgba(251, 191, 36, 0.55); }
+}
+
+@keyframes avTeacherAura {
+  0%, 100% { box-shadow: 0 0 16px rgba(251, 191, 36, 0.78), 0 0 32px rgba(52, 211, 153, 0.45); }
+  50% { box-shadow: 0 0 26px rgba(253, 224, 71, 0.98), 0 0 46px rgba(56, 189, 248, 0.62); }
+}
