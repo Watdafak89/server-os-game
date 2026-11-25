@@ -224,6 +224,16 @@
     return { granted, remainingAfter: Math.max(0, remaining - granted) };
   }
 
+  const CONSOLATION_DAILY_XP_CAP = 30;
+  function applyConsolationXpCap(rawXp) {
+    ensureTodayQuests();
+    const earnedToday = Math.max(0, state.dailyQuests.consolationXpEarned || 0);
+    const remaining = Math.max(0, CONSOLATION_DAILY_XP_CAP - earnedToday);
+    const granted = Math.min(Math.max(0, rawXp), remaining);
+    state.dailyQuests.consolationXpEarned = earnedToday + granted;
+    return { granted, remainingAfter: Math.max(0, remaining - granted) };
+  }
+
   function checkBadges() {
     const unlock = (id) => {
       if (!state.unlockedBadges.includes(id)) {
@@ -1999,6 +2009,7 @@
       maxEnemyHp: stage.enemy.hp,
       combo: 0,
       correctCount: 0,
+      wrongCount: 0,
       wrongStreak: 0,
       questionShownAt: Date.now(),
       shieldActive: false,
@@ -2149,6 +2160,7 @@
     } else {
       btn.classList.add('wrong');
       battle.combo = 0;
+      battle.wrongCount = (battle.wrongCount || 0) + 1;
       battle.wrongStreak += 1;
       const isFastSpam = answerElapsedMs < 2000;
 
@@ -2312,9 +2324,24 @@
       $('outcomeEmoji').textContent = '💥';
       $('outcomeTitle').textContent = 'SERVER DOWN! (พ่ายแพ้)';
       $('outcomeStars').textContent = '☆☆☆';
-      $('outcomeSub').textContent = 'Server HP หมดก่อนพิชิตภัยคุกคาม — ลองทบทวนเนื้อหาในคัมภีร์แล้วกลับมาสู้ใหม่!';
+      const missedCount = battle.wrongCount || 0;
+      let consolationXp = 0;
+      let consolationNote = '0 XP';
+      if (missedCount >= 3) {
+        const { granted, remainingAfter } = applyConsolationXpCap(5);
+        consolationXp = granted;
+        if (granted > 0) {
+          grantRewards(granted, 0);
+          consolationNote = `+${granted} XP (ปลอบใจความพยายาม • เหลือโควตาวันนี้ ${remainingAfter} XP)`;
+        } else {
+          consolationNote = '0 XP (รับโควตาปลอบใจครบ 30 XP/วันแล้ว)';
+        }
+      }
+      $('outcomeSub').textContent = consolationXp > 0
+        ? `ตอบผิด ${missedCount} ข้อ — รับ +${consolationXp} XP ปลอบใจความพยายาม! ลองทบทวนเนื้อหาในคัมภีร์แล้วกลับมาสู้ใหม่นะ`
+        : 'Server HP หมดก่อนพิชิตภัยคุกคาม — ลองทบทวนเนื้อหาในคัมภีร์แล้วกลับมาสู้ใหม่!';
       $('outcomeRewards').innerHTML = `
-        <div class="reward-box"><span>XP ที่ได้รับ</span><strong>0 XP (ต้องผ่านด่านจึงจะได้ XP)</strong></div>
+        <div class="reward-box"><span>💖 XP ปลอบใจ</span><strong>${consolationNote}</strong></div>
         <div class="reward-box"><span>XP คงเหลือ</span><strong>${state.xp.toLocaleString()} XP</strong></div>
       `;
       nextBtn.classList.add('hidden');
