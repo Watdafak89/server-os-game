@@ -307,56 +307,79 @@
           </div>
 
           <div class="ro-map-canvas" id="roWorldCanvas">
-            <!-- Illustrated Fantasy-Cyber Continent SVG -->
+            <!-- Illustrated Modern Cyber-Tactical Continent SVG -->
             <svg class="ro-continent-svg" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
               <defs>
-                <radialGradient id="oceanGrad" cx="50%" cy="50%" r="70%">
-                  <stop offset="0%" stop-color="#143a5c" />
-                  <stop offset="100%" stop-color="#081b30" />
+                <radialGradient id="oceanGrad" cx="50%" cy="46%" r="72%">
+                  <stop offset="0%" stop-color="#0f2944" />
+                  <stop offset="55%" stop-color="#09192d" />
+                  <stop offset="100%" stop-color="#040b16" />
                 </radialGradient>
                 <linearGradient id="landGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#3c6e47" />
-                  <stop offset="45%" stop-color="#4e7a48" />
-                  <stop offset="78%" stop-color="#8b7346" />
-                  <stop offset="100%" stop-color="#5c4b37" />
+                  <stop offset="0%" stop-color="#133d3a" />
+                  <stop offset="48%" stop-color="#1c4b47" />
+                  <stop offset="82%" stop-color="#35463b" />
+                  <stop offset="100%" stop-color="#222c38" />
                 </linearGradient>
-                <linearGradient id="skyIslandGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stop-color="#bae6fd" />
-                  <stop offset="100%" stop-color="#38bdf8" />
+                <linearGradient id="landStrokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.85" />
+                  <stop offset="50%" stop-color="#34d399" stop-opacity="0.75" />
+                  <stop offset="100%" stop-color="#fbbf24" stop-opacity="0.85" />
                 </linearGradient>
-                <filter id="landShadow" x="-10%" y="-10%" width="120%" height="120%">
-                  <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#020617" flood-opacity="0.65" />
+                <linearGradient id="skyIslandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.42" />
+                  <stop offset="100%" stop-color="#1e3a5f" stop-opacity="0.78" />
+                </linearGradient>
+                <linearGradient id="darkIslandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#4c1d95" stop-opacity="0.58" />
+                  <stop offset="100%" stop-color="#1e1b4b" stop-opacity="0.85" />
+                </linearGradient>
+                <filter id="landShadow" x="-12%" y="-12%" width="124%" height="124%">
+                  <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#020617" flood-opacity="0.8" />
+                </filter>
+                <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3.5" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
                 </filter>
               </defs>
 
-              <!-- Sea + Classic RO Grid Lines -->
+              <!-- Deep Cyber Ocean + Subtle Tactical Grid & Radar Rings -->
               <rect width="1000" height="600" fill="url(#oceanGrad)" />
-              <g stroke="rgba(186,230,253,0.12)" stroke-width="1">
-                <line x1="0" y1="120" x2="1000" y2="120" />
-                <line x1="0" y1="240" x2="1000" y2="240" />
-                <line x1="0" y1="360" x2="1000" y2="360" />
-                <line x1="0" y1="480" x2="1000" y2="480" />
-                <line x1="200" y1="0" x2="200" y2="600" />
-                <line x1="400" y1="0" x2="400" y2="600" />
-                <line x1="600" y1="0" x2="600" y2="600" />
-                <line x1="800" y1="0" x2="800" y2="600" />
+              <g stroke="rgba(56,189,248,0.08)" stroke-width="1">
+                <line x1="0" y1="100" x2="1000" y2="100" />
+                <line x1="0" y1="200" x2="1000" y2="200" />
+                <line x1="0" y1="300" x2="1000" y2="300" />
+                <line x1="0" y1="400" x2="1000" y2="400" />
+                <line x1="0" y1="500" x2="1000" y2="500" />
+                <line x1="166" y1="0" x2="166" y2="600" />
+                <line x1="333" y1="0" x2="333" y2="600" />
+                <line x1="500" y1="0" x2="500" y2="600" />
+                <line x1="666" y1="0" x2="666" y2="600" />
+                <line x1="833" y1="0" x2="833" y2="600" />
+              </g>
+              <g fill="none" stroke="rgba(56,189,248,0.1)" stroke-dasharray="6 10">
+                <circle cx="500" cy="340" r="145" />
+                <circle cx="500" cy="340" r="275" />
+                <circle cx="500" cy="340" r="405" />
               </g>
 
-              <!-- Main Rune-Midgard-like Continent Landmass -->
-              <path filter="url(#landShadow)" fill="url(#landGrad)" stroke="#d4b475" stroke-width="4"
+              <!-- Main Cyber-Midgard Continent Landmass -->
+              <path filter="url(#landShadow)" fill="url(#landGrad)" stroke="url(#landStrokeGrad)" stroke-width="3"
                 d="M 110,470 Q 85,370 135,280 Q 170,210 270,215 Q 370,190 480,220 Q 590,195 695,215 Q 845,210 895,300 Q 925,405 860,485 Q 765,545 640,520 Q 520,555 385,535 Q 245,555 155,515 Z" />
 
-              <!-- Desert Patch (Morroc Area) -->
-              <ellipse cx="790" cy="315" rx="95" ry="70" fill="rgba(217, 169, 98, 0.45)" />
-              <!-- Dark Castle Swamp (Glast Heim) -->
-              <ellipse cx="220" cy="275" rx="85" ry="55" fill="rgba(88, 28, 135, 0.38)" />
+              <!-- Biome Atmospheric Glows -->
+              <ellipse cx="790" cy="315" rx="95" ry="70" fill="rgba(251, 191, 36, 0.14)" />
+              <ellipse cx="220" cy="275" rx="85" ry="55" fill="rgba(167, 139, 250, 0.16)" />
 
-              <!-- Northern Sky Islands (Juno & Thanatos) -->
-              <ellipse filter="url(#landShadow)" cx="340" cy="116" rx="108" ry="48" fill="url(#skyIslandGrad)" stroke="#e0f2fe" stroke-width="3" />
-              <ellipse filter="url(#landShadow)" cx="680" cy="112" rx="115" ry="50" fill="#312e81" stroke="#f59e0b" stroke-width="3" />
+              <!-- Northern Sky Islands (Holographic Floating Citadels) -->
+              <ellipse filter="url(#landShadow)" cx="340" cy="116" rx="112" ry="46" fill="url(#skyIslandGrad)" stroke="rgba(56,189,248,0.75)" stroke-width="2.5" />
+              <ellipse filter="url(#landShadow)" cx="680" cy="112" rx="118" ry="48" fill="url(#darkIslandGrad)" stroke="rgba(251,191,36,0.75)" stroke-width="2.5" />
 
-              <!-- Decorative Mountains & Trees -->
-              <g fill="#2b4c32" opacity="0.65">
+              <!-- Minimal Geometric Cyber Peaks -->
+              <g fill="rgba(56,189,248,0.14)" stroke="rgba(56,189,248,0.28)" stroke-width="1">
                 <polygon points="330,415 350,375 370,415" />
                 <polygon points="620,390 645,342 670,390" />
                 <polygon points="648,395 668,358 688,395" />
@@ -364,21 +387,24 @@
               </g>
 
               <!-- Dynamic Travel Routes Layer (rendered by JS) -->
-              <g id="roRoutesLayer"></g>
+              <g id="roRoutesLayer" filter="url(#neonGlow)"></g>
 
               <!-- Compass Rose (Bottom Left) -->
-              <g transform="translate(62, 535)" opacity="0.78">
-                <circle cx="0" cy="0" r="28" fill="rgba(8,27,48,0.7)" stroke="#fbbf24" stroke-width="2" />
+              <g transform="translate(62, 535)" opacity="0.82">
+                <circle cx="0" cy="0" r="28" fill="rgba(8,27,48,0.78)" stroke="#38bdf8" stroke-width="1.8" />
                 <polygon points="0,-24 6,-4 0,-9 -6,-4" fill="#fbbf24" />
                 <polygon points="0,24 6,4 0,9 -6,4" fill="#94a3b8" />
                 <polygon points="24,0 4,-6 9,0 4,6" fill="#94a3b8" />
                 <polygon points="-24,0 -4,-6 -9,0 -4,6" fill="#94a3b8" />
-                <text x="0" y="-32" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">N</text>
+                <text x="0" y="-32" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="700">N</text>
               </g>
             </svg>
 
             <!-- Clickable Region Pins Overlay -->
             <div id="roPinsLayer" class="ro-pins-layer"></div>
+
+            <!-- Animated Holographic MVP Boss Hover Card -->
+            <div id="roBossHoverCard" class="ro-boss-hover-card hidden" aria-hidden="true"></div>
           </div>
 
           <!-- RO Bottom Region Info Preview Strip -->

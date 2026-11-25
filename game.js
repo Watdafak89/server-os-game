@@ -1014,7 +1014,62 @@
       `;
     }
 
-    // 2. Render clickable RO Region Pins (10 per continent) + 1cm x 1cm Avatar & Name per line
+    // 2. Render clickable RO Region Pins (10 per continent) + Animated Boss Hover Hologram
+    const bossHoverCard = $('roBossHoverCard');
+    const hideBossHoverCard = () => {
+      if (!bossHoverCard) return;
+      bossHoverCard.classList.add('hidden');
+      bossHoverCard.setAttribute('aria-hidden', 'true');
+    };
+    hideBossHoverCard();
+    if (canvas) {
+      canvas.onmouseleave = hideBossHoverCard;
+    }
+
+    const showBossHoverCard = (zone, bossStage, { unlocked, teacherLocked, canWarpHere, cleared, earned, maxS }) => {
+      if (!bossHoverCard || !bossStage) return;
+      const isLockedView = !unlocked && !canWarpHere;
+      const clampedX = Math.max(18, Math.min(82, zone.mapX));
+      const placeBelow = zone.mapY < 48;
+      const topPct = placeBelow ? Math.min(72, zone.mapY + 11) : Math.max(12, zone.mapY - 10);
+
+      const statusLabel = cleared
+        ? '✅ พิชิตแล้ว'
+        : (unlocked
+          ? '🔓 เปิดให้ท้าสู้'
+          : (canWarpHere ? '🌀 วาร์ปได้' : (teacherLocked ? '🔐 ครูล็อก' : '🔒 ล็อกอยู่')));
+      const ctaText = unlocked
+        ? (cleared ? '✨ คลิกเพื่อเข้าไปทบทวนด่านอีกครั้ง' : '⚔️ คลิกที่โซนเพื่อเข้าท้าสู้บอส!')
+        : (canWarpHere
+          ? '🌀 คลิกเพื่อใช้ตั๋ววาร์ปปลดล็อกโซนนี้ทันที!'
+          : (teacherLocked
+            ? '🔐 รอครูผู้สอนปลดล็อกโซนนี้ตามแผนการสอน'
+            : '🔒 ปราบ MVP Boss โซนก่อนหน้าเพื่อปลดล็อก'));
+
+      bossHoverCard.className = `ro-boss-hover-card ${placeBelow ? 'pos-below' : ''} ${isLockedView ? 'is-locked-boss' : ''}`;
+      bossHoverCard.style.left = `${clampedX}%`;
+      bossHoverCard.style.top = `${topPct}%`;
+      bossHoverCard.style.setProperty('--boss-accent', zone.themeColor || '#38bdf8');
+      bossHoverCard.setAttribute('aria-hidden', 'false');
+      bossHoverCard.innerHTML = `
+        <div class="ro-boss-hover-stage">
+          <div class="ro-boss-holo-ring"></div>
+          <div class="ro-boss-holo-scan"></div>
+          <span class="ro-boss-crown-pill">👑 MVP BOSS</span>
+          <span class="ro-boss-status-pill ${isLockedView ? 'locked' : ''}">${statusLabel}</span>
+          <div class="ro-boss-hover-sprite">${AnimeSprites.getEnemySprite(bossStage.id)}</div>
+        </div>
+        <div class="ro-boss-hover-name">${bossStage.enemy.name}</div>
+        <div class="ro-boss-hover-zone">${zone.code}: ${zone.roName} • ${zone.lvRange}</div>
+        <div class="ro-boss-hover-stats">
+          <span class="ro-boss-stat-chip">❤️ HP ${bossStage.enemy.hp}</span>
+          <span class="ro-boss-stat-chip">⚡ +${bossStage.xp} XP</span>
+          <span class="ro-boss-stat-chip">⭐ ${earned}/${maxS}</span>
+        </div>
+        <div class="ro-boss-hover-cta">${ctaText}</div>
+      `;
+    };
+
     const hasWarpPass = (state.inventory?.warp_pass || 0) > 0;
     continentEntries.forEach(({ zone, zIdx }) => {
       const unlocked = isZoneUnlocked(zIdx);
@@ -1065,11 +1120,12 @@
 
       const pin = document.createElement('button');
       pin.type = 'button';
-      pin.className = `ro-pin ${cleared ? 'cleared' : ''} ${isCurrent ? 'current-target' : ''} ${canWarpHere ? 'can-warp' : ''} ${teacherLocked ? 'teacher-locked' : ''} ${peersHere.length ? 'has-peers' : ''}`;
+      const isPinLocked = !unlocked && !canWarpHere;
+      pin.className = `ro-pin ${cleared ? 'cleared' : ''} ${isCurrent ? 'current-target' : ''} ${canWarpHere ? 'can-warp' : ''} ${teacherLocked ? 'teacher-locked' : ''} ${isPinLocked ? 'is-locked' : ''} ${peersHere.length ? 'has-peers' : ''}`;
       pin.style.left = `${zone.mapX}%`;
       pin.style.top = `${zone.mapY}%`;
       pin.style.setProperty('--zone-color', zone.themeColor);
-      pin.disabled = !unlocked && !canWarpHere;
+      if (isPinLocked) pin.setAttribute('aria-disabled', 'true');
       const pinMetaText = canWarpHere
         ? '🌀 คลิกใช้ตั๋ววาร์ป!'
         : (teacherLocked && !unlocked
@@ -1102,14 +1158,26 @@
         renderPreviewPeers(peersHere);
       };
 
-      pin.addEventListener('mouseenter', updatePreview);
-      pin.addEventListener('focus', updatePreview);
+      const onPinHover = () => {
+        updatePreview();
+        showBossHoverCard(zone, bossStage, { unlocked, teacherLocked, canWarpHere, cleared, earned, maxS });
+      };
+
+      pin.addEventListener('mouseenter', onPinHover);
+      pin.addEventListener('focus', onPinHover);
+      pin.addEventListener('mouseleave', hideBossHoverCard);
+      pin.addEventListener('blur', hideBossHoverCard);
       pin.addEventListener('click', () => {
         if (unlocked) {
+          hideBossHoverCard();
           SoundFX.shield();
           openRoFieldMap(zone.id);
         } else if (canWarpHere) {
+          hideBossHoverCard();
           useWarpPassOnZone(zone);
+        } else {
+          SoundFX.wrong();
+          showToast(teacherLocked ? '🔐 โซนนี้ถูกล็อกโดยครูผู้สอนชั่วคราว' : '🔒 ปราบ MVP Boss ของโซนก่อนหน้าเพื่อปลดล็อก!');
         }
       });
 
