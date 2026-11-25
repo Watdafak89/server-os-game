@@ -354,6 +354,94 @@ const AuthSystem = (() => {
     }
   }
 
+  const CAMPAIGN_BADGE_IDS = [
+    'first_blood',
+    'zone1_clear', 'zone2_clear', 'zone3_clear', 'zone4_clear', 'zone5_clear',
+    'final_boss', 'zone7_clear', 'zone8_clear', 'zone9_clear', 'zone10_clear'
+  ];
+
+  function shouldAcceptCloudAccount(localAcc, cloudAcc) {
+    if (!localAcc) return true;
+    const localReset = localAcc?.gameData?.mapResetAt ? new Date(localAcc.gameData.mapResetAt).getTime() : 0;
+    const cloudReset = cloudAcc?.gameData?.mapResetAt ? new Date(cloudAcc.gameData.mapResetAt).getTime() : 0;
+    if (cloudReset > localReset) return true;
+    if (localReset > cloudReset) return false;
+    const localTime = localAcc?.updatedAt ? new Date(localAcc.updatedAt).getTime() : 0;
+    const cloudTime = cloudAcc?.updatedAt ? new Date(cloudAcc.updatedAt).getTime() : 0;
+    const localXp = localAcc?.gameData?.xp || 0;
+    const cloudXp = cloudAcc?.gameData?.xp || 0;
+    return cloudTime >= localTime || cloudXp > localXp;
+  }
+
+  function applyMapResetToAccount(acc, options = {}) {
+    if (!acc || acc.role === 'teacher') return false;
+    const now = new Date().toISOString();
+    const base = createEmptyGameData(acc.fullName, acc.gameData?.avatar || 'avatar1');
+    const prev = acc.gameData || {};
+    const nextBadges = Array.isArray(prev.unlockedBadges)
+      ? prev.unlockedBadges.filter((id) => !CAMPAIGN_BADGE_IDS.includes(id))
+      : [];
+    const nextInv = {
+      ...base.inventory,
+      ...(prev.inventory || {}),
+      warp_pass: 0
+    };
+    acc.gameData = {
+      ...base,
+      ...prev,
+      stageStars: {},
+      importedStars: 0,
+      warpedZones: [],
+      warpPassPurchased: false,
+      inventory: nextInv,
+      unlockedBadges: nextBadges,
+      mapResetAt: now
+    };
+    if (options.resetXpAndCoins) {
+      acc.gameData.xp = 0;
+      acc.gameData.coins = 100;
+    }
+    acc.updatedAt = now;
+    return true;
+  }
+
+  async function resetStudentMapProgress(username, options = {}) {
+    const accounts = loadAccounts();
+    const acc = accounts[username];
+    if (!acc || acc.role === 'teacher') return { ok: false, error: 'ไม่พบบัญชีนักศึกษา' };
+    applyMapResetToAccount(acc, options);
+    accounts[username] = acc;
+    saveAccounts(accounts);
+    const syncRes = await syncAccountToCloud(acc);
+    return { ok: true, account: acc, synced: Boolean(syncRes?.ok) };
+  }
+
+  async function resetStudentsMapProgress(options = {}) {
+    const classroom = (options.classroom || '').trim();
+    const accounts = loadAccounts();
+    const targets = Object.values(accounts).filter((acc) => {
+      if (!acc || acc.role !== 'student') return false;
+      if (classroom && (acc.classroom || '-') !== classroom) return false;
+      return true;
+    });
+    if (!targets.length) {
+      return { ok: false, count: 0, synced: 0, error: 'ไม่พบรายชื่อนักศึกษาตามเงื่อนไขที่เลือก' };
+    }
+    targets.forEach((acc) => {
+      applyMapResetToAccount(acc, options);
+      accounts[acc.username] = acc;
+    });
+    saveAccounts(accounts);
+    let synced = 0;
+    if (getCloudUrl()) {
+      for (const acc of targets) {
+        const r = await syncAccountToCloud(acc);
+        if (r?.ok) synced += 1;
+      }
+    }
+    return { ok: true, count: targets.length, synced };
+  }
+
   async function pullAllFromCloud() {
     const base = getCloudUrl();
     if (!base) return { ok: false, error: 'ยังไม่ได้ตั้งค่า Firebase Realtime DB URL' };
@@ -377,9 +465,7 @@ const AuthSystem = (() => {
       Object.values(cloudData).forEach((acc) => {
         if (!acc || !acc.username) return;
         const prev = local[acc.username];
-        const prevTime = prev?.updatedAt ? new Date(prev.updatedAt).getTime() : 0;
-        const cloudTime = acc?.updatedAt ? new Date(acc.updatedAt).getTime() : 0;
-        if (!prev || cloudTime >= prevTime || (acc.gameData?.xp || 0) > (prev.gameData?.xp || 0)) {
+        if (shouldAcceptCloudAccount(prev, acc)) {
           local[acc.username] = acc;
           count += 1;
         }
@@ -508,9 +594,7 @@ const AuthSystem = (() => {
       const cloudAcc = await fetchSingleCloudAccount(cleanUser);
       if (cloudAcc) {
         const localAcc = accounts[cleanUser];
-        const localXp = localAcc?.gameData?.xp || 0;
-        const cloudXp = cloudAcc?.gameData?.xp || 0;
-        if (!localAcc || cloudXp >= localXp) {
+        if (shouldAcceptCloudAccount(localAcc, cloudAcc)) {
           accounts[cleanUser] = cloudAcc;
           saveAccounts(accounts);
         }
@@ -599,9 +683,7 @@ const AuthSystem = (() => {
       const cloudAcc = await fetchSingleCloudAccount(cleanId);
       if (cloudAcc) {
         const localAcc = accounts[cleanId];
-        const localXp = localAcc?.gameData?.xp || 0;
-        const cloudXp = cloudAcc?.gameData?.xp || 0;
-        if (!localAcc || cloudXp >= localXp) {
+        if (shouldAcceptCloudAccount(localAcc, cloudAcc)) {
           accounts[cleanId] = cloudAcc;
           saveAccounts(accounts);
         }
@@ -903,6 +985,8 @@ const AuthSystem = (() => {
     pushAllToCloud,
     getMapLockConfig,
     saveMapLockConfig,
-    pullMapLockConfigFromCloud
+    pullMapLockConfigFromCloud,
+    resetStudentMapProgress,
+    resetStudentsMapProgress
   };
 })();

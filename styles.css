@@ -5152,3 +5152,37 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
     grid-template-columns: 1fr;
   }
 }
+
+.zlock-reset-box {
+  margin-top: 0.9rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(248, 113, 113, 0.55);
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.zlock-reset-head h4 {
+  font-size: 0.9rem;
+  color: var(--danger);
+  margin-bottom: 0.2rem;
+}
+
+.zlock-reset-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.65rem;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  border-color: rgba(248, 113, 113, 0.6);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}

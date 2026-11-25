@@ -568,15 +568,34 @@
   let mapPeerFilter = 'all'; // 'all' | 'class'
   let lastMapCloudPull = 0;
 
+  function checkStudentRemoteMapReset() {
+    if (!currentAccount || isTeacherAccount()) return false;
+    const fresh = AuthSystem.getCurrentAccount();
+    const freshReset = fresh?.gameData?.mapResetAt ? new Date(fresh.gameData.mapResetAt).getTime() : 0;
+    const localReset = state?.mapResetAt ? new Date(state.mapResetAt).getTime() : 0;
+    if (freshReset > localReset) {
+      hydrateFromCurrentAccount();
+      activeRoZoneId = null;
+      activeContinentId = 1;
+      renderHud();
+      showToast('🔄 ครูผู้สอนได้รีเซ็ตการตะลุยแผนที่ของคุณกลับสู่จุดเริ่มต้น (Zone 1) แล้ว!');
+      return true;
+    }
+    return false;
+  }
+
   function maybePullPeersForMap(force = false) {
     if (!AuthSystem.getCloudUrl()) return;
     const now = Date.now();
     if (!force && now - lastMapCloudPull < 20000) return;
     lastMapCloudPull = now;
     AuthSystem.pullAllFromCloud().then((res) => {
-      if (res.ok && $('screen-map')?.classList.contains('active')) {
-        renderWorldMap();
-        if (force) showToast('☁️ อัปเดตตำแหน่งผู้เล่นอื่นล่าสุดจาก Cloud แล้ว!');
+      if (res.ok) {
+        const wasReset = checkStudentRemoteMapReset();
+        if ($('screen-map')?.classList.contains('active')) {
+          renderWorldMap();
+          if (force && !wasReset) showToast('☁️ อัปเดตตำแหน่งผู้เล่นอื่นล่าสุดจาก Cloud แล้ว!');
+        }
       }
     });
   }
@@ -1433,6 +1452,20 @@
     $('zoneLockStatusMeta').textContent = saved.updatedAt
       ? `อัปเดตล่าสุด: ${new Date(saved.updatedAt).toLocaleString('th-TH')} โดย ${saved.updatedBy || 'ครูผู้สอน'}`
       : 'ยังใช้ค่าเริ่มต้น (ล็อกตามลำดับ)';
+
+    // Populate classroom dropdown for student map reset
+    const resetSel = $('mapResetClassSelect');
+    if (resetSel) {
+      const prevVal = resetSel.value;
+      const students = AuthSystem.getAllAccountsList().filter((a) => a.role === 'student');
+      const classes = [...new Set(students.map((s) => s.classroom || '-'))].sort();
+      resetSel.innerHTML = `<option value="">นักศึกษาทุกคน (${students.length} คน)</option>` +
+        classes.map((c) => {
+          const cnt = students.filter((s) => (s.classroom || '-') === c).length;
+          return `<option value="${c}">ห้อง ${c} (${cnt} คน)</option>`;
+        }).join('');
+      if (classes.includes(prevVal)) resetSel.value = prevVal;
+    }
   }
 
   $('mapLockConfigBtn')?.addEventListener('click', () => {
@@ -1558,6 +1591,47 @@
     } finally {
       btn.disabled = false;
       btn.textContent = '💾 บันทึกและซิงค์ให้นักศึกษา';
+    }
+  });
+
+  $('mapResetStudentsBtn')?.addEventListener('click', async () => {
+    if (!isTeacherAccount()) {
+      showToast('🔒 สงวนสิทธิ์เฉพาะครูผู้สอนเท่านั้น');
+      return;
+    }
+    const classroom = ($('mapResetClassSelect')?.value || '').trim();
+    const resetXpAndCoins = Boolean($('mapResetXpCoinsToggle')?.checked);
+    const scopeLabel = classroom ? `ห้อง "${classroom}"` : 'ทุกคนทุกห้อง';
+    const extraNote = resetXpAndCoins
+      ? '\n⚠️ รวมถึงล้าง XP เป็น 0 และเหรียญเป็น 100 ด้วย'
+      : '\n(ยังคงคะแนนสอบ, CLI Lab, พัซเซิล และ XP เดิมไว้)';
+    const ok = confirm(
+      `🔄 ยืนยันการรีเซ็ตการตะลุยแผนที่ของนักศึกษา${scopeLabel} กลับไปเริ่มต้นที่ Zone 1 ใช่หรือไม่?${extraNote}`
+    );
+    if (!ok) return;
+
+    SoundFX.click();
+    const btn = $('mapResetStudentsBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ กำลังรีเซ็ตและซิงค์...';
+    try {
+      const res = await AuthSystem.resetStudentsMapProgress({ classroom, resetXpAndCoins });
+      if (!res.ok) {
+        SoundFX.wrong();
+        showToast(`⚠️ ${res.error || 'ไม่พบรายชื่อนักศึกษา'}`);
+        return;
+      }
+      SoundFX.levelUp();
+      renderZoneLockPanel();
+      renderWorldMap();
+      showToast(
+        AuthSystem.getCloudUrl()
+          ? `🔄 รีเซ็ตแผนที่นักศึกษา${scopeLabel} กลับสู่ Zone 1 สำเร็จ ${res.count} คน (ซิงค์ Cloud ${res.synced} คน)!`
+          : `🔄 รีเซ็ตแผนที่นักศึกษา${scopeLabel} กลับสู่ Zone 1 สำเร็จ ${res.count} คน!`
+      );
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔄 รีเซ็ตแผนที่นักศึกษา';
     }
   });
 
@@ -3918,11 +3992,26 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
           <td>${m.exam}/${EXAM_QUESTION_COUNT}</td>
           <td>${m.passed ? '<span class="role-badge">ผ่าน ✓</span>' : '<span class="muted-text">ยังไม่ผ่าน</span>'}</td>
           <td>
+            <button class="btn btn-ghost btn-xs t-reset-map" data-u="${acc.username}" title="รีเซ็ตการตะลุยแผนที่กลับไปเริ่ม Zone 1">🔄 รีเซ็ตแผนที่</button>
             <button class="btn btn-ghost btn-xs t-reset-pw" data-u="${acc.username}" title="รีเซ็ตรหัสผ่านเป็น 123456">🔑 รีเซ็ตรหัส</button>
             <button class="btn btn-ghost btn-xs t-del-u" data-u="${acc.username}" title="ลบบัญชีนี้">🗑️</button>
           </td>
         `;
         tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll('.t-reset-map').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const u = btn.dataset.u;
+          if (confirm(`🔄 รีเซ็ตการตะลุยแผนที่ของ "${u}" กลับไปเริ่มต้นที่ Zone 1 ใช่หรือไม่?\n(ล้างดาวแคมเปญและโซนที่ผ่านแล้ว แต่ยังคงคะแนนสอบและ CLI Lab ไว้)`)) {
+            const res = await AuthSystem.resetStudentMapProgress(u);
+            if (res.ok) {
+              SoundFX.levelUp();
+              renderTeacherDashboard();
+              showToast(`🔄 รีเซ็ตการตะลุยแผนที่ของ ${u} กลับสู่ Zone 1 เรียบร้อยแล้ว`);
+            }
+          }
+        });
       });
 
       tbody.querySelectorAll('.t-reset-pw').forEach((btn) => {
@@ -3978,6 +4067,38 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     activeRoZoneId = null;
     switchScreen('map');
     openZoneLockPanel(true);
+  });
+
+  $('teacherResetAllMapBtn')?.addEventListener('click', async () => {
+    if (!isTeacherAccount()) return;
+    const classroom = ($('teacherClassFilter')?.value || '').trim();
+    const scopeLabel = classroom ? `ห้อง "${classroom}"` : 'ทุกคนทุกห้อง';
+    const ok = confirm(
+      `🔄 ยืนยันรีเซ็ตการตะลุยแผนที่ของนักศึกษา${scopeLabel} กลับไปเริ่มต้นที่ Zone 1 ใช่หรือไม่?\n(ล้างดาวแคมเปญ โซนที่ผ่านแล้ว และโซนวาร์ป — ยังคงคะแนนสอบและ CLI Lab ไว้)`
+    );
+    if (!ok) return;
+    SoundFX.click();
+    const btn = $('teacherResetAllMapBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ กำลังรีเซ็ต...';
+    try {
+      const res = await AuthSystem.resetStudentsMapProgress({ classroom, resetXpAndCoins: false });
+      if (!res.ok) {
+        SoundFX.wrong();
+        showToast(`⚠️ ${res.error || 'ไม่พบรายชื่อนักศึกษา'}`);
+        return;
+      }
+      SoundFX.levelUp();
+      renderTeacherDashboard();
+      showToast(
+        AuthSystem.getCloudUrl()
+          ? `🔄 รีเซ็ตแผนที่นักศึกษา${scopeLabel} กลับสู่ Zone 1 สำเร็จ ${res.count} คน (ซิงค์ Cloud ${res.synced} คน)!`
+          : `🔄 รีเซ็ตแผนที่นักศึกษา${scopeLabel} กลับสู่ Zone 1 สำเร็จ ${res.count} คน!`
+      );
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔄 รีเซ็ตการตะลุยแผนที่นักศึกษา';
+    }
   });
 
   $('exportCsvBtn').addEventListener('click', () => {
