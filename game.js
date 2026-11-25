@@ -477,10 +477,12 @@
       const unlockedList = BADGES
         .filter((b) => state.unlockedBadges.includes(b.id))
         .sort((a, b) => (b.special ? 1 : 0) - (a.special ? 1 : 0));
+      const shownOrbs = unlockedList.slice(0, 12);
+      const extraOrbs = unlockedList.length - shownOrbs.length;
       const badgesPreviewHtml = unlockedList.length
-        ? `<div class="profile-badges-row">${unlockedList.map((b) =>
-          `<span class="profile-badge-chip ${b.special ? 'is-special' : ''}" title="${b.name} — ${b.desc}">${b.emoji} ${b.name}</span>`
-        ).join('')}</div>`
+        ? `<div class="title-badges-showcase">${shownOrbs.map((b) =>
+          `<span class="title-badge-orb ${b.special ? 'is-special' : ''}" title="${b.emoji} ${b.name} — ${b.desc}">${b.emoji}</span>`
+        ).join('')}${extraOrbs > 0 ? `<span class="title-badge-count-pill" title="ดูเหรียญตราทั้งหมดในเกม">+${extraOrbs} เหรียญ</span>` : ''}</div>`
         : '';
       $('titleSavePreview').innerHTML = `
         <span class="save-chip">LV.${rank.level} ${rank.title}</span>
@@ -4844,7 +4846,119 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     showToast(`📋 นำเข้ารายชื่อนักศึกษาสำเร็จ ${res.added + res.updated} คน!`);
   });
 
-  /* ==================== AUTH FORM BINDINGS ==================== */
+  /* ==================== AUTH FORM BINDINGS (STUDENT + TEACHER MODES) ==================== */
+  let authTabMode = 'student'; // 'student' | 'teacher'
+  let teacherRegMode = false;
+
+  function setAuthTabMode(mode) {
+    authTabMode = mode === 'teacher' ? 'teacher' : 'student';
+    showAuthError('');
+    showAuthInfo('');
+    $('authTabStudent')?.classList.toggle('active', authTabMode === 'student');
+    $('authTabTeacher')?.classList.toggle('active', authTabMode === 'teacher');
+    $('studentLoginForm')?.classList.toggle('hidden', authTabMode !== 'student');
+    $('teacherLoginForm')?.classList.toggle('hidden', authTabMode !== 'teacher');
+    if (authTabMode === 'teacher') {
+      $('teacherUserInput')?.focus();
+    } else {
+      $('stuIdInput')?.focus();
+    }
+  }
+
+  function setTeacherRegMode(enable) {
+    teacherRegMode = Boolean(enable);
+    showAuthError('');
+    showAuthInfo('');
+    $('teacherRegisterFields')?.classList.toggle('hidden', !teacherRegMode);
+    const submitBtn = $('teacherSubmitBtn');
+    const toggleBtn = $('toggleTeacherRegBtn');
+    if (submitBtn) {
+      submitBtn.textContent = teacherRegMode ? '✨ สมัครและเข้าสู่ระบบครูผู้สอน' : '🛡️ เข้าสู่ระบบครูผู้สอน';
+    }
+    if (toggleBtn) {
+      toggleBtn.textContent = teacherRegMode ? '← กลับไปหน้าเข้าสู่ระบบครู' : '✨ สมัครบัญชีครูผู้สอนใหม่';
+    }
+  }
+
+  $('authTabStudent')?.addEventListener('click', () => {
+    SoundFX.click();
+    setAuthTabMode('student');
+  });
+
+  $('authTabTeacher')?.addEventListener('click', () => {
+    SoundFX.click();
+    setAuthTabMode('teacher');
+  });
+
+  $('toggleTeacherRegBtn')?.addEventListener('click', () => {
+    SoundFX.click();
+    setTeacherRegMode(!teacherRegMode);
+  });
+
+  $('fillDemoTeacherBtn')?.addEventListener('click', () => {
+    SoundFX.click();
+    setTeacherRegMode(false);
+    if ($('teacherUserInput')) $('teacherUserInput').value = 'teacher';
+    if ($('teacherPassInput')) $('teacherPassInput').value = '123456';
+    showAuthInfo('⚡ กรอกบัญชีครูทดลอง (teacher / 123456) แล้ว กดปุ่มเข้าสู่ระบบได้เลย!');
+  });
+
+  $('teacherLoginForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showAuthError('');
+    showAuthInfo('');
+    const username = ($('teacherUserInput')?.value || '').trim();
+    const password = $('teacherPassInput')?.value || '';
+    const submitBtn = $('teacherSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = teacherRegMode ? '⏳ กำลังสมัครบัญชีครูผู้สอน...' : '⏳ กำลังตรวจสอบสิทธิ์ครูผู้สอน...';
+
+    try {
+      if (teacherRegMode) {
+        const fullName = ($('teacherFullNameInput')?.value || '').trim();
+        const teacherCode = ($('teacherCodeInput')?.value || '').trim();
+        const res = await AuthSystem.register({
+          username,
+          fullName,
+          classroom: 'ผู้ดูแลรายวิชา',
+          password,
+          role: 'teacher',
+          teacherCode,
+          avatar: 'avatar6'
+        });
+        if (!res.ok) {
+          SoundFX.wrong();
+          showAuthError(res.error);
+          return;
+        }
+        $('teacherLoginForm').reset();
+        setTeacherRegMode(false);
+        showToast(`👨‍🏫 สมัครบัญชีครูผู้สอนสำเร็จ ยินดีต้อนรับ ${res.account.fullName}!`);
+        enterGame();
+        return;
+      }
+
+      const res = await AuthSystem.login(username, password);
+      if (!res.ok) {
+        SoundFX.wrong();
+        showAuthError(res.error);
+        return;
+      }
+      if (res.account?.role !== 'teacher') {
+        AuthSystem.logout();
+        SoundFX.wrong();
+        showAuthError('⚠️ บัญชีนี้เป็นบัญชีนักศึกษา กรุณาเข้าสู่ระบบที่แท็บ "🎓 นักศึกษา"');
+        return;
+      }
+      $('teacherLoginForm').reset();
+      showToast(`👨‍🏫 ยินดีต้อนรับครูผู้สอน ${res.account.fullName}!`);
+      enterGame();
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = teacherRegMode ? '✨ สมัครและเข้าสู่ระบบครูผู้สอน' : '🛡️ เข้าสู่ระบบครูผู้สอน';
+    }
+  });
+
   $('stuIdInput').addEventListener('input', () => {
     showAuthError('');
     showAuthInfo('');

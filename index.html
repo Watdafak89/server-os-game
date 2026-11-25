@@ -45,14 +45,23 @@
         </div>
       </div>
 
-      <!-- Auth Gate (Student ID Login) -->
+      <!-- Auth Gate (Modern Student + Teacher Login Switcher) -->
       <div id="authGate" class="auth-panel">
-        <div class="auth-single-head">🎓 เข้าสู่ระบบด้วยรหัสนักศึกษา (Student ID)</div>
+        <div class="auth-mode-tabs" role="tablist" aria-label="เลือกโหมดเข้าสู่ระบบ">
+          <button type="button" class="auth-mode-tab active" id="authTabStudent" data-auth-tab="student">
+            <span>🎓</span>
+            <span>นักศึกษา</span>
+          </button>
+          <button type="button" class="auth-mode-tab" id="authTabTeacher" data-auth-tab="teacher">
+            <span>👨‍🏫</span>
+            <span>ครูผู้สอน</span>
+          </button>
+        </div>
 
         <div id="authErrorBox" class="auth-error hidden"></div>
         <div id="authInfoBox" class="info-note hidden" style="margin-bottom:0.85rem;"></div>
 
-        <!-- Student ID Login (Primary Classroom Flow) -->
+        <!-- TAB 1: Student ID Login (Primary Classroom Flow) -->
         <form id="studentLoginForm" class="auth-form">
           <div class="form-field">
             <label for="stuIdInput">รหัสนักศึกษา (Student ID)</label>
@@ -86,6 +95,46 @@
           </div>
 
           <button type="submit" class="btn btn-neon btn-lg" id="stuSubmitBtn" style="width:100%;">🚀 เข้าสู่ระบบด้วยรหัสนักศึกษา</button>
+        </form>
+
+        <!-- TAB 2: Dedicated Teacher Login Mode -->
+        <form id="teacherLoginForm" class="auth-form hidden">
+          <div class="teacher-login-banner">
+            <span>🛡️</span>
+            <div>
+              <strong>โหมดครูผู้สอน (Teacher Command)</strong>
+              <div class="muted-text" style="font-size:0.76rem;">จัดการล็อกโซนแผนที่ ดูคะแนนทั้งห้อง มอบ XP โบนัส และส่งออก Excel</div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="teacherUserInput">ชื่อผู้ใช้ครูผู้สอน (Username)</label>
+            <input type="text" id="teacherUserInput" class="game-input left-input" placeholder="เช่น teacher หรือชื่อผู้ใช้ครู" required autocomplete="username" />
+          </div>
+
+          <div class="form-field">
+            <label for="teacherPassInput">รหัสผ่านครูผู้สอน (Password)</label>
+            <input type="password" id="teacherPassInput" class="game-input left-input" placeholder="กรอกรหัสผ่าน" required autocomplete="current-password" />
+          </div>
+
+          <!-- Optional Teacher Registration Fields -->
+          <div id="teacherRegisterFields" class="hidden" style="display:flex;flex-direction:column;gap:0.7rem;">
+            <div class="form-field">
+              <label for="teacherFullNameInput">ชื่อ-นามสกุลครูผู้สอน *</label>
+              <input type="text" id="teacherFullNameInput" class="game-input left-input" placeholder="เช่น อาจารย์วัชรพงษ์ สุขแช่ม" />
+            </div>
+            <div class="form-field">
+              <label for="teacherCodeInput">รหัสยืนยันสิทธิ์ครูผู้สอน (Teacher Code) *</label>
+              <input type="text" id="teacherCodeInput" class="game-input left-input" placeholder="กรอกรหัสยืนยัน (เช่น TEACHER2026)" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-teacher-gold btn-lg" id="teacherSubmitBtn" style="width:100%;">🛡️ เข้าสู่ระบบครูผู้สอน</button>
+
+          <div class="teacher-auth-links">
+            <button type="button" class="auth-text-link" id="toggleTeacherRegBtn">✨ สมัครบัญชีครูผู้สอนใหม่</button>
+            <button type="button" class="auth-text-link" id="fillDemoTeacherBtn">⚡ กรอกบัญชีทดลอง (teacher)</button>
+          </div>
         </form>
       </div>
 
