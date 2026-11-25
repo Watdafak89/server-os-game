@@ -4068,6 +4068,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
   function renderLeaderboard() {
     const accounts = AuthSystem.getAllAccountsList()
+      .filter((acc) => acc.role !== 'teacher' && (acc.classroom || '').trim() !== 'ผู้ดูแลรายวิชา')
       .map((acc) => ({ acc, m: getAccountMetrics(acc) }))
       .sort((a, b) => {
         if (lbSortBy === 'stars') return b.m.stars - a.m.stars || b.m.xp - a.m.xp;
