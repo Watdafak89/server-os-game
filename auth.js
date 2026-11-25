@@ -6,6 +6,7 @@ const AuthSystem = (() => {
   const MAP_LOCK_KEY = 'serverops_map_lock_v1';
   const MAP_LOCK_CLOUD_KEY = '__map_settings__';
   const TEACHER_SIGNUP_CODE = 'TEACHER2026';
+  let demoTeacherMemoryAccount = null;
 
   /* Pure-JS SHA-256 fallback (works even on file:// where crypto.subtle may be unavailable) */
   function fallbackHash(str) {
@@ -190,9 +191,7 @@ const AuthSystem = (() => {
       changed = true;
     } else if (accounts['teacher'].gameData && (accounts['teacher'].gameData.xp || 0) !== 9999) {
       accounts['teacher'].gameData.xp = 9999;
-      accounts['teacher'].updatedAt = new Date().toISOString();
       changed = true;
-      syncAccountToCloud(accounts['teacher']).catch(() => {});
     }
 
     if (!accounts['student01']) {
@@ -322,7 +321,7 @@ const AuthSystem = (() => {
   /* ==================== FIREBASE RTDB REST SYNC ==================== */
   async function syncAccountToCloud(account) {
     const base = getCloudUrl();
-    if (!base || !account?.username) return { ok: false, skipped: true };
+    if (!base || !account?.username || account.username === 'teacher') return { ok: false, skipped: true };
     try {
       const key = safeFirebaseKey(account.username);
       const res = await fetch(`${base}/serverops_accounts/${key}.json`, {
@@ -595,7 +594,7 @@ const AuthSystem = (() => {
       const local = loadAccounts();
       let count = 0;
       Object.values(cloudData).forEach((acc) => {
-        if (!acc || !acc.username) return;
+        if (!acc || !acc.username || acc.username === 'teacher') return;
         if (acc.role === 'teacher' && acc.gameData) {
           acc.gameData.xp = 9999;
         }
@@ -724,8 +723,8 @@ const AuthSystem = (() => {
     const cleanUser = (username || '').trim().toLowerCase();
     const accounts = await ensureSeedAccounts();
 
-    // Sync latest account from Cloud so user can seamlessly continue on another device
-    if (getCloudUrl()) {
+    // Sync latest account from Cloud so user can seamlessly continue on another device (skip ephemeral demo teacher)
+    if (getCloudUrl() && cleanUser !== 'teacher') {
       const cloudAcc = await fetchSingleCloudAccount(cleanUser);
       if (cloudAcc) {
         const localAcc = accounts[cleanUser];
@@ -747,6 +746,22 @@ const AuthSystem = (() => {
       return { ok: false, error: 'รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง' };
     }
 
+    // Demo teacher ('teacher'): ephemeral in-memory session only (not saved to DB, cleared on tab/window close)
+    if (cleanUser === 'teacher') {
+      demoTeacherMemoryAccount = {
+        ...acc,
+        lastLogin: new Date().toISOString(),
+        gameData: {
+          ...createEmptyGameData('อาจารย์ผู้สอน (Demo)', 'avatar6'),
+          xp: 9999,
+          freePlay: true,
+          coins: 999
+        }
+      };
+      setSession('teacher');
+      return { ok: true, account: demoTeacherMemoryAccount };
+    }
+
     acc.lastLogin = new Date().toISOString();
     if (acc.role === 'teacher' && acc.gameData) {
       acc.gameData.xp = 9999;
@@ -760,8 +775,17 @@ const AuthSystem = (() => {
 
   function setSession(username) {
     try {
-      if (username) localStorage.setItem(SESSION_KEY, username);
-      else localStorage.removeItem(SESSION_KEY);
+      if (username === 'teacher') {
+        sessionStorage.setItem(SESSION_KEY, 'teacher');
+        localStorage.removeItem(SESSION_KEY);
+      } else if (username) {
+        localStorage.setItem(SESSION_KEY, username);
+        sessionStorage.removeItem(SESSION_KEY);
+      } else {
+        localStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem(SESSION_KEY);
+        demoTeacherMemoryAccount = null;
+      }
     } catch {
       // ignore
     }
@@ -769,7 +793,7 @@ const AuthSystem = (() => {
 
   function getSessionUsername() {
     try {
-      return localStorage.getItem(SESSION_KEY) || null;
+      return sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY) || null;
     } catch {
       return null;
     }
@@ -779,6 +803,20 @@ const AuthSystem = (() => {
     const uname = getSessionUsername();
     if (!uname) return null;
     const accounts = loadAccounts();
+    if (uname === 'teacher') {
+      if (!demoTeacherMemoryAccount && accounts['teacher']) {
+        demoTeacherMemoryAccount = {
+          ...accounts['teacher'],
+          gameData: {
+            ...createEmptyGameData('อาจารย์ผู้สอน (Demo)', 'avatar6'),
+            xp: 9999,
+            freePlay: true,
+            coins: 999
+          }
+        };
+      }
+      return demoTeacherMemoryAccount || accounts['teacher'] || null;
+    }
     return accounts[uname] || null;
   }
 
@@ -789,6 +827,13 @@ const AuthSystem = (() => {
   function updateCurrentGameData(gameData) {
     const uname = getSessionUsername();
     if (!uname) return;
+    // Demo teacher ('teacher'): keep gameplay strictly in RAM (never persist to localStorage or Firebase DB)
+    if (uname === 'teacher') {
+      if (demoTeacherMemoryAccount) {
+        demoTeacherMemoryAccount.gameData = { ...gameData, xp: 9999 };
+      }
+      return;
+    }
     const accounts = loadAccounts();
     if (!accounts[uname]) return;
     if (accounts[uname].role === 'teacher' && gameData) {
