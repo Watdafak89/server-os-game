@@ -1218,6 +1218,26 @@
 
         <!-- Student Roster Table -->
         <div class="panel" style="margin-bottom:1.25rem;">
+          <div class="panel-header" style="flex-wrap:wrap;margin-bottom:0.65rem;">
+            <h3>🎁 มอบ XP โบนัสให้นักศึกษา (เมื่อตอบคำถามในห้องเรียนได้)</h3>
+            <span class="stage-chip">ซิงค์ขึ้น Cloud ทันที</span>
+          </div>
+          <div style="display:flex;gap:0.55rem;flex-wrap:wrap;align-items:center;">
+            <select id="teacherGrantStudentSelect" class="game-input left-input sm-input" style="min-width:220px;flex:1;">
+              <option value="">-- เลือกนักศึกษา --</option>
+            </select>
+            <input type="number" id="teacherGrantXpAmount" class="game-input sm-input" value="50" min="1" max="5000" style="width:105px;text-align:center;font-weight:700;" title="จำนวน XP" />
+            <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+              <button type="button" class="btn btn-ghost btn-xs t-xp-preset" data-xp="20">+20</button>
+              <button type="button" class="btn btn-ghost btn-xs t-xp-preset" data-xp="50">+50</button>
+              <button type="button" class="btn btn-ghost btn-xs t-xp-preset" data-xp="100">+100</button>
+            </div>
+            <input type="text" id="teacherGrantXpReason" class="game-input left-input sm-input" placeholder="เหตุผล (เช่น ตอบคำถามในห้องเรียนได้)" style="min-width:200px;flex:1;" />
+            <button type="button" class="btn btn-neon btn-sm" id="teacherGrantXpBtn">✨ มอบ XP ทันที</button>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:1.25rem;">
           <div class="panel-header" style="flex-wrap:wrap;">
             <h3>🧑‍🎓 รายชื่อและผลคะแนนนักศึกษา</h3>
             <div class="teacher-filter-row">

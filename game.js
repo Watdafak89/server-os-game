@@ -628,6 +628,8 @@
     const localMapReset = state?.mapResetAt ? new Date(state.mapResetAt).getTime() : 0;
     const freshXpReset = fresh?.gameData?.xpResetAt ? new Date(fresh.gameData.xpResetAt).getTime() : 0;
     const localXpReset = state?.xpResetAt ? new Date(state.xpResetAt).getTime() : 0;
+    const freshXpBonus = fresh?.gameData?.xpBonusAt ? new Date(fresh.gameData.xpBonusAt).getTime() : 0;
+    const localXpBonus = state?.xpBonusAt ? new Date(state.xpBonusAt).getTime() : 0;
     if (freshMapReset > localMapReset) {
       hydrateFromCurrentAccount();
       activeRoZoneId = null;
@@ -640,6 +642,16 @@
       hydrateFromCurrentAccount();
       renderHud();
       showToast('⚡ ครูผู้สอนได้รีเซ็ตค่า XP ของคุณกลับเป็น 0 แล้ว!');
+      return true;
+    }
+    if (freshXpBonus > localXpBonus) {
+      hydrateFromCurrentAccount();
+      renderHud();
+      SoundFX.levelUp();
+      const b = state.lastXpBonus || {};
+      const amt = b.amount || 0;
+      const reason = b.reason ? ` (${b.reason})` : '';
+      showToast(`🎉 ครูผู้สอนมอบโบนัส ${amt >= 0 ? '+' : ''}${amt} XP ให้คุณ!${reason}`);
       return true;
     }
     return false;
@@ -4290,6 +4302,20 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       return matchClass && matchQuery;
     });
 
+    // Populate Award Bonus XP student dropdown
+    const grantSel = $('teacherGrantStudentSelect');
+    if (grantSel) {
+      const prevGrantVal = grantSel.value;
+      const classOpt = cls
+        ? `<option value="__class__">👥 ทั้งห้อง ${cls} (${filtered.length} คน)</option>`
+        : `<option value="__all__">👥 นักศึกษาทุกคน (${allStudents.length} คน)</option>`;
+      grantSel.innerHTML = `<option value="">-- เลือกนักศึกษาที่ตอบคำถามได้ --</option>${classOpt}` +
+        filtered.map(({ acc, m }) =>
+          `<option value="${acc.username}">${acc.fullName} (@${acc.username} • ${acc.classroom || '-'} • ${m.xp} XP)</option>`
+        ).join('');
+      if ([...grantSel.options].some((o) => o.value === prevGrantVal)) grantSel.value = prevGrantVal;
+    }
+
     const tbody = $('teacherTableBody');
     tbody.innerHTML = '';
     if (!filtered.length) {
@@ -4316,6 +4342,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
           <td>${m.exam}/${EXAM_QUESTION_COUNT}</td>
           <td>${m.passed ? '<span class="role-badge">ผ่าน ✓</span>' : '<span class="muted-text">ยังไม่ผ่าน</span>'}</td>
           <td>
+            <button class="btn btn-neon btn-xs t-add-xp" data-u="${acc.username}" data-name="${acc.fullName}" title="เพิ่ม XP ให้นักศึกษาเมื่อตอบคำถามได้">➕ เพิ่ม XP</button>
             <button class="btn btn-ghost btn-xs t-reset-xp" data-u="${acc.username}" title="รีเซ็ตค่า XP กลับเป็น 0">⚡ รีเซ็ต XP</button>
             <button class="btn btn-ghost btn-xs t-reset-map" data-u="${acc.username}" title="รีเซ็ตการตะลุยแผนที่กลับไปเริ่ม Zone 1">🔄 รีเซ็ตแผนที่</button>
             <button class="btn btn-ghost btn-xs t-reset-pw" data-u="${acc.username}" title="รีเซ็ตรหัสผ่านเป็น 123456">🔑 รีเซ็ตรหัส</button>
@@ -4323,6 +4350,27 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
           </td>
         `;
         tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll('.t-add-xp').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const u = btn.dataset.u;
+          const fullName = btn.dataset.name || u;
+          const raw = prompt(`✨ มอบโบนัส XP ให้ "${fullName}" (@${u}) เมื่อตอบคำถามได้:\nกรอกจำนวน XP ที่ต้องการเพิ่ม`, '50');
+          if (raw === null) return;
+          const amount = Math.round(Number(raw));
+          if (!amount || amount <= 0) {
+            SoundFX.wrong();
+            showToast('⚠️ กรุณากรอกจำนวน XP เป็นตัวเลขมากกว่า 0');
+            return;
+          }
+          const res = await AuthSystem.grantStudentXp(u, amount, 'ตอบคำถามในห้องเรียนได้');
+          if (res.ok) {
+            SoundFX.levelUp();
+            renderTeacherDashboard();
+            showToast(`✨ มอบ +${amount} XP ให้ ${fullName} สำเร็จ! (รวม ${res.newXp.toLocaleString()} XP)`);
+          }
+        });
       });
 
       tbody.querySelectorAll('.t-reset-xp').forEach((btn) => {
@@ -4469,6 +4517,65 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     } finally {
       btn.disabled = false;
       btn.textContent = '⚡ รีเซ็ต XP นักศึกษา';
+    }
+  });
+
+  document.querySelectorAll('.t-xp-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      SoundFX.click();
+      const inp = $('teacherGrantXpAmount');
+      if (inp) inp.value = btn.dataset.xp || '50';
+    });
+  });
+
+  $('teacherGrantXpBtn')?.addEventListener('click', async () => {
+    if (!isTeacherAccount()) return;
+    const target = ($('teacherGrantStudentSelect')?.value || '').trim();
+    const amount = Math.round(Number($('teacherGrantXpAmount')?.value || 0));
+    const reason = ($('teacherGrantXpReason')?.value || '').trim() || 'ตอบคำถามในห้องเรียนได้';
+
+    if (!target) {
+      SoundFX.wrong();
+      showToast('⚠️ กรุณาเลือกนักศึกษา (หรือทั้งห้อง) ที่ต้องการมอบ XP');
+      return;
+    }
+    if (!amount || amount <= 0) {
+      SoundFX.wrong();
+      showToast('⚠️ กรุณาระบุจำนวน XP มากกว่า 0');
+      return;
+    }
+
+    const btn = $('teacherGrantXpBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ กำลังมอบ XP...';
+    try {
+      if (target === '__all__' || target === '__class__') {
+        const classroom = target === '__class__' ? ($('teacherClassFilter')?.value || '').trim() : '';
+        const scopeLabel = classroom ? `ห้อง "${classroom}"` : 'ทุกคน';
+        if (!confirm(`✨ ยืนยันมอบโบนัส +${amount} XP ให้นักศึกษา${scopeLabel} ใช่หรือไม่?\nเหตุผล: ${reason}`)) return;
+        const res = await AuthSystem.grantStudentsXp({ classroom, amount, reason });
+        if (!res.ok) {
+          SoundFX.wrong();
+          showToast(`⚠️ ${res.error || 'ไม่สามารถมอบ XP ได้'}`);
+          return;
+        }
+        SoundFX.levelUp();
+        renderTeacherDashboard();
+        showToast(`✨ มอบ +${amount} XP ให้นักศึกษา${scopeLabel} สำเร็จ ${res.count} คน!`);
+      } else {
+        const res = await AuthSystem.grantStudentXp(target, amount, reason);
+        if (!res.ok) {
+          SoundFX.wrong();
+          showToast(`⚠️ ${res.error || 'ไม่พบบัญชีนักศึกษา'}`);
+          return;
+        }
+        SoundFX.levelUp();
+        renderTeacherDashboard();
+        showToast(`✨ มอบ +${amount} XP ให้ ${res.account.fullName} สำเร็จ! (รวม ${res.newXp.toLocaleString()} XP)`);
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✨ มอบ XP ทันที';
     }
   });
 

@@ -234,449 +234,406 @@ const AnimeSprites = (() => {
     `)
   };
 
-  /* ==================== 24 ANIME CYBER-COMPUTER MONSTERS & MVP BOSSES ==================== */
-  const ENEMIES = {
-    /* ---------- ZONE 1 ---------- */
-    z1_s1: () => wrapSvg('z1s1', '#0369a1', '#08172e', '#38bdf8', `
-      <!-- Legacy P2P Drone: Anime hovering CRT/PC Mecha-Drone -->
-      <g stroke="#061020" stroke-width="2.3" stroke-linejoin="round">
-        <line x1="42" y1="30" x2="34" y2="16" stroke="#38bdf8" stroke-width="3"/>
-        <circle cx="34" cy="15" r="4" fill="#fde047"/>
-        <line x1="78" y1="30" x2="86" y2="16" stroke="#38bdf8" stroke-width="3"/>
-        <circle cx="86" cy="15" r="4" fill="#fde047"/>
-        <!-- Floating wing thrusters -->
-        <polygon points="14,54 28,46 28,70 14,66" fill="#0284c7"/>
-        <polygon points="106,54 92,46 92,70 106,66" fill="#0284c7"/>
-        <!-- Monitor mecha head -->
-        <rect x="26" y="28" width="68" height="54" rx="14" fill="#e2e8f0"/>
-        <rect x="33" y="36" width="54" height="36" rx="9" fill="#0f172a"/>
-        <!-- Hover base -->
-        <path d="M44 82 H76 L70 96 H50 Z" fill="#334155"/>
-        <ellipse cx="60" cy="102" rx="16" ry="4" fill="#38bdf8" stroke="none" opacity="0.7"/>
+  /* ==================== RAGNAROK ONLINE MONSTERS & MVP BOSSES LIBRARY ==================== */
+  const RO_MONSTERS = {
+    // 1. Poring / Drops / Poporing / Marin
+    poring: (uid, body, shade, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#2a0a18" stroke-width="2.4" stroke-linejoin="round">
+        <ellipse cx="60" cy="98" rx="34" ry="7" fill="#020617" opacity="0.45" stroke="none"/>
+        <path d="M60 22 C66 36 96 52 96 74 C96 92 80 98 60 98 C40 98 24 92 24 74 C24 52 54 36 60 22 Z" fill="${body}"/>
+        <path d="M26 76 C30 90 46 95 60 95 C74 95 90 90 94 76 C84 86 72 88 60 88 C48 88 36 86 26 76 Z" fill="${shade}" stroke="none" opacity="0.65"/>
+        <ellipse cx="44" cy="54" rx="7" ry="11" fill="#ffffff" stroke="none" opacity="0.65" transform="rotate(-24 44 54)"/>
+        <circle cx="38" cy="68" r="3" fill="#ffffff" stroke="none" opacity="0.55"/>
+        <ellipse cx="38" cy="74" rx="6" ry="3.5" fill="#fb7185" stroke="none" opacity="0.55"/>
+        <ellipse cx="82" cy="74" rx="6" ry="3.5" fill="#fb7185" stroke="none" opacity="0.55"/>
+        <circle cx="47" cy="66" r="4.2" fill="#1e1b2e" stroke="none"/>
+        <circle cx="45.6" cy="64.5" r="1.4" fill="#ffffff" stroke="none"/>
+        <circle cx="73" cy="66" r="4.2" fill="#1e1b2e" stroke="none"/>
+        <circle cx="71.6" cy="64.5" r="1.4" fill="#ffffff" stroke="none"/>
+        <path d="M53 74 Q56.5 78 60 74 Q63.5 78 67 74" fill="none" stroke="#1e1b2e" stroke-width="2.4" stroke-linecap="round"/>
       </g>
-      ${animeEyes('#38bdf8', false, 53)}
-      <path d="M53 64 Q60 69 67 64" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round"/>
     `),
 
-    z1_s2: () => wrapSvg('z1s2', '#9a3412', '#1c0705', '#fb923c', `
-      <!-- Overheat Gremlin: Fiery Anime CPU Fan Imp -->
-      <g stroke="#1a0604" stroke-width="2.3" stroke-linejoin="round">
-        <!-- Flame hair spikes -->
-        <path d="M26 52 Q24 22 44 28 Q54 10 64 26 Q84 14 86 38 Q102 36 92 56 Z" fill="#f97316"/>
-        <path d="M36 46 Q44 24 58 32 Q68 18 76 34 Q86 30 82 48 Z" fill="#fde047" stroke="none"/>
-        <!-- CPU Chip armored body -->
-        <rect x="30" y="38" width="60" height="54" rx="14" fill="#1e293b"/>
-        <!-- Golden CPU Pins -->
-        <path d="M22 48 H30 M22 58 H30 M22 68 H30 M90 48 H98 M90 58 H98 M90 68 H98" stroke="#fbbf24" stroke-width="3.5" stroke-linecap="round"/>
-        <!-- Glowing heatsink core -->
-        <circle cx="60" cy="84" r="8" fill="#ef4444"/>
+    // 2. Lunatic / Eclipse (Fluffy RO Bunny)
+    lunatic: (uid, fur, earIn, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#1e1b2e" stroke-width="2.3" stroke-linejoin="round">
+        <ellipse cx="60" cy="100" rx="30" ry="6" fill="#020617" opacity="0.4" stroke="none"/>
+        <ellipse cx="43" cy="30" rx="9" ry="22" fill="${fur}" transform="rotate(-14 43 30)"/>
+        <ellipse cx="43" cy="31" rx="4.5" ry="15" fill="${earIn}" stroke="none" transform="rotate(-14 43 31)"/>
+        <ellipse cx="77" cy="30" rx="9" ry="22" fill="${fur}" transform="rotate(14 77 30)"/>
+        <ellipse cx="77" cy="31" rx="4.5" ry="15" fill="${earIn}" stroke="none" transform="rotate(14 77 31)"/>
+        <circle cx="91" cy="82" r="9" fill="${fur}"/>
+        <ellipse cx="60" cy="72" rx="32" ry="27" fill="${fur}"/>
+        <ellipse cx="44" cy="95" rx="9" ry="5" fill="${fur}"/>
+        <ellipse cx="76" cy="95" rx="9" ry="5" fill="${fur}"/>
+        <ellipse cx="47" cy="68" rx="4.5" ry="5.5" fill="#dc2626" stroke="none"/>
+        <circle cx="45.5" cy="66" r="1.6" fill="#ffffff" stroke="none"/>
+        <ellipse cx="73" cy="68" rx="4.5" ry="5.5" fill="#dc2626" stroke="none"/>
+        <circle cx="71.5" cy="66" r="1.6" fill="#ffffff" stroke="none"/>
+        <polygon points="57,74 63,74 60,78" fill="#f472b6" stroke="none"/>
+        <path d="M54 81 Q60 85 66 81" fill="none" stroke="#1e1b2e" stroke-width="2" stroke-linecap="round"/>
       </g>
-      ${animeEyes('#fde047', true, 58)}
-      <path d="M48 72 L54 68 L60 72 L66 68 L72 72" fill="none" stroke="#fb923c" stroke-width="2.4" stroke-linecap="round"/>
     `),
 
-    z1_boss: () => wrapSvg('z1b', '#7f1d1d', '#0f0714', '#f87171', `
-      <!-- MVP BOSS: Disk-Crash Colossus — Shattered RAID Platter Mecha Titan -->
-      <g stroke="#0b0510" stroke-width="2.4" stroke-linejoin="round">
-        <!-- Massive spinning HDD Platter Shoulders -->
-        <circle cx="24" cy="54" r="18" fill="#cbd5e1"/>
-        <circle cx="24" cy="54" r="6" fill="#ef4444"/>
-        <circle cx="96" cy="54" r="18" fill="#cbd5e1"/>
-        <circle cx="96" cy="54" r="6" fill="#ef4444"/>
-        <!-- Horned Gundam-Mecha Helm -->
-        <polygon points="36,36 22,12 48,26" fill="#fbbf24"/>
-        <polygon points="84,36 98,12 72,26" fill="#fbbf24"/>
-        <polygon points="60,18 86,36 82,86 60,102 38,86 34,36" fill="#1e293b"/>
-        <polygon points="60,24 78,38 74,76 60,88 46,76 42,38" fill="#334155"/>
-        <!-- Visor slit -->
-        <polygon points="39,46 81,46 76,62 44,62" fill="#050814"/>
-        <!-- Glowing fractured chest RAID core -->
-        <polygon points="60,68 70,79 60,92 50,79" fill="#ef4444" stroke="#fde047" stroke-width="1.6"/>
+    // 3. Chonchon / Steel Chonchon / Hunter Fly
+    chonchon: (uid, body, wing, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#0f172a" stroke-width="2.2" stroke-linejoin="round">
+        <ellipse cx="32" cy="44" rx="22" ry="11" fill="${wing}" opacity="0.78" transform="rotate(-26 32 44)"/>
+        <ellipse cx="88" cy="44" rx="22" ry="11" fill="${wing}" opacity="0.78" transform="rotate(26 88 44)"/>
+        <path d="M52 44 Q44 26 36 28" fill="none" stroke="${acc}" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M68 44 Q76 26 84 28" fill="none" stroke="${acc}" stroke-width="2.4" stroke-linecap="round"/>
+        <ellipse cx="60" cy="70" rx="22" ry="26" fill="${body}"/>
+        <path d="M40 76 Q60 83 80 76" fill="none" stroke="#0f172a" stroke-width="2"/>
+        <path d="M43 85 Q60 91 77 85" fill="none" stroke="#0f172a" stroke-width="2"/>
+        <circle cx="48" cy="56" r="11" fill="#fde047"/>
+        <circle cx="48" cy="56" r="5" fill="#0f172a" stroke="none"/>
+        <circle cx="46" cy="53" r="2.2" fill="#ffffff" stroke="none"/>
+        <circle cx="72" cy="56" r="11" fill="#fde047"/>
+        <circle cx="72" cy="56" r="5" fill="#0f172a" stroke="none"/>
+        <circle cx="70" cy="53" r="2.2" fill="#ffffff" stroke="none"/>
       </g>
-      ${animeEyes('#ef4444', true, 52)}
-    `, true),
-
-    /* ---------- ZONE 2 ---------- */
-    z2_s1: () => wrapSvg('z2s1', '#1e3a8a', '#090d26', '#60a5fa', `
-      <!-- IP-Conflict Phantom: Dual-Glitch Anime Cyber Spirit -->
-      <g opacity="0.55" transform="translate(-6,0)">
-        <path d="M36 94 V48 A24 24 0 0 1 84 48 V94 L72 84 L60 94 L48 84 Z" fill="#f472b6"/>
-      </g>
-      <g opacity="0.55" transform="translate(6,0)">
-        <path d="M36 94 V48 A24 24 0 0 1 84 48 V94 L72 84 L60 94 L48 84 Z" fill="#22d3ee"/>
-      </g>
-      <g stroke="#080c20" stroke-width="2.3" stroke-linejoin="round">
-        <path d="M34 94 V48 A26 26 0 0 1 86 48 V94 L73 84 L60 94 L47 84 Z" fill="#e0f2fe"/>
-        <rect x="34" y="42" width="52" height="22" rx="8" fill="#0f172a"/>
-        <!-- Antenna -->
-        <line x1="60" y1="22" x2="60" y2="12" stroke="#60a5fa" stroke-width="3"/>
-        <circle cx="60" cy="11" r="4" fill="#f472b6"/>
-      </g>
-      ${animeEyes('#38bdf8', true, 52)}
-      <text x="60" y="79" text-anchor="middle" fill="#1e3a8a" font-family="monospace" font-weight="900" font-size="11">IP:ERR</text>
     `),
 
-    z2_s2: () => wrapSvg('z2s2', '#4c1d95', '#100724', '#a78bfa', `
-      <!-- NXDOMAIN Glitch: Swirling Anime Cyber Vortex Entity -->
-      <circle cx="60" cy="60" r="40" fill="none" stroke="#c084fc" stroke-width="4" stroke-dasharray="18 8"/>
-      <circle cx="60" cy="60" r="30" fill="none" stroke="#38bdf8" stroke-width="3" stroke-dasharray="12 7"/>
-      <g stroke="#100724" stroke-width="2.2">
-        <polygon points="60,24 88,44 82,80 60,96 38,80 32,44" fill="#1e1b4b"/>
-        <rect x="36" y="44" width="48" height="26" rx="8" fill="#09071a"/>
+    // 4. Spore / Poison Spore (RO Mushroom)
+    spore: (uid, cap, spots, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#1e1b2e" stroke-width="2.3" stroke-linejoin="round">
+        <ellipse cx="60" cy="100" rx="28" ry="6" fill="#020617" opacity="0.4" stroke="none"/>
+        <path d="M36 58 H84 L88 94 Q60 102 32 94 Z" fill="#fef3c7"/>
+        <path d="M16 62 C16 24 40 16 60 16 C80 16 104 24 104 62 Q60 72 16 62 Z" fill="${cap}"/>
+        <circle cx="38" cy="40" r="7" fill="${spots}" stroke="none"/>
+        <circle cx="62" cy="28" r="8" fill="${spots}" stroke="none"/>
+        <circle cx="84" cy="44" r="6.5" fill="${spots}" stroke="none"/>
+        <circle cx="52" cy="48" r="5" fill="${spots}" stroke="none"/>
+        <circle cx="49" cy="76" r="4" fill="#1e1b2e" stroke="none"/>
+        <circle cx="47.8" cy="74.5" r="1.3" fill="#ffffff" stroke="none"/>
+        <circle cx="71" cy="76" r="4" fill="#1e1b2e" stroke="none"/>
+        <circle cx="69.8" cy="74.5" r="1.3" fill="#ffffff" stroke="none"/>
+        <path d="M54 85 Q60 90 66 85" fill="none" stroke="#1e1b2e" stroke-width="2.2" stroke-linecap="round"/>
       </g>
-      ${animeEyes('#e879f9', false, 56)}
-      <text x="60" y="84" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-weight="900" font-size="11">DNS 404</text>
     `),
 
-    z2_boss: () => wrapSvg('z2b', '#1d4ed8', '#080e2b', '#38bdf8', `
-      <!-- MVP BOSS: Port-Storm Hydra — 3-Headed Neon Cyber Dragon -->
-      <g stroke="#060b20" stroke-width="2.3" stroke-linejoin="round">
-        <!-- Lightning wings -->
-        <polygon points="10,40 34,48 26,76 12,68" fill="#38bdf8"/>
-        <polygon points="110,40 86,48 94,76 108,68" fill="#38bdf8"/>
-        <!-- Left & Right Dragon Heads -->
-        <polygon points="18,28 40,26 42,48 22,50" fill="#1e40af"/>
-        <circle cx="29" cy="37" r="3.2" fill="#fde047" stroke="none"/>
-        <polygon points="102,28 80,26 78,48 98,50" fill="#1e40af"/>
-        <circle cx="91" cy="37" r="3.2" fill="#fde047" stroke="none"/>
-        <!-- Center Cyber Hydra Boss Head -->
-        <polygon points="60,14 82,34 78,86 60,102 42,86 38,34" fill="#0f172a"/>
-        <polygon points="46,24 60,12 74,24 68,36 52,36" fill="#38bdf8"/>
-        <!-- Fiber-optic chest reactor -->
-        <circle cx="60" cy="78" r="10" fill="#0284c7" stroke="#fde047" stroke-width="2"/>
-        <circle cx="60" cy="78" r="4.5" fill="#ffffff" stroke="none"/>
+    // 5. Whisper / Giant Whisper (Geffen Ghost)
+    whisper: (uid, cloth, eye, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#1e1b2e" stroke-width="2.3" stroke-linejoin="round">
+        <path d="M24 96 L28 48 C28 22 44 16 60 16 C76 16 92 22 92 48 L96 96 L82 86 L70 98 L60 86 L50 98 L38 86 Z" fill="${cloth}"/>
+        <path d="M28 54 L12 68 L26 74 Z" fill="${cloth}"/>
+        <path d="M92 54 L108 68 L94 74 Z" fill="${cloth}"/>
+        <ellipse cx="60" cy="48" rx="18" ry="14" fill="#0f172a"/>
+        <ellipse cx="52" cy="47" rx="4.2" ry="5" fill="${eye}" stroke="none"/>
+        <ellipse cx="68" cy="47" rx="4.2" ry="5" fill="${eye}" stroke="none"/>
+        <circle cx="51" cy="45" r="1.4" fill="#ffffff" stroke="none"/>
+        <circle cx="67" cy="45" r="1.4" fill="#ffffff" stroke="none"/>
       </g>
-      ${animeEyes('#38bdf8', true, 52)}
-    `, true),
-
-    /* ---------- ZONE 3 ---------- */
-    z3_s1: () => wrapSvg('z3s1', '#065f46', '#061a14', '#34d399', `
-      <!-- Rogue Account Mimic: Cyber Kitsune Phantom Thief -->
-      <g stroke="#041510" stroke-width="2.2" stroke-linejoin="round">
-        <!-- Kitsune cyber ears -->
-        <polygon points="28,46 24,14 48,30" fill="#f8fafc"/>
-        <polygon points="31,39 29,21 43,32" fill="#34d399" stroke="none"/>
-        <polygon points="92,46 96,14 72,30" fill="#f8fafc"/>
-        <polygon points="89,39 91,21 77,32" fill="#34d399" stroke="none"/>
-        <!-- Masquerade Cyber Mask Face -->
-        <path d="M28 44 Q60 28 92 44 L84 82 L60 98 L36 82 Z" fill="#f8fafc"/>
-        <path d="M32 50 Q60 40 88 50 L82 66 Q60 60 38 66 Z" fill="#0f172a"/>
-        <!-- Red Japanese kitsune markings -->
-        <path d="M36 74 L46 78 M84 74 L74 78" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-      </g>
-      ${animeEyes('#34d399', true, 55)}
     `),
 
-    z3_s2: () => wrapSvg('z3s2', '#134e4a', '#061717', '#2dd4bf', `
-      <!-- Privilege Escalator: Hooded Anime Cyber Ninja Hacker -->
-      <g stroke="#041212" stroke-width="2.2" stroke-linejoin="round">
-        <!-- Cyber Ninja Hood -->
-        <path d="M22 94 L30 34 Q60 12 90 34 L98 94 Z" fill="#0f172a"/>
-        <path d="M34 42 Q60 32 86 42 L82 76 L60 86 L38 76 Z" fill="#1e293b"/>
-        <!-- Glowing Neon Visor Scarf -->
-        <rect x="34" y="64" width="52" height="18" rx="6" fill="#0d9488"/>
-        <!-- Twin SUDO energy daggers -->
-        <polygon points="14,76 28,60 32,68 18,86" fill="#2dd4bf"/>
-        <polygon points="106,76 92,60 88,68 102,86" fill="#2dd4bf"/>
+    // 6. Munak / Bongun (Payon Cave Jiangshi)
+    munak: (uid, hat, robe, talisman, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#0f172a" stroke-width="2.3" stroke-linejoin="round">
+        <path d="M30 98 L36 62 H84 L90 98 Z" fill="${robe}"/>
+        <path d="M46 62 V98 M74 62 V98" stroke="${acc}" stroke-width="2"/>
+        <rect x="14" y="68" width="22" height="10" rx="4" fill="#cbd5e1"/>
+        <rect x="84" y="68" width="22" height="10" rx="4" fill="#cbd5e1"/>
+        <circle cx="60" cy="48" r="20" fill="#e2e8f0"/>
+        <path d="M34 36 Q60 16 86 36 Z" fill="${hat}"/>
+        <circle cx="60" cy="18" r="5" fill="#ef4444"/>
+        <rect x="53" y="28" width="14" height="24" rx="2" fill="${talisman}"/>
+        <path d="M56 34 H64 M60 32 V48 M56 42 H64" stroke="#dc2626" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="48" cy="48" r="3" fill="#ef4444" stroke="none"/>
+        <circle cx="72" cy="48" r="3" fill="#ef4444" stroke="none"/>
       </g>
-      ${animeEyes('#2dd4bf', true, 52)}
-      <text x="60" y="77" text-anchor="middle" fill="#041212" font-family="monospace" font-weight="900" font-size="10">SUDO</text>
     `),
 
-    z3_boss: () => wrapSvg('z3b', '#991b1b', '#14050a', '#fb7185', `
-      <!-- MVP BOSS: Rootkit Sentinel — Japanese Cyber-Oni Samurai -->
-      <g stroke="#0d0307" stroke-width="2.3" stroke-linejoin="round">
-        <!-- Glowing Laser Katana behind -->
-        <line x1="16" y1="98" x2="104" y2="20" stroke="#34d399" stroke-width="5.5" stroke-linecap="round"/>
-        <line x1="16" y1="98" x2="104" y2="20" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-        <!-- Samurai Kabuto Crest & Oni Horns -->
-        <polygon points="44,28 24,10 36,38" fill="#fbbf24"/>
-        <polygon points="76,28 96,10 84,38" fill="#fbbf24"/>
-        <path d="M26 52 Q60 16 94 52 L90 82 L60 100 L30 82 Z" fill="#1e293b"/>
-        <!-- Oni Cyber Menpo Mask -->
-        <path d="M34 64 L60 56 L86 64 L80 86 L60 96 L40 86 Z" fill="#dc2626"/>
-        <polygon points="46,74 51,84 55,74" fill="#ffffff" stroke="none"/>
-        <polygon points="65,74 69,84 74,74" fill="#ffffff" stroke="none"/>
+    // 7. Nine Tail / Sohee (Payon Fox Spirit)
+    sohee: (uid, fur, tailTip, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#1e1b2e" stroke-width="2.2" stroke-linejoin="round">
+        <path d="M56 76 Q14 70 16 40 Q32 48 44 68 Z" fill="${fur}"/>
+        <path d="M64 76 Q106 70 104 40 Q88 48 76 68 Z" fill="${fur}"/>
+        <path d="M48 84 Q12 96 18 72 Q34 74 48 80 Z" fill="${tailTip}"/>
+        <path d="M72 84 Q108 96 102 72 Q86 74 72 80 Z" fill="${tailTip}"/>
+        <polygon points="36,44 28,14 52,32" fill="${fur}"/>
+        <polygon points="37,38 33,21 48,33" fill="${tailTip}" stroke="none"/>
+        <polygon points="84,44 92,14 68,32" fill="${fur}"/>
+        <polygon points="83,38 87,21 72,33" fill="${tailTip}" stroke="none"/>
+        <path d="M34 46 Q60 28 86 46 L78 82 L60 94 L42 82 Z" fill="${fur}"/>
+        <path d="M44 76 Q60 92 76 76 L60 94 Z" fill="#fef3c7" stroke="none"/>
+        ${animeEyes(acc, true, 54)}
+        <polygon points="57,67 63,67 60,71" fill="#1e1b2e" stroke="none"/>
       </g>
-      ${animeEyes('#fde047', true, 48)}
-    `, true),
-
-    /* ---------- ZONE 4 ---------- */
-    z4_s1: () => wrapSvg('z4s1', '#365314', '#0e1706', '#a3e635', `
-      <!-- Zombie Process Swarm: Chibi Anime Cyber-Zombie -->
-      <g stroke="#0a1204" stroke-width="2.3" stroke-linejoin="round">
-        <rect x="28" y="28" width="64" height="62" rx="18" fill="#4d7c0f"/>
-        <!-- Circuit stitch headband -->
-        <rect x="28" y="34" width="64" height="10" fill="#1e293b"/>
-        <circle cx="40" cy="39" r="2.5" fill="#a3e635" stroke="none"/>
-        <circle cx="60" cy="39" r="2.5" fill="#ef4444" stroke="none"/>
-        <circle cx="80" cy="39" r="2.5" fill="#a3e635" stroke="none"/>
-        <!-- PID tag -->
-        <rect x="40" y="72" width="40" height="14" rx="4" fill="#0f172a"/>
-      </g>
-      ${animeEyes('#bef264', false, 56)}
-      <text x="60" y="83" text-anchor="middle" fill="#a3e635" font-family="monospace" font-weight="900" font-size="9">PID:99</text>
     `),
 
-    z4_s2: () => wrapSvg('z4s2', '#1d4ed8', '#081844', '#60a5fa', `
-      <!-- BlueScreen Specter: Anime BSOD Monitor Ghost -->
-      <g stroke="#06102e" stroke-width="2.3" stroke-linejoin="round">
-        <path d="M24 32 Q24 20 36 20 H84 Q96 20 96 32 V86 L82 78 L70 90 L60 80 L50 90 L38 78 L24 86 Z" fill="#2563eb"/>
-        <rect x="32" y="28" width="56" height="44" rx="8" fill="#1e40af" stroke="#93c5fd" stroke-width="1.8"/>
+    // 8. Peco Peco / Grand Peco (Morroc Desert Bird)
+    peco: (uid, feather, crest, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#1c1917" stroke-width="2.3" stroke-linejoin="round">
+        <polygon points="48,30 40,10 58,24 66,8 70,26 84,16 74,34" fill="${crest}"/>
+        <ellipse cx="26" cy="70" rx="14" ry="18" fill="${feather}" transform="rotate(18 26 70)"/>
+        <ellipse cx="94" cy="70" rx="14" ry="18" fill="${feather}" transform="rotate(-18 94 70)"/>
+        <ellipse cx="60" cy="74" rx="28" ry="24" fill="${feather}"/>
+        <circle cx="60" cy="46" r="20" fill="${feather}"/>
+        <polygon points="50,52 70,52 60,68" fill="#f97316"/>
+        <circle cx="49" cy="44" r="5" fill="#ffffff"/>
+        <circle cx="50" cy="44" r="2.6" fill="#0f172a" stroke="none"/>
+        <circle cx="71" cy="44" r="5" fill="#ffffff"/>
+        <circle cx="70" cy="44" r="2.6" fill="#0f172a" stroke="none"/>
       </g>
-      ${animeEyes('#ffffff', false, 47)}
-      <path d="M48 64 Q60 56 72 64" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
-      <text x="60" y="84" text-anchor="middle" fill="#bae6fd" font-family="monospace" font-weight="900" font-size="9">BSOD</text>
     `),
 
-    z4_boss: () => wrapSvg('z4b', '#b45309', '#1c0d04', '#fbbf24', `
-      <!-- MVP BOSS: Kernel-Panic Mech — Gundam-Style Heavy Warning Mecha -->
-      <g stroke="#140903" stroke-width="2.3" stroke-linejoin="round">
-        <!-- Twin Shoulder Plasma Cannons -->
-        <rect x="12" y="26" width="18" height="40" rx="4" fill="#334155"/>
-        <circle cx="21" cy="30" r="5" fill="#38bdf8"/>
-        <rect x="90" y="26" width="18" height="40" rx="4" fill="#334155"/>
-        <circle cx="99" cy="30" r="5" fill="#38bdf8"/>
-        <!-- V-Fin Gundam Antenna -->
-        <polygon points="60,26 30,12 44,32" fill="#fbbf24"/>
-        <polygon points="60,26 90,12 76,32" fill="#fbbf24"/>
-        <!-- Armored Head & Torso -->
-        <polygon points="36,30 84,30 88,76 60,98 32,76" fill="#e2e8f0"/>
-        <rect x="38" y="42" width="44" height="18" rx="4" fill="#0f172a"/>
-        <!-- Warning Chest Core -->
-        <polygon points="60,64 74,84 46,84" fill="#fbbf24" stroke="#ef4444" stroke-width="2"/>
-        <text x="60" y="81" text-anchor="middle" fill="#0f172a" font-family="monospace" font-weight="900" font-size="12" stroke="none">!</text>
+    // 9. Orc Warrior / High Orc
+    orc: (uid, skin, armor, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#0f172a" stroke-width="2.3" stroke-linejoin="round">
+        <line x1="88" y1="22" x2="96" y2="96" stroke="#78350f" stroke-width="5" stroke-linecap="round"/>
+        <path d="M90 24 Q112 24 110 46 Q98 48 88 40 Z" fill="#cbd5e1"/>
+        <path d="M30 40 Q14 26 24 14 Q32 24 38 30 Z" fill="#fef3c7"/>
+        <path d="M90 40 Q106 26 96 14 Q88 24 82 30 Z" fill="#fef3c7"/>
+        <path d="M32 46 Q60 16 88 46 Z" fill="${armor}"/>
+        <rect x="34" y="42" width="52" height="44" rx="14" fill="${skin}"/>
+        <rect x="28" y="80" width="64" height="20" rx="8" fill="${armor}"/>
+        <polygon points="44,78 48,65 53,78" fill="#fef9c3"/>
+        <polygon points="67,78 72,65 76,78" fill="#fef9c3"/>
+        ${animeEyes('#fde047', true, 54)}
       </g>
-      ${animeEyes('#ef4444', true, 50)}
-    `, true),
-
-    /* ---------- ZONE 5 ---------- */
-    z5_s1: () => wrapSvg('z5s1', '#831843', '#1a0613', '#f472b6', `
-      <!-- Brute-Force Botnet: Anime Cyber Arachnid Mecha -->
-      <g stroke="#f472b6" stroke-width="3.2" stroke-linecap="round" fill="none">
-        <path d="M34 52 L14 38 L10 54"/>
-        <path d="M32 62 L12 64 L10 80"/>
-        <path d="M36 72 L18 86 L16 98"/>
-        <path d="M86 52 L106 38 L110 54"/>
-        <path d="M88 62 L108 64 L110 80"/>
-        <path d="M84 72 L102 86 L104 98"/>
-      </g>
-      <g stroke="#14040e" stroke-width="2.3">
-        <ellipse cx="60" cy="60" rx="28" ry="26" fill="#1e293b"/>
-        <rect x="36" y="46" width="48" height="22" rx="9" fill="#090714"/>
-      </g>
-      ${animeEyes('#f43f5e', true, 56)}
-      <circle cx="60" cy="48" r="3" fill="#fde047"/>
     `),
 
-    z5_s2: () => wrapSvg('z5s2', '#581c87', '#130620', '#c084fc', `
-      <!-- Data-Wiper Virus: Spiky Neon Anime Cyber-Virus Core -->
-      <g stroke="#12051e" stroke-width="2.2" stroke-linejoin="round">
-        <!-- Spikes -->
-        <polygon points="60,10 67,30 53,30" fill="#c084fc"/>
-        <polygon points="60,110 67,90 53,90" fill="#c084fc"/>
-        <polygon points="10,60 30,53 30,67" fill="#c084fc"/>
-        <polygon points="110,60 90,53 90,67" fill="#c084fc"/>
-        <polygon points="24,24 40,34 34,40" fill="#f472b6"/>
-        <polygon points="96,24 80,34 86,40" fill="#f472b6"/>
-        <polygon points="24,96 40,86 34,80" fill="#f472b6"/>
-        <polygon points="96,96 80,86 86,80" fill="#f472b6"/>
-        <!-- Core body -->
-        <circle cx="60" cy="60" r="30" fill="#1e1b4b"/>
+    // 10. Raydric / Abysmal Knight (Glast Heim Cursed Knight)
+    raydric: (uid, armor, plume, eye, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#050814" stroke-width="2.3" stroke-linejoin="round">
+        <path d="M56 18 Q84 6 94 28 Q78 24 64 28 Z" fill="${plume}"/>
+        <polygon points="94,16 102,22 98,92 90,92" fill="#e2e8f0"/>
+        <rect x="84" y="76" width="22" height="6" rx="2" fill="#fbbf24"/>
+        <polygon points="16,66 36,56 36,92 20,96" fill="${armor}"/>
+        <polygon points="104,66 84,56 84,92 100,96" fill="${armor}"/>
+        <path d="M36 42 Q60 18 84 42 L80 80 L60 94 L40 80 Z" fill="${armor}"/>
+        <polygon points="42,48 78,48 74,62 46,62" fill="#050814"/>
+        <line x1="60" y1="62" x2="60" y2="88" stroke="${acc}" stroke-width="2.5"/>
+        ${animeEyes(eye, true, 54)}
       </g>
-      ${animeEyes('#f472b6', true, 56)}
-      <path d="M46 72 Q60 80 74 72" fill="none" stroke="#c084fc" stroke-width="2.6" stroke-linecap="round"/>
     `),
 
-    z5_boss: () => wrapSvg('z5b', '#9f1239', '#1a050c', '#fb7185', `
-      <!-- MVP BOSS: RansomWorm-X — Crimson Cyber Dragon + Encrypted Padlock -->
-      <g stroke="#140309" stroke-width="2.3" stroke-linejoin="round">
-        <!-- Coiled cyber serpent armor -->
-        <path d="M20 88 Q12 52 38 36 Q60 22 86 38 Q108 54 96 86 Q76 104 42 96" fill="none" stroke="#be123c" stroke-width="14" stroke-linecap="round"/>
-        <path d="M20 88 Q12 52 38 36 Q60 22 86 38 Q108 54 96 86" fill="none" stroke="#fb7185" stroke-width="3" stroke-dasharray="6 6"/>
-        <!-- Dragon Head -->
-        <polygon points="60,14 84,32 78,66 60,78 42,66 36,32" fill="#0f172a"/>
-        <polygon points="40,28 24,12 48,20" fill="#fde047"/>
-        <polygon points="80,28 96,12 72,20" fill="#fde047"/>
-        <!-- Ransom Padlock Orb -->
-        <rect x="47" y="78" width="26" height="22" rx="5" fill="#fbbf24"/>
-        <circle cx="60" cy="88" r="3.2" fill="#0f172a" stroke="none"/>
+    // 11. Deviruchi / Diabolic (Cute-Evil RO Imp)
+    deviruchi: (uid, body, wing, eye, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#090414" stroke-width="2.3" stroke-linejoin="round">
+        <path d="M34 58 L10 38 L16 68 L28 66 L22 78 L36 74 Z" fill="${wing}"/>
+        <path d="M86 58 L110 38 L104 68 L92 66 L98 78 L84 74 Z" fill="${wing}"/>
+        <path d="M74 88 Q98 94 96 78" fill="none" stroke="${body}" stroke-width="4" stroke-linecap="round"/>
+        <polygon points="96,72 103,80 91,82" fill="${acc}"/>
+        <path d="M40 36 Q28 16 44 18 Q44 26 48 32 Z" fill="${acc}"/>
+        <path d="M80 36 Q92 16 76 18 Q76 26 72 32 Z" fill="${acc}"/>
+        <circle cx="60" cy="58" r="26" fill="${body}"/>
+        <path d="M44 80 L60 96 L76 80 Z" fill="${body}"/>
+        ${animeEyes(eye, true, 55)}
+        <path d="M48 70 Q60 77 72 70" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+        <polygon points="51,71 54,77 57,72" fill="#ffffff" stroke="none"/>
+        <polygon points="63,72 66,77 69,71" fill="#ffffff" stroke="none"/>
       </g>
-      ${animeEyes('#fde047', true, 46)}
-    `, true),
-
-    /* ---------- ZONE 6 ---------- */
-    z6_s1: () => wrapSvg('z6s1', '#a16207', '#1a0f04', '#fde047', `
-      <!-- DDoS Overload Core: Crackling Anime Plasma Battery Mecha -->
-      <g stroke="#140b03" stroke-width="2.3" stroke-linejoin="round">
-        <!-- Lightning bolts -->
-        <polygon points="22,22 10,48 22,48 14,72 32,42 22,42" fill="#fde047"/>
-        <polygon points="98,22 110,48 98,48 106,72 88,42 98,42" fill="#fde047"/>
-        <!-- Reactor Cell Body -->
-        <rect x="44" y="18" width="32" height="10" rx="3" fill="#94a3b8"/>
-        <rect x="30" y="28" width="60" height="68" rx="14" fill="#1e293b"/>
-        <rect x="36" y="38" width="48" height="30" rx="8" fill="#090d16"/>
-        <!-- Overload bar -->
-        <rect x="38" y="75" width="44" height="10" rx="4" fill="#ef4444"/>
-      </g>
-      ${animeEyes('#fde047', true, 52)}
     `),
 
-    z6_s2: () => wrapSvg('z6s2', '#312e81', '#070614', '#818cf8', `
-      <!-- Zero-Day Shadow: Cloaked Dark-Anime Cyber Wraith -->
-      <g stroke="#05040d" stroke-width="2.3" stroke-linejoin="round">
-        <!-- Shadow blades -->
-        <polygon points="10,72 34,44 36,62 18,90" fill="#6366f1"/>
-        <polygon points="110,72 86,44 84,62 102,90" fill="#6366f1"/>
-        <!-- Dark Anime Cloak -->
-        <path d="M24 98 L34 30 Q60 12 86 30 L96 98 L76 86 L60 98 L44 86 Z" fill="#0f172a"/>
-        <ellipse cx="60" cy="52" rx="22" ry="18" fill="#020617"/>
+    // 12. Clock / Alarm (Al De Baran Clock Tower)
+    clock: (uid, brass, face, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#1c1917" stroke-width="2.3" stroke-linejoin="round">
+        <circle cx="34" cy="28" r="11" fill="${brass}"/>
+        <circle cx="86" cy="28" r="11" fill="${brass}"/>
+        <rect x="54" y="14" width="12" height="12" rx="3" fill="${brass}"/>
+        <path d="M42 92 L34 104 M78 92 L86 104" stroke="${brass}" stroke-width="5" stroke-linecap="round"/>
+        <circle cx="60" cy="62" r="34" fill="${brass}"/>
+        <circle cx="60" cy="62" r="26" fill="${face}"/>
+        <line x1="60" y1="62" x2="60" y2="42" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="60" y1="62" x2="76" y2="66" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="60" cy="62" r="4" fill="${acc}"/>
+        <circle cx="48" cy="54" r="3.5" fill="#dc2626" stroke="none"/>
+        <circle cx="72" cy="54" r="3.5" fill="#dc2626" stroke="none"/>
       </g>
-      ${animeEyes('#f43f5e', true, 51)}
-      <text x="60" y="80" text-anchor="middle" fill="#a5b4fc" font-family="monospace" font-weight="900" font-size="10">0-DAY</text>
-    `),
+    `)
+  };
 
-    z6_boss: () => wrapSvg('z6b', '#991b1b', '#0a030f', '#fbbf24', `
-      <!-- FINAL BOSS: BLACKOUT OVERLORD — Dark Anime Cyber Demon King -->
-      <g stroke="#09020e" stroke-width="2.3" stroke-linejoin="round">
-        <!-- Cyber Demon Wings -->
-        <polygon points="8,28 38,44 34,78 14,70 22,52" fill="#dc2626"/>
-        <polygon points="112,28 82,44 86,78 106,70 98,52" fill="#dc2626"/>
-        <!-- Blazing Golden Holographic Crown -->
-        <polygon points="36,34 42,12 52,26 60,8 68,26 78,12 84,34" fill="#fbbf24"/>
-        <!-- Overlord Armored Visage -->
-        <polygon points="34,34 86,34 82,82 60,104 38,82" fill="#0f172a"/>
-        <polygon points="40,42 80,42 76,62 44,62" fill="#020617"/>
-        <!-- Crimson Server Core -->
-        <polygon points="60,68 72,82 60,96 48,82" fill="#ef4444" stroke="#fbbf24" stroke-width="2"/>
-      </g>
-      ${animeEyes('#fbbf24', true, 51)}
-    `, true),
-
-    /* ---------- ZONE 7 ---------- */
-    z7_s1: () => wrapSvg('z7s1', '#0e7490', '#061d29', '#22d3ee', `
-      <!-- Dependency Hydra: Cute-Fierce Anime Cyber-Whale Container Beast -->
-      <g stroke="#051722" stroke-width="2.2" stroke-linejoin="round">
-        <!-- Stacked container armor -->
-        <rect x="34" y="22" width="16" height="12" rx="2.5" fill="#38bdf8"/>
-        <rect x="52" y="22" width="16" height="12" rx="2.5" fill="#22d3ee"/>
-        <rect x="70" y="22" width="16" height="12" rx="2.5" fill="#34d399"/>
-        <rect x="43" y="34" width="16" height="12" rx="2.5" fill="#0ea5e9"/>
-        <rect x="61" y="34" width="16" height="12" rx="2.5" fill="#38bdf8"/>
-        <!-- Cyber Whale Mecha Body -->
-        <path d="M18 68 Q20 44 60 44 Q92 44 96 66 Q98 88 60 92 Q20 92 18 68 Z" fill="#0284c7"/>
-        <polygon points="94,64 110,48 106,74" fill="#38bdf8"/>
-      </g>
-      ${animeEyes('#fde047', false, 64)}
-      <path d="M46 78 Q60 85 74 78" fill="none" stroke="#e0f2fe" stroke-width="2.5" stroke-linecap="round"/>
-    `),
-
-    z7_s2: () => wrapSvg('z7s2', '#475569', '#0f172a', '#fbbf24', `
-      <!-- Manual-Task Golem: Anime Clockwork Server Golem -->
-      <g stroke="#090f1d" stroke-width="2.3" stroke-linejoin="round">
-        <!-- Spinning gear shoulders -->
-        <circle cx="22" cy="58" r="13" fill="#f59e0b" stroke-dasharray="6 3"/>
-        <circle cx="98" cy="58" r="13" fill="#f59e0b" stroke-dasharray="6 3"/>
-        <!-- Heavy Golem Head & Clock Chest -->
-        <rect x="30" y="24" width="60" height="72" rx="14" fill="#334155"/>
-        <rect x="36" y="34" width="48" height="24" rx="6" fill="#0f172a"/>
-        <!-- Analog Cron Clock Chest -->
-        <circle cx="60" cy="76" r="13" fill="#fef3c7" stroke="#f59e0b" stroke-width="2.4"/>
-        <line x1="60" y1="76" x2="60" y2="67" stroke="#0f172a" stroke-width="2.4" stroke-linecap="round"/>
-        <line x1="60" y1="76" x2="68" y2="76" stroke="#ef4444" stroke-width="2.4" stroke-linecap="round"/>
-      </g>
-      ${animeEyes('#fbbf24', true, 45)}
-    `),
-
-    z7_boss: () => wrapSvg('z7b', '#0369a1', '#061429', '#22d3ee', `
-      <!-- MVP BOSS: Cloud-Scale Kraken — Electric Anime Cyber-Leviathan -->
-      <g stroke="#051124" stroke-width="2.3" stroke-linejoin="round">
-        <!-- Electric cyber tentacles -->
-        <path d="M36 74 Q16 82 16 102" fill="none" stroke="#22d3ee" stroke-width="7" stroke-linecap="round"/>
-        <path d="M48 78 Q38 94 34 106" fill="none" stroke="#38bdf8" stroke-width="7" stroke-linecap="round"/>
-        <path d="M72 78 Q82 94 86 106" fill="none" stroke="#38bdf8" stroke-width="7" stroke-linecap="round"/>
-        <path d="M84 74 Q104 82 104 102" fill="none" stroke="#22d3ee" stroke-width="7" stroke-linecap="round"/>
-        <!-- Crowned Kraken Dome -->
-        <path d="M26 56 Q26 14 60 14 Q94 14 94 56 L86 80 H34 Z" fill="#0f172a"/>
-        <polygon points="44,24 60,10 76,24 68,36 52,36" fill="#22d3ee"/>
-        <!-- Lightning bolts -->
-        <polygon points="20,24 12,42 22,42 16,58 30,36 20,36" fill="#fde047" stroke="none"/>
-        <polygon points="100,24 108,42 98,42 104,58 90,36 100,36" fill="#fde047" stroke="none"/>
-      </g>
-      ${animeEyes('#fde047', true, 54)}
-    `, true),
-
-    /* ---------- ZONE 8 ---------- */
-    z8_s1: () => wrapSvg('z8s1', '#334155', '#090d1a', '#38bdf8', `
-      <!-- Log-Eraser Ghost: Anime Cyber-Detective Phantom -->
-      <g stroke="#060914" stroke-width="2.2" stroke-linejoin="round">
-        <!-- Cyber Fedora Hat -->
-        <ellipse cx="60" cy="36" rx="40" ry="9" fill="#1e293b"/>
-        <path d="M36 36 L44 16 H76 L84 36 Z" fill="#0f172a"/>
-        <rect x="39" y="28" width="42" height="5" fill="#fb923c" stroke="none"/>
-        <!-- Glowing Phantom Body -->
-        <path d="M32 42 H88 L84 94 L70 84 L60 94 L50 84 L36 94 Z" fill="#1e293b"/>
-        <rect x="36" y="46" width="48" height="22" rx="7" fill="#020617"/>
-      </g>
-      ${animeEyes('#fb923c', true, 56)}
-    `),
-
-    z8_s2: () => wrapSvg('z8s2', '#15803d', '#061a0e', '#4ade80', `
-      <!-- Memory-Leak Slime: Glowing Anime Cyber-Slime + RAM Stick -->
-      <g stroke="#04140a" stroke-width="2.2" stroke-linejoin="round">
-        <!-- RAM Stick sticking out -->
-        <rect x="52" y="14" width="38" height="16" rx="3" fill="#065f46" transform="rotate(24 71 22)"/>
-        <rect x="58" y="18" width="6" height="8" fill="#0f172a" stroke="none" transform="rotate(24 71 22)"/>
-        <rect x="68" y="18" width="6" height="8" fill="#0f172a" stroke="none" transform="rotate(24 71 22)"/>
-        <!-- Translucent Anime Slime Blob -->
-        <path d="M18 82 Q16 40 60 36 Q104 40 102 82 Q102 98 60 98 Q18 98 18 82 Z" fill="#22c55e"/>
-        <ellipse cx="40" cy="50" rx="10" ry="5" fill="#bbf7d0" stroke="none" opacity="0.7" transform="rotate(-22 40 50)"/>
-      </g>
-      ${animeEyes('#052e16', false, 64)}
-      <path d="M52 78 Q60 84 68 78" fill="none" stroke="#052e16" stroke-width="2.6" stroke-linecap="round"/>
-    `),
-
-    z8_boss: () => wrapSvg('z8b', '#c2410c', '#120508', '#fb923c', `
-      <!-- GRAND MASTER BOSS: APT ZERO-DAY OVERLORD — Blazing Cyber-Seraph Eye Entity -->
-      <g stroke="#120406" stroke-width="2.3" stroke-linejoin="round">
-        <!-- 4 Blazing Anime Cyber-Seraph Wings -->
-        <polygon points="8,24 44,44 36,64 12,50" fill="#f97316"/>
-        <polygon points="112,24 76,44 84,64 108,50" fill="#f97316"/>
-        <polygon points="14,74 44,66 38,94 18,96" fill="#ef4444"/>
-        <polygon points="106,74 76,66 82,94 102,96" fill="#ef4444"/>
-        <!-- Floating Halo Ring -->
-        <ellipse cx="60" cy="20" rx="26" ry="7" fill="none" stroke="#fde047" stroke-width="3"/>
-        <!-- Armored Seraph Core -->
-        <polygon points="60,24 88,58 60,100 32,58" fill="#0f172a" stroke="#fb923c" stroke-width="2.6"/>
-        <!-- Piercing All-Seeing Anime Cyber Eye -->
-        <path d="M36 58 Q60 36 84 58 Q60 80 36 58 Z" fill="#fef08a"/>
-        <circle cx="60" cy="58" r="11" fill="#dc2626"/>
-        <circle cx="60" cy="58" r="5" fill="#0f172a" stroke="none"/>
-        <circle cx="56" cy="54" r="2.6" fill="#ffffff" stroke="none"/>
+  const RO_MVPS = {
+    // 1. Baphomet (Curved Ram Horns + Giant Crescent Scythe)
+    baphomet: (uid, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#09040e" stroke-width="2.4" stroke-linejoin="round">
+        <line x1="16" y1="104" x2="96" y2="20" stroke="#78350f" stroke-width="5.5" stroke-linecap="round"/>
+        <path d="M88 18 Q116 24 106 58 Q96 38 78 30 Z" fill="#e2e8f0" stroke="${acc}" stroke-width="2"/>
+        <path d="M42 36 C16 24 12 4 36 10 C48 14 48 26 42 32" fill="none" stroke="#d97706" stroke-width="8" stroke-linecap="round"/>
+        <path d="M78 36 C104 24 108 4 84 10 C72 14 72 26 78 32" fill="none" stroke="#d97706" stroke-width="8" stroke-linecap="round"/>
+        <path d="M32 42 Q60 22 88 42 L80 86 L60 102 L40 86 Z" fill="#27272a"/>
+        <path d="M44 74 L60 98 L76 74 Z" fill="#18181b"/>
+        <circle cx="60" cy="38" r="5" fill="${acc}" stroke="none"/>
+        ${animeEyes('#ef4444', true, 54)}
       </g>
     `, true),
 
-    /* ---------- ZONE 50 GRAND APEX FINAL BOSS ---------- */
-    z50_boss: () => wrapSvg('z50b', '#92400e', '#090314', '#fbbf24', `
-      <!-- FINAL APEX BOSS: OMEGA-CORE ARCHITECT -->
-      <circle cx="60" cy="60" r="46" fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="14 6"/>
-      <g stroke="#090314" stroke-width="2.3" stroke-linejoin="round">
-        <!-- 6 Radiant Cyber-Angel / Mecha Wings -->
-        <polygon points="4,22 44,44 36,64 10,48" fill="#fbbf24"/>
-        <polygon points="116,22 76,44 84,64 110,48" fill="#fbbf24"/>
-        <polygon points="8,74 42,64 36,92 14,94" fill="#38bdf8"/>
-        <polygon points="112,74 78,64 84,92 106,94" fill="#38bdf8"/>
-        <!-- Sovereign Holographic Crown -->
-        <polygon points="34,30 42,8 52,24 60,4 68,24 78,8 86,30" fill="#fde047"/>
-        <!-- Armored Cyber-Emperor Visage -->
-        <polygon points="34,30 86,30 84,80 60,104 36,80" fill="#0f172a" stroke="#fbbf24" stroke-width="2.4"/>
-        <polygon points="40,40 80,40 76,60 44,60" fill="#020617"/>
-        <!-- Omega Quantum Core -->
-        <polygon points="60,64 74,80 60,96 46,80" fill="#38bdf8" stroke="#fde047" stroke-width="2"/>
-        <circle cx="60" cy="80" r="5" fill="#ffffff" stroke="none"/>
+    // 2. Doppelganger (Geffen Dark Swordsman MVP)
+    doppelganger: (uid, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#090410" stroke-width="2.3" stroke-linejoin="round">
+        <polygon points="94,10 104,18 98,96 88,96" fill="#dc2626"/>
+        <polygon points="96,14 101,18 96,86 92,86" fill="#fca5a5" stroke="none"/>
+        <path d="M18 100 L30 46 Q60 26 90 46 L102 100 L78 90 L60 102 L42 90 Z" fill="#18181b"/>
+        <path d="M28 54 L60 72 L92 54" fill="none" stroke="#ef4444" stroke-width="3.5"/>
+        <path d="M34 46 L26 24 L44 30 L56 12 L68 28 L88 20 L84 46 Z" fill="#0f172a"/>
+        <path d="M38 44 Q60 36 82 44 L76 74 L60 82 L44 74 Z" fill="#e2e8f0"/>
+        ${animeEyes('#ef4444', true, 54)}
       </g>
-      ${animeEyes('#38bdf8', true, 49)}
+    `, true),
+
+    // 3. Moonlight Flower (Payon Nine-Tailed Fox Girl MVP)
+    moonlight: (uid, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#1e1b2e" stroke-width="2.2" stroke-linejoin="round">
+        <circle cx="18" cy="34" r="7" fill="#38bdf8" stroke="none" opacity="0.8"/>
+        <circle cx="102" cy="34" r="7" fill="#38bdf8" stroke="none" opacity="0.8"/>
+        <path d="M60 78 Q10 74 14 44 Q32 52 50 70 Z" fill="#fbbf24"/>
+        <path d="M60 78 Q110 74 106 44 Q88 52 70 70 Z" fill="#fbbf24"/>
+        <polygon points="36,44 26,10 52,32" fill="#f59e0b"/>
+        <polygon points="84,44 94,10 68,32" fill="#f59e0b"/>
+        <circle cx="60" cy="54" r="24" fill="#fef3c7"/>
+        <path d="M34 52 Q60 22 86 52 Q72 38 60 40 Q48 38 34 52 Z" fill="#fde047"/>
+        <path d="M36 78 L60 98 L84 78 Z" fill="#dc2626"/>
+        <circle cx="60" cy="82" r="6" fill="#fde047"/>
+        ${animeEyes('#38bdf8', false, 56)}
+      </g>
+    `, true),
+
+    // 4. Pharaoh / Osiris (Morroc Pyramid MVP)
+    pharaoh: (uid, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#0f172a" stroke-width="2.3" stroke-linejoin="round">
+        <path d="M22 92 L28 32 Q60 12 92 32 L98 92 L78 86 L74 44 H46 L42 86 Z" fill="#fbbf24"/>
+        <path d="M27 46 H93 M25 60 H95 M24 74 H96" stroke="#1d4ed8" stroke-width="4.5"/>
+        <circle cx="60" cy="22" r="7" fill="#fde047"/>
+        <circle cx="60" cy="22" r="2.5" fill="#ef4444" stroke="none"/>
+        <path d="M40 42 H80 L74 78 L60 88 L46 78 Z" fill="#1e293b"/>
+        <rect x="55" y="84" width="10" height="16" rx="3" fill="#fbbf24"/>
+        ${animeEyes('#22d3ee', true, 56)}
+      </g>
+    `, true),
+
+    // 5. Orc Lord (Crowned Warlord MVP)
+    orclord: (uid, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#090410" stroke-width="2.4" stroke-linejoin="round">
+        <path d="M88 18 Q114 18 112 44 Q98 46 88 38 Z" fill="#ef4444"/>
+        <line x1="88" y1="16" x2="96" y2="100" stroke="#fbbf24" stroke-width="5"/>
+        <polygon points="34,34 42,10 52,26 60,8 68,26 78,10 86,34" fill="#fbbf24"/>
+        <polygon points="14,72 36,60 36,96 18,98" fill="#7f1d1d"/>
+        <polygon points="106,72 84,60 84,96 102,98" fill="#7f1d1d"/>
+        <rect x="34" y="34" width="52" height="52" rx="14" fill="#15803d"/>
+        <polygon points="40,80 46,62 52,80" fill="#fef9c3"/>
+        <polygon points="68,80 74,62 80,80" fill="#fef9c3"/>
+        ${animeEyes('#fde047', true, 50)}
+      </g>
+    `, true),
+
+    // 6. Dark Lord (Glast Heim Lich King MVP)
+    darklord: (uid, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#090312" stroke-width="2.4" stroke-linejoin="round">
+        <path d="M16 74 Q12 42 32 48 Q26 24 44 34" fill="none" stroke="#a855f7" stroke-width="5" stroke-linecap="round"/>
+        <path d="M104 74 Q108 42 88 48 Q94 24 76 34" fill="none" stroke="#a855f7" stroke-width="5" stroke-linecap="round"/>
+        <path d="M22 102 L32 34 Q60 12 88 34 L98 102 L78 90 L60 104 L42 90 Z" fill="#1e1b4b"/>
+        <polygon points="38,34 22,10 48,26" fill="#dc2626"/>
+        <polygon points="82,34 98,10 72,26" fill="#dc2626"/>
+        <path d="M40 42 Q60 28 80 42 L76 74 L60 84 L44 74 Z" fill="#e2e8f0"/>
+        <path d="M50 74 V82 M56 75 V83 M64 75 V83 M70 74 V82" stroke="#0f172a" stroke-width="2"/>
+        ${animeEyes('#ef4444', true, 54)}
+      </g>
+    `, true),
+
+    // 7. Valkyrie Randgris (Juno Radiant Winged MVP)
+    valkyrie: (uid, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#0f172a" stroke-width="2.2" stroke-linejoin="round">
+        <ellipse cx="60" cy="18" rx="22" ry="6" fill="none" stroke="#fde047" stroke-width="3.2"/>
+        <path d="M40 56 L8 28 L16 56 L10 76 L38 74 Z" fill="#f8fafc" stroke="#38bdf8" stroke-width="2"/>
+        <path d="M80 56 L112 28 L104 56 L110 76 L82 74 Z" fill="#f8fafc" stroke="#38bdf8" stroke-width="2"/>
+        <polygon points="36,42 22,22 46,34" fill="#fbbf24"/>
+        <polygon points="84,42 98,22 74,34" fill="#fbbf24"/>
+        <path d="M38 42 Q60 24 82 42 L78 78 L60 94 L42 78 Z" fill="#f8fafc"/>
+        <path d="M42 72 L60 94 L78 72 Z" fill="#0284c7"/>
+        ${animeEyes('#38bdf8', true, 54)}
+      </g>
+    `, true),
+
+    // 8. Memory of Thanatos (6 Spectral Swords + Phantom Armor)
+    thanatos: (uid, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#090414" stroke-width="2.3" stroke-linejoin="round">
+        <polygon points="10,24 42,46 36,56 8,36" fill="#c084fc"/>
+        <polygon points="110,24 78,46 84,56 112,36" fill="#c084fc"/>
+        <polygon points="12,80 42,64 38,76 16,92" fill="#f472b6"/>
+        <polygon points="108,80 78,64 82,76 104,92" fill="#f472b6"/>
+        <polygon points="60,16 86,44 78,92 60,104 42,92 34,44" fill="#0f172a" stroke="#e2e8f0" stroke-width="2.4"/>
+        <polygon points="44,44 76,44 70,74 60,84 50,74" fill="#f8fafc"/>
+        ${animeEyes('#dc2626', true, 56)}
+      </g>
+    `, true),
+
+    // 9. Angeling / Archangeling (Giant Winged Holy Poring MVP)
+    angeling: (uid, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <g stroke="#1e1b2e" stroke-width="2.3" stroke-linejoin="round">
+        <ellipse cx="60" cy="18" rx="20" ry="6" fill="none" stroke="#fde047" stroke-width="3.5"/>
+        <path d="M32 62 L8 38 L14 66 L10 80 L34 78 Z" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
+        <path d="M88 62 L112 38 L106 66 L110 80 L86 78 Z" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
+        <path d="M60 28 C66 42 94 56 94 76 C94 94 78 100 60 100 C42 100 26 94 26 76 C26 56 54 42 60 28 Z" fill="#f472b6"/>
+        <ellipse cx="45" cy="58" rx="7" ry="10" fill="#ffffff" stroke="none" opacity="0.7" transform="rotate(-22 45 58)"/>
+        <circle cx="48" cy="70" r="4.2" fill="#1e1b2e" stroke="none"/>
+        <circle cx="72" cy="70" r="4.2" fill="#1e1b2e" stroke="none"/>
+        <path d="M53 78 Q56.5 82 60 78 Q63.5 82 67 78" fill="none" stroke="#1e1b2e" stroke-width="2.4" stroke-linecap="round"/>
+      </g>
+    `, true),
+
+    // 10. Satan Morroc (Grand Apex Demon Lord of Midgard)
+    satanmorroc: (uid, bg1, bg2, acc) => wrapSvg(uid, bg1, bg2, acc, `
+      <circle cx="60" cy="60" r="46" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-dasharray="14 6"/>
+      <g stroke="#09030c" stroke-width="2.4" stroke-linejoin="round">
+        <polygon points="4,18 44,44 36,66 10,50" fill="#dc2626"/>
+        <polygon points="116,18 76,44 84,66 110,50" fill="#dc2626"/>
+        <polygon points="8,76 42,66 36,96 14,96" fill="#f59e0b"/>
+        <polygon points="112,76 78,66 84,96 106,96" fill="#f59e0b"/>
+        <polygon points="38,34 16,6 50,24" fill="#fbbf24"/>
+        <polygon points="82,34 104,6 70,24" fill="#fbbf24"/>
+        <polygon points="34,30 86,30 84,82 60,104 36,82" fill="#18181b" stroke="#fbbf24" stroke-width="2.4"/>
+        <polygon points="60,64 74,80 60,96 46,80" fill="#ef4444" stroke="#fde047" stroke-width="2"/>
+        <circle cx="60" cy="80" r="5" fill="#fef08a" stroke="none"/>
+        ${animeEyes('#fde047', true, 48)}
+      </g>
     `, true)
+  };
+
+  /* Lore-accurate Ragnarok Online Monsters & MVP Bosses for Zones 1–8 & Zone 50 */
+  const ENEMIES = {
+    // Zone 1: Prontera Core — Poring, Lunatic, MVP Baphomet
+    z1_s1: () => RO_MONSTERS.poring('z1s1', '#f472b6', '#db2777', '#831843', '#1a0613', '#f472b6'),
+    z1_s2: () => RO_MONSTERS.lunatic('z1s2', '#f8fafc', '#fda4af', '#0369a1', '#08172e', '#38bdf8'),
+    z1_boss: () => RO_MVPS.baphomet('z1b', '#7f1d1d', '#0f0510', '#fbbf24'),
+
+    // Zone 2: Geffen Net-Tower — Chonchon, Whisper, MVP Doppelganger
+    z2_s1: () => RO_MONSTERS.chonchon('z2s1', '#38bdf8', '#bae6fd', '#0c4a6e', '#071326', '#38bdf8'),
+    z2_s2: () => RO_MONSTERS.whisper('z2s2', '#f1f5f9', '#a855f7', '#4c1d95', '#100724', '#c084fc'),
+    z2_boss: () => RO_MVPS.doppelganger('z2b', '#881337', '#0f0510', '#ef4444'),
+
+    // Zone 3: Payon Identity Vault — Munak, Nine Tail, MVP Moonlight Flower
+    z3_s1: () => RO_MONSTERS.munak('z3s1', '#1e3a8a', '#312e81', '#fde047', '#1e3a8a', '#090d26', '#60a5fa'),
+    z3_s2: () => RO_MONSTERS.sohee('z3s2', '#f97316', '#fde047', '#7c2d12', '#170a05', '#fb923c'),
+    z3_boss: () => RO_MVPS.moonlight('z3b', '#92400e', '#1a0b04', '#fbbf24'),
+
+    // Zone 4: Morroc CLI Desert — Drops (Orange Poring), Peco Peco, MVP Pharaoh
+    z4_s1: () => RO_MONSTERS.poring('z4s1', '#fb923c', '#ea580c', '#7c2d12', '#1c0904', '#fb923c'),
+    z4_s2: () => RO_MONSTERS.peco('z4s2', '#fbbf24', '#ef4444', '#78350f', '#1c0f04', '#fbbf24'),
+    z4_boss: () => RO_MVPS.pharaoh('z4b', '#1e3a8a', '#0b0a1f', '#fbbf24'),
+
+    // Zone 5: Al De Baran Defense — Clock, Orc Warrior, MVP Orc Lord
+    z5_s1: () => RO_MONSTERS.clock('z5s1', '#d97706', '#fef3c7', '#78350f', '#170b04', '#fbbf24'),
+    z5_s2: () => RO_MONSTERS.orc('z5s2', '#22c55e', '#475569', '#065f46', '#051a14', '#34d399'),
+    z5_boss: () => RO_MVPS.orclord('z5b', '#7f1d1d', '#140808', '#fbbf24'),
+
+    // Zone 6: Glast Heim Blackout — Raydric, Deviruchi, MVP Dark Lord
+    z6_s1: () => RO_MONSTERS.raydric('z6s1', '#334155', '#ef4444', '#f87171', '#312e81', '#090717', '#818cf8'),
+    z6_s2: () => RO_MONSTERS.deviruchi('z6s2', '#3b0764', '#581c87', '#fde047', '#4c1d95', '#100724', '#c084fc'),
+    z6_boss: () => RO_MVPS.darklord('z6b', '#4c1d95', '#090314', '#ef4444'),
+
+    // Zone 7: Juno Cloud Sky-City — Marin (Blue Poring), Spore, MVP Valkyrie Randgris
+    z7_s1: () => RO_MONSTERS.poring('z7s1', '#38bdf8', '#0284c7', '#0c4a6e', '#071326', '#38bdf8'),
+    z7_s2: () => RO_MONSTERS.spore('z7s2', '#ef4444', '#ffffff', '#0e7490', '#06202b', '#22d3ee'),
+    z7_boss: () => RO_MVPS.valkyrie('z7b', '#0369a1', '#071326', '#fde047'),
+
+    // Zone 8: Thanatos Forensics Spire — Poison Spore, Abysmal Knight, MVP Memory of Thanatos
+    z8_s1: () => RO_MONSTERS.spore('z8s1', '#9333ea', '#a3e635', '#4c1d95', '#100724', '#c084fc'),
+    z8_s2: () => RO_MONSTERS.raydric('z8s2', '#1e1b4b', '#a855f7', '#38bdf8', '#1e1b4b', '#070614', '#c084fc'),
+    z8_boss: () => RO_MVPS.thanatos('z8b', '#581c87', '#090314', '#f472b6'),
+
+    // Zone 50: Grand Apex Final Boss — Satan Morroc
+    z50_boss: () => RO_MVPS.satanmorroc('z50b', '#92400e', '#090314', '#fbbf24')
   };
 
   /* ==================== PROCEDURAL JAPANESE ANIME-CYBER GENERATOR (ZONES 9–50) ==================== */
@@ -787,142 +744,28 @@ const AnimeSprites = (() => {
     const uid = `z${num}_${slot}`;
 
     if (isBoss) {
-      const bType = num % 5;
-      let body = '';
-      if (bType === 0) {
-        // Horned Anime Mecha Gundam-Boss
-        body = `<g stroke="#090410" stroke-width="2.3" stroke-linejoin="round">
-          <rect x="10" y="28" width="18" height="42" rx="4" fill="#334155"/>
-          <circle cx="19" cy="34" r="5" fill="${p.sub}"/>
-          <rect x="92" y="28" width="18" height="42" rx="4" fill="#334155"/>
-          <circle cx="101" cy="34" r="5" fill="${p.sub}"/>
-          <polygon points="60,26 26,10 42,32" fill="${p.sub}"/>
-          <polygon points="60,26 94,10 78,32" fill="${p.sub}"/>
-          <polygon points="34,30 86,30 86,78 60,100 34,78" fill="#1e293b"/>
-          <rect x="38" y="42" width="44" height="18" rx="4" fill="#050814"/>
-          <polygon points="60,66 72,80 60,94 48,80" fill="${p.acc}" stroke="#ffffff" stroke-width="1.4"/>
-        </g>${animeEyes(p.eye, true, 50)}`;
-      } else if (bType === 1) {
-        // Japanese Cyber-Oni Samurai Boss
-        body = `<g stroke="#090410" stroke-width="2.3" stroke-linejoin="round">
-          <line x1="14" y1="98" x2="106" y2="18" stroke="${p.acc}" stroke-width="5.5" stroke-linecap="round"/>
-          <line x1="14" y1="98" x2="106" y2="18" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
-          <polygon points="44,28 22,10 36,40" fill="${p.sub}"/>
-          <polygon points="76,28 98,10 84,40" fill="${p.sub}"/>
-          <path d="M26 52 Q60 16 94 52 L88 82 L60 100 L32 82 Z" fill="#0f172a"/>
-          <path d="M36 64 L60 56 L84 64 L78 86 L60 95 L42 86 Z" fill="${p.acc}"/>
-          <polygon points="48,74 52,83 56,74" fill="#ffffff" stroke="none"/>
-          <polygon points="64,74 68,83 72,74" fill="#ffffff" stroke="none"/>
-        </g>${animeEyes(p.eye, true, 48)}`;
-      } else if (bType === 2) {
-        // Winged Cyber-Dragon Hydra Boss
-        body = `<g stroke="#090410" stroke-width="2.3" stroke-linejoin="round">
-          <polygon points="8,30 38,44 32,78 12,70" fill="${p.acc}"/>
-          <polygon points="112,30 82,44 88,78 108,70" fill="${p.acc}"/>
-          <polygon points="36,30 44,12 52,24 60,10 68,24 76,12 84,30" fill="${p.sub}"/>
-          <polygon points="36,30 84,30 80,82 60,102 40,82" fill="#0f172a"/>
-          <circle cx="60" cy="78" r="10" fill="${p.acc}" stroke="${p.sub}" stroke-width="2"/>
-          <circle cx="60" cy="78" r="4" fill="#ffffff" stroke="none"/>
-        </g>${animeEyes(p.eye, true, 49)}`;
-      } else if (bType === 3) {
-        // Electric Cyber-Kraken Leviathan Boss
-        body = `<g stroke="#090410" stroke-width="2.3" stroke-linejoin="round">
-          <path d="M34 74 Q14 82 14 102" fill="none" stroke="${p.acc}" stroke-width="6.5" stroke-linecap="round"/>
-          <path d="M48 78 Q38 94 34 106" fill="none" stroke="${p.sub}" stroke-width="6.5" stroke-linecap="round"/>
-          <path d="M72 78 Q82 94 86 106" fill="none" stroke="${p.sub}" stroke-width="6.5" stroke-linecap="round"/>
-          <path d="M86 74 Q106 82 106 102" fill="none" stroke="${p.acc}" stroke-width="6.5" stroke-linecap="round"/>
-          <path d="M26 56 Q26 14 60 14 Q94 14 94 56 L84 80 H36 Z" fill="#1e293b"/>
-          <polygon points="44,24 60,10 76,24 68,36 52,36" fill="${p.sub}"/>
-        </g>${animeEyes(p.eye, true, 54)}`;
-      } else {
-        // Blazing Cyber-Seraph Arbiter Boss
-        body = `<g stroke="#090410" stroke-width="2.3" stroke-linejoin="round">
-          <polygon points="8,24 44,44 36,64 12,50" fill="${p.acc}"/>
-          <polygon points="112,24 76,44 84,64 108,50" fill="${p.acc}"/>
-          <polygon points="14,74 44,66 38,94 18,96" fill="${p.sub}"/>
-          <polygon points="106,74 76,66 82,94 102,96" fill="${p.sub}"/>
-          <ellipse cx="60" cy="20" rx="26" ry="7" fill="none" stroke="${p.sub}" stroke-width="3"/>
-          <polygon points="60,24 88,58 60,100 32,58" fill="#0f172a" stroke="${p.acc}" stroke-width="2.4"/>
-        </g>${animeEyes(p.eye, true, 56)}`;
-      }
-      return wrapSvg(uid, p.bg1, p.bg2, p.acc, body, true);
+      const mvpKeys = [
+        'baphomet', 'doppelganger', 'moonlight', 'pharaoh', 'orclord',
+        'darklord', 'valkyrie', 'thanatos', 'angeling', 'satanmorroc'
+      ];
+      const key = mvpKeys[num % mvpKeys.length];
+      return RO_MVPS[key](uid, p.bg1, p.bg2, p.acc);
     }
 
-    // 7 distinct Japanese Anime Cyber-Monster archetypes for regular stages
-    const mType = seed % 7;
-    let mBody = '';
-    if (mType === 0) {
-      // Hovering Anime CRT/Server Drone
-      mBody = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
-        <line x1="40" y1="30" x2="32" y2="15" stroke="${p.acc}" stroke-width="3"/>
-        <circle cx="32" cy="14" r="4" fill="${p.sub}"/>
-        <line x1="80" y1="30" x2="88" y2="15" stroke="${p.acc}" stroke-width="3"/>
-        <circle cx="88" cy="14" r="4" fill="${p.sub}"/>
-        <polygon points="12,54 26,46 26,70 12,64" fill="${p.acc}"/>
-        <polygon points="108,54 94,46 94,70 108,64" fill="${p.acc}"/>
-        <rect x="26" y="28" width="68" height="54" rx="14" fill="#e2e8f0"/>
-        <rect x="33" y="36" width="54" height="36" rx="9" fill="#0f172a"/>
-        <path d="M44 82 H76 L70 96 H50 Z" fill="#334155"/>
-      </g>${animeEyes(p.eye, false, 53)}`;
-    } else if (mType === 1) {
-      // Anime Cyber-Kitsune Phantom
-      mBody = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
-        <polygon points="28,46 22,14 48,30" fill="#f8fafc"/>
-        <polygon points="31,39 28,21 43,32" fill="${p.acc}" stroke="none"/>
-        <polygon points="92,46 98,14 72,30" fill="#f8fafc"/>
-        <polygon points="89,39 92,21 77,32" fill="${p.acc}" stroke="none"/>
-        <path d="M28 44 Q60 28 92 44 L84 82 L60 98 L36 82 Z" fill="#f8fafc"/>
-        <path d="M32 48 Q60 38 88 48 L82 66 Q60 60 38 66 Z" fill="#0f172a"/>
-        <path d="M36 74 L48 78 M84 74 L72 78" stroke="${p.sub}" stroke-width="3" stroke-linecap="round"/>
-      </g>${animeEyes(p.eye, true, 54)}`;
-    } else if (mType === 2) {
-      // Hooded Anime Cyber-Ninja Hacker
-      mBody = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
-        <path d="M22 94 L30 32 Q60 12 90 32 L98 94 Z" fill="#0f172a"/>
-        <path d="M34 42 Q60 32 86 42 L82 76 L60 86 L38 76 Z" fill="#1e293b"/>
-        <rect x="34" y="64" width="52" height="16" rx="6" fill="${p.acc}"/>
-        <polygon points="12,76 28,58 32,66 16,86" fill="${p.sub}"/>
-        <polygon points="108,76 92,58 88,66 104,86" fill="${p.sub}"/>
-      </g>${animeEyes(p.eye, true, 52)}`;
-    } else if (mType === 3) {
-      // Spiky Cyber-Virus Core
-      mBody = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
-        <polygon points="60,10 67,30 53,30" fill="${p.acc}"/>
-        <polygon points="60,110 67,90 53,90" fill="${p.acc}"/>
-        <polygon points="10,60 30,53 30,67" fill="${p.acc}"/>
-        <polygon points="110,60 90,53 90,67" fill="${p.acc}"/>
-        <polygon points="24,24 40,34 34,40" fill="${p.sub}"/>
-        <polygon points="96,24 80,34 86,40" fill="${p.sub}"/>
-        <circle cx="60" cy="60" r="30" fill="#1e293b"/>
-      </g>${animeEyes(p.eye, true, 56)}
-      <path d="M46 72 Q60 80 74 72" fill="none" stroke="${p.acc}" stroke-width="2.5" stroke-linecap="round"/>`;
-    } else if (mType === 4) {
-      // CPU-Pin Cyber Gremlin Imp
-      mBody = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
-        <path d="M28 48 Q30 18 48 28 Q58 10 68 28 Q86 16 88 46 Z" fill="${p.sub}"/>
-        <rect x="30" y="36" width="60" height="54" rx="14" fill="#1e293b"/>
-        <path d="M20 48 H30 M20 58 H30 M20 68 H30 M90 48 H100 M90 58 H100 M90 68 H100" stroke="${p.acc}" stroke-width="3.5" stroke-linecap="round"/>
-      </g>${animeEyes(p.eye, true, 56)}
-      <path d="M48 73 L54 69 L60 73 L66 69 L72 73" fill="none" stroke="${p.sub}" stroke-width="2.4" stroke-linecap="round"/>`;
-    } else if (mType === 5) {
-      // Anime Cyber-Arachnid Botnet Spider
-      mBody = `<g stroke="${p.acc}" stroke-width="3.2" stroke-linecap="round" fill="none">
-        <path d="M34 52 L14 38 L10 54"/><path d="M32 62 L12 64 L10 80"/><path d="M36 72 L18 86 L16 98"/>
-        <path d="M86 52 L106 38 L110 54"/><path d="M88 62 L108 64 L110 80"/><path d="M84 72 L102 86 L104 98"/>
-      </g><g stroke="#081020" stroke-width="2.2">
-        <ellipse cx="60" cy="60" rx="28" ry="26" fill="#1e293b"/>
-        <rect x="36" y="46" width="48" height="22" rx="9" fill="#090d1a"/>
-      </g>${animeEyes(p.eye, true, 56)}`;
-    } else {
-      // Anime Cyber-Slime + RAM/Circuit Core
-      mBody = `<g stroke="#081020" stroke-width="2.2" stroke-linejoin="round">
-        <rect x="52" y="14" width="36" height="15" rx="3" fill="${p.sub}" transform="rotate(22 70 22)"/>
-        <path d="M18 82 Q16 40 60 36 Q104 40 102 82 Q102 98 60 98 Q18 98 18 82 Z" fill="${p.acc}"/>
-        <ellipse cx="40" cy="50" rx="10" ry="5" fill="#ffffff" stroke="none" opacity="0.5" transform="rotate(-22 40 50)"/>
-      </g>${animeEyes('#090d1a', false, 64)}
-      <path d="M52 78 Q60 84 68 78" fill="none" stroke="#090d1a" stroke-width="2.6" stroke-linecap="round"/>`;
-    }
-    return wrapSvg(uid, p.bg1, p.bg2, p.acc, mBody, false);
+    // Cycle across all 12 classic Ragnarok Online monsters with elemental color variants
+    const mIdx = seed % 12;
+    if (mIdx === 0) return RO_MONSTERS.poring(uid, p.acc, p.bg1, p.bg1, p.bg2, p.acc);
+    if (mIdx === 1) return RO_MONSTERS.lunatic(uid, '#f8fafc', p.acc, p.bg1, p.bg2, p.acc);
+    if (mIdx === 2) return RO_MONSTERS.chonchon(uid, p.acc, p.sub, p.bg1, p.bg2, p.acc);
+    if (mIdx === 3) return RO_MONSTERS.spore(uid, p.acc, p.sub, p.bg1, p.bg2, p.acc);
+    if (mIdx === 4) return RO_MONSTERS.whisper(uid, '#e2e8f0', p.eye, p.bg1, p.bg2, p.acc);
+    if (mIdx === 5) return RO_MONSTERS.munak(uid, p.bg1, '#1e293b', '#fde047', p.bg1, p.bg2, p.acc);
+    if (mIdx === 6) return RO_MONSTERS.sohee(uid, p.acc, p.sub, p.bg1, p.bg2, p.acc);
+    if (mIdx === 7) return RO_MONSTERS.peco(uid, p.sub, p.acc, p.bg1, p.bg2, p.acc);
+    if (mIdx === 8) return RO_MONSTERS.orc(uid, p.sub, '#334155', p.bg1, p.bg2, p.acc);
+    if (mIdx === 9) return RO_MONSTERS.raydric(uid, '#1e293b', p.acc, p.eye, p.bg1, p.bg2, p.acc);
+    if (mIdx === 10) return RO_MONSTERS.deviruchi(uid, p.bg1, '#1e1b4b', p.eye, p.bg1, p.bg2, p.acc);
+    return RO_MONSTERS.clock(uid, p.sub, '#fef3c7', p.bg1, p.bg2, p.acc);
   }
 
   function getZoneIcon(zoneId, tag) {

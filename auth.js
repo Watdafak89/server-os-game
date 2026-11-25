@@ -368,16 +368,18 @@ const AuthSystem = (() => {
 
   function shouldAcceptCloudAccount(localAcc, cloudAcc) {
     if (!localAcc) return true;
-    const localReset = Math.max(
+    const localAdminTs = Math.max(
       localAcc?.gameData?.mapResetAt ? new Date(localAcc.gameData.mapResetAt).getTime() : 0,
-      localAcc?.gameData?.xpResetAt ? new Date(localAcc.gameData.xpResetAt).getTime() : 0
+      localAcc?.gameData?.xpResetAt ? new Date(localAcc.gameData.xpResetAt).getTime() : 0,
+      localAcc?.gameData?.xpBonusAt ? new Date(localAcc.gameData.xpBonusAt).getTime() : 0
     );
-    const cloudReset = Math.max(
+    const cloudAdminTs = Math.max(
       cloudAcc?.gameData?.mapResetAt ? new Date(cloudAcc.gameData.mapResetAt).getTime() : 0,
-      cloudAcc?.gameData?.xpResetAt ? new Date(cloudAcc.gameData.xpResetAt).getTime() : 0
+      cloudAcc?.gameData?.xpResetAt ? new Date(cloudAcc.gameData.xpResetAt).getTime() : 0,
+      cloudAcc?.gameData?.xpBonusAt ? new Date(cloudAcc.gameData.xpBonusAt).getTime() : 0
     );
-    if (cloudReset > localReset) return true;
-    if (localReset > cloudReset) return false;
+    if (cloudAdminTs > localAdminTs) return true;
+    if (localAdminTs > cloudAdminTs) return false;
     const localTime = localAcc?.updatedAt ? new Date(localAcc.updatedAt).getTime() : 0;
     const cloudTime = cloudAcc?.updatedAt ? new Date(cloudAcc.updatedAt).getTime() : 0;
     const localXp = localAcc?.gameData?.xp || 0;
@@ -492,6 +494,71 @@ const AuthSystem = (() => {
     }
     targets.forEach((acc) => {
       applyXpResetToAccount(acc);
+      accounts[acc.username] = acc;
+    });
+    saveAccounts(accounts);
+    let synced = 0;
+    if (getCloudUrl()) {
+      for (const acc of targets) {
+        const r = await syncAccountToCloud(acc);
+        if (r?.ok) synced += 1;
+      }
+    }
+    return { ok: true, count: targets.length, synced };
+  }
+
+  function applyXpGrantToAccount(acc, amount, reason, grantedBy) {
+    if (!acc || acc.role === 'teacher') return false;
+    const delta = Math.round(Number(amount) || 0);
+    if (delta === 0) return false;
+    const now = new Date().toISOString();
+    const base = createEmptyGameData(acc.fullName, acc.gameData?.avatar || 'avatar1');
+    const prev = acc.gameData || {};
+    const nextXp = Math.max(0, (prev.xp || 0) + delta);
+    acc.gameData = {
+      ...base,
+      ...prev,
+      xp: nextXp,
+      xpBonusAt: now,
+      lastXpBonus: {
+        amount: delta,
+        reason: (reason || '').trim() || 'ตอบคำถามในห้องเรียนได้',
+        by: grantedBy || getCurrentAccount()?.fullName || 'ครูผู้สอน',
+        at: now
+      }
+    };
+    acc.updatedAt = now;
+    return true;
+  }
+
+  async function grantStudentXp(username, amount, reason = '') {
+    const delta = Math.round(Number(amount) || 0);
+    if (!delta) return { ok: false, error: 'กรุณาระบุจำนวน XP ที่ไม่เป็น 0' };
+    const accounts = loadAccounts();
+    const acc = accounts[username];
+    if (!acc || acc.role === 'teacher') return { ok: false, error: 'ไม่พบบัญชีนักศึกษา' };
+    applyXpGrantToAccount(acc, delta, reason);
+    accounts[username] = acc;
+    saveAccounts(accounts);
+    const syncRes = await syncAccountToCloud(acc);
+    return { ok: true, account: acc, newXp: acc.gameData.xp, synced: Boolean(syncRes?.ok) };
+  }
+
+  async function grantStudentsXp({ classroom = '', amount = 50, reason = '' } = {}) {
+    const delta = Math.round(Number(amount) || 0);
+    if (!delta) return { ok: false, count: 0, synced: 0, error: 'กรุณาระบุจำนวน XP ที่ไม่เป็น 0' };
+    const cleanClass = (classroom || '').trim();
+    const accounts = loadAccounts();
+    const targets = Object.values(accounts).filter((acc) => {
+      if (!acc || acc.role !== 'student') return false;
+      if (cleanClass && (acc.classroom || '-') !== cleanClass) return false;
+      return true;
+    });
+    if (!targets.length) {
+      return { ok: false, count: 0, synced: 0, error: 'ไม่พบรายชื่อนักศึกษาตามเงื่อนไขที่เลือก' };
+    }
+    targets.forEach((acc) => {
+      applyXpGrantToAccount(acc, delta, reason);
       accounts[acc.username] = acc;
     });
     saveAccounts(accounts);
@@ -1064,6 +1131,8 @@ const AuthSystem = (() => {
     resetStudentMapProgress,
     resetStudentsMapProgress,
     resetStudentXp,
-    resetStudentsXp
+    resetStudentsXp,
+    grantStudentXp,
+    grantStudentsXp
   };
 })();
