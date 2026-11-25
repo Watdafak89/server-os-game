@@ -6055,6 +6055,7 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
 /* ==================== MODERN GLASSMORPHISM TITLE & AUTH INTERFACE ==================== */
 .title-card {
   position: relative;
+  overflow: hidden;
   background: linear-gradient(160deg, rgba(15, 23, 42, 0.92), rgba(9, 15, 30, 0.96)) !important;
   border: 1.5px solid rgba(56, 189, 248, 0.32) !important;
   border-radius: 26px !important;
@@ -6062,8 +6063,21 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   -webkit-backdrop-filter: blur(22px);
   box-shadow:
     0 28px 65px rgba(2, 6, 23, 0.72),
-    0 0 40px rgba(56, 189, 248, 0.12),
+    0 0 40px rgba(56, 189, 248, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.title-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(90deg, transparent, #38bdf8, #34d399, #fbbf24, transparent);
+  opacity: 0.9;
+  pointer-events: none;
 }
 
 [data-theme="light"] .title-card {
