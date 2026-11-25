@@ -5723,3 +5723,95 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   70% { opacity: 1; }
   100% { top: 112px; opacity: 0; }
 }
+
+/* ==================== PROFILE BADGE ICONS & SPECIAL STREAK BADGES ==================== */
+.hud-badges-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  margin-top: 0.3rem;
+}
+
+.hud-badge-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 0.78rem;
+  background: rgba(56, 189, 248, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 2px 8px rgba(2, 6, 23, 0.4);
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.hud-badge-ico:hover {
+  transform: scale(1.22);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.7);
+}
+
+.hud-badge-ico.is-special {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.32), rgba(167, 139, 250, 0.32));
+  border-color: rgba(251, 191, 36, 0.85);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+}
+
+.hud-badge-more {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.08rem 0.42rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.16);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.hud-streak-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.08rem 0.45rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.25), rgba(239, 68, 68, 0.25));
+  border: 1px solid rgba(251, 146, 60, 0.7);
+  color: #fde047;
+}
+
+.profile-badges-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.55rem;
+  width: 100%;
+}
+
+.profile-badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.52rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: var(--text);
+}
+
+.profile-badge-chip.is-special {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.24), rgba(167, 139, 250, 0.24));
+  border-color: rgba(251, 191, 36, 0.8);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.28);
+}
+
+.badge-card.special-badge.unlocked {
+  border-color: var(--gold);
+  background: linear-gradient(160deg, rgba(251, 191, 36, 0.16), rgba(167, 139, 250, 0.12), var(--bg-card));
+  box-shadow: 0 8px 24px rgba(251, 191, 36, 0.2);
+}

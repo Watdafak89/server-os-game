@@ -127,6 +127,8 @@ const AuthSystem = (() => {
       },
       examBestScore: 0,
       examPassed: false,
+      currentCorrectStreak: 0,
+      bestCorrectStreak: 0,
       unlockedBadges: [],
       analytics: {
         fundamentals: { correct: 0, total: 0 },

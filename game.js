@@ -80,6 +80,8 @@
       warpPassPurchased: Boolean(saved.warpPassPurchased),
       warpedZones: Array.isArray(saved.warpedZones) ? saved.warpedZones : [],
       blitzHighScore: saved.blitzHighScore || 0,
+      currentCorrectStreak: saved.currentCorrectStreak || 0,
+      bestCorrectStreak: saved.bestCorrectStreak || 0,
       dailyQuests: { ...base.dailyQuests, ...(saved.dailyQuests || {}) }
     };
     if (currentAccount.role !== 'teacher') state.freePlay = false;
@@ -174,8 +176,16 @@
   function recordAnalytics(cat, isCorrect) {
     if (!state.analytics[cat]) state.analytics[cat] = { correct: 0, total: 0 };
     state.analytics[cat].total += 1;
-    if (isCorrect) state.analytics[cat].correct += 1;
+    if (isCorrect) {
+      state.analytics[cat].correct += 1;
+      state.currentCorrectStreak = (state.currentCorrectStreak || 0) + 1;
+      state.bestCorrectStreak = Math.max(state.bestCorrectStreak || 0, state.currentCorrectStreak);
+      checkBadges();
+    } else {
+      state.currentCorrectStreak = 0;
+    }
     saveState();
+    renderHud();
   }
 
   function grantRewards(xp, coins) {
@@ -246,6 +256,9 @@
     if (state.solvedChmod.length >= 4 && state.solvedRaid.length >= 4) unlock('puzzle_master');
     if ((state.installedVms || []).length >= 5) unlock('vbox_master');
     if (state.examPassed) unlock('certified');
+    if ((state.bestCorrectStreak || 0) >= 5) unlock('streak_5');
+    if ((state.bestCorrectStreak || 0) >= 10) unlock('streak_10');
+    if ((state.bestCorrectStreak || 0) >= 20) unlock('streak_20');
   }
 
   /* ==================== THEME & SOUND ==================== */
@@ -412,11 +425,21 @@
 
       const rank = getRankInfo(state.xp);
       const maxStars = ALL_STAGES_FLAT.length * 3;
+      const unlockedList = BADGES
+        .filter((b) => state.unlockedBadges.includes(b.id))
+        .sort((a, b) => (b.special ? 1 : 0) - (a.special ? 1 : 0));
+      const badgesPreviewHtml = unlockedList.length
+        ? `<div class="profile-badges-row">${unlockedList.map((b) =>
+          `<span class="profile-badge-chip ${b.special ? 'is-special' : ''}" title="${b.name} — ${b.desc}">${b.emoji} ${b.name}</span>`
+        ).join('')}</div>`
+        : '';
       $('titleSavePreview').innerHTML = `
         <span class="save-chip">LV.${rank.level} ${rank.title}</span>
         <span class="save-chip">⭐ ${getTotalStars()}/${maxStars} ดาว</span>
         <span class="save-chip">💰 ${state.coins} เหรียญ</span>
         <span class="save-chip">🏆 ${state.unlockedBadges.length}/${BADGES.length} เหรียญตรา</span>
+        ${(state.bestCorrectStreak || 0) > 0 ? `<span class="save-chip">🔥 ตอบถูกติดกันสูงสุด ${state.bestCorrectStreak} ข้อ</span>` : ''}
+        ${badgesPreviewHtml}
       `;
     } else {
       $('loggedInGate').classList.add('hidden');
@@ -443,6 +466,30 @@
     $('hudBoostBadge').classList.toggle('hidden', !state.xpBoostActive);
     $('shopCoinsDisplay').textContent = state.coins.toLocaleString();
     $('dockTeacherBtn').classList.toggle('hidden', !isTeacher);
+
+    // Render unlocked badge icons directly in top HUD personal profile
+    const hudBadgesEl = $('hudBadgesStrip');
+    if (hudBadgesEl) {
+      const unlockedList = BADGES
+        .filter((b) => (state.unlockedBadges || []).includes(b.id))
+        .sort((a, b) => (b.special ? 1 : 0) - (a.special ? 1 : 0));
+      const shown = unlockedList.slice(0, 8);
+      const extra = unlockedList.length - shown.length;
+      const curStreak = state.currentCorrectStreak || 0;
+      const streakHtml = curStreak >= 2
+        ? `<span class="hud-streak-pill" title="กำลังตอบถูกต่อเนื่อง ${curStreak} ข้อ (สูงสุด ${state.bestCorrectStreak || curStreak} ข้อ)">🔥 ${curStreak} ติด</span>`
+        : '';
+      if (shown.length || streakHtml) {
+        hudBadgesEl.innerHTML =
+          shown.map((b) =>
+            `<span class="hud-badge-ico ${b.special ? 'is-special' : ''}" title="${b.emoji} ${b.name} — ${b.desc}">${b.emoji}</span>`
+          ).join('') +
+          (extra > 0 ? `<span class="hud-badge-more" title="ดูเหรียญตราทั้งหมด (${unlockedList.length}/${BADGES.length})">+${extra}</span>` : '') +
+          streakHtml;
+      } else {
+        hudBadgesEl.innerHTML = `<span class="hud-badge-more" title="คลิกเพื่อดูรายการเหรียญตรา">🏆 0/${BADGES.length} เหรียญตรา</span>`;
+      }
+    }
     updateCloudBadges();
 
     // Auto-fill Exam name/studentId from logged-in account
@@ -3131,12 +3178,17 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       blitz.correct += 1;
       blitz.combo = Math.min(6, blitz.combo + 1);
       blitz.timeLeft = Math.min(60, blitz.timeLeft + 2);
+      state.currentCorrectStreak = (state.currentCorrectStreak || 0) + 1;
+      state.bestCorrectStreak = Math.max(state.bestCorrectStreak || 0, state.currentCorrectStreak);
+      checkBadges();
+      renderHud();
       fb.style.color = 'var(--accent)';
       fb.textContent = `⚡ ถูกต้อง! +${gained} คะแนน (+2 วิ) — ${blitz.current.fact}`;
     } else {
       SoundFX.wrong();
       blitz.combo = 1;
       blitz.timeLeft = Math.max(0, blitz.timeLeft - 3);
+      state.currentCorrectStreak = 0;
       const lostXp = deductXp(5);
       fb.style.color = 'var(--danger)';
       fb.textContent = `❌ ผิด! (-3 วิ${lostXp > 0 ? `, -${lostXp} XP` : ''}) — ${blitz.current.fact}`;
@@ -3843,11 +3895,12 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     $('badgesProgressBar').style.width = `${pct}%`;
 
     const readyEl = $('badgesExamReadyText');
+    const streakSummary = ` • 🔥 ตอบถูกติดกันสูงสุด ${state.bestCorrectStreak || 0} ข้อ (ปัจจุบัน ${state.currentCorrectStreak || 0})`;
     if (elig.eligible) {
-      readyEl.textContent = `✅ ปลดล็อกสิทธิ์สอบรับรองแล้ว! (ครบ ${elig.total}/${elig.total} เหรียญตราบังคับ • สะสมรวม ${unlockedTotal}/${BADGES.length} เหรียญ)`;
+      readyEl.textContent = `✅ ปลดล็อกสิทธิ์สอบรับรองแล้ว! (ครบ ${elig.total}/${elig.total} เหรียญตราบังคับ • สะสมรวม ${unlockedTotal}/${BADGES.length} เหรียญ${streakSummary})`;
       readyEl.style.color = 'var(--accent)';
     } else {
-      readyEl.textContent = `🔒 สะสมแล้ว ${elig.unlockedCount}/${elig.total} เหรียญบังคับ — ขาดอีก ${elig.missing.length} เหรียญจึงจะปลดล็อกสิทธิ์เข้าสอบรับรอง`;
+      readyEl.textContent = `🔒 สะสมแล้ว ${elig.unlockedCount}/${elig.total} เหรียญบังคับ — ขาดอีก ${elig.missing.length} เหรียญจึงจะปลดล็อกสิทธิ์เข้าสอบรับรอง${streakSummary}`;
       readyEl.style.color = 'var(--gold)';
     }
 
@@ -3857,9 +3910,9 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       const unlocked = state.unlockedBadges.includes(b.id);
       const targetScreen = b.id === 'certified' ? 'exam' : (BADGE_SCREEN_MAP[b.id] || 'map');
       const card = document.createElement('div');
-      card.className = `badge-item badge-card-full ${unlocked ? 'unlocked' : 'locked'}`;
+      card.className = `badge-item badge-card-full badge-card ${b.special ? 'special-badge' : ''} ${unlocked ? 'unlocked' : 'locked'}`;
       card.innerHTML = `
-        <div class="badge-status-pill ${unlocked ? 'ok' : ''}">${unlocked ? '✅ ปลดล็อกแล้ว' : '🔒 ยังไม่ปลดล็อก'}</div>
+        <div class="badge-status-pill ${unlocked ? 'ok' : ''}">${unlocked ? (b.special ? '✨ เหรียญพิเศษ • ปลดล็อกแล้ว' : '✅ ปลดล็อกแล้ว') : (b.special ? '🌟 เหรียญพิเศษ' : '🔒 ยังไม่ปลดล็อก')}</div>
         <div class="badge-emoji">${b.emoji}</div>
         <div class="badge-name">${b.name}</div>
         <div class="badge-desc">${b.desc}</div>
@@ -3900,7 +3953,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
   /* ==================== SCREEN 8: GUILD CERTIFICATION EXAM ==================== */
   const EXAM_QUESTION_COUNT = 30;
-  const EXAM_REQUIRED_BADGES = BADGES.filter((b) => b.id !== 'certified');
+  const EXAM_REQUIRED_BADGES = BADGES.filter((b) => b.id !== 'certified' && !b.special);
   const BADGE_SCREEN_MAP = {
     first_blood: 'map',
     zone1_clear: 'map',
@@ -4764,6 +4817,10 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
   $('enterGameBtn').addEventListener('click', enterGame);
   $('hudHomeBtn').addEventListener('click', returnToTitle);
   $('hudProfileBtn').addEventListener('click', openAvatarModal);
+  $('hudBadgesStrip')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    switchScreen('badges');
+  });
   $('titleChangeAvatarBtn').addEventListener('click', openAvatarModal);
   $('closeAvatarModalBtn').addEventListener('click', closeAvatarModal);
   $('avatarModal').addEventListener('click', (e) => {

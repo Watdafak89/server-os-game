@@ -108,7 +108,10 @@ const BADGES = [
   { id: 'subnet_guru', emoji: '📡', name: 'เซียนคำนวณ IP & Subnet', desc: 'ผ่านภารกิจ IP & Subnet Medic ครบ 6 ด่าน' },
   { id: 'puzzle_master', emoji: '🧩', name: 'ยอดนักไขปริศนา', desc: 'ผ่านทั้ง CHMOD และ RAID อย่างน้อย 4 ด่าน' },
   { id: 'vbox_master', emoji: '💿', name: 'ปรมาจารย์ VirtualBox', desc: 'จำลองติดตั้ง OS บน VirtualBox ครบทั้ง 5 ระบบ' },
-  { id: 'certified', emoji: '🎓', name: 'Certified SysAdmin', desc: 'สอบผ่าน Guild Exam ตั้งแต่ 70% ขึ้นไป' }
+  { id: 'certified', emoji: '🎓', name: 'Certified SysAdmin', desc: 'สอบผ่าน Guild Exam ตั้งแต่ 70% ขึ้นไป' },
+  { id: 'streak_5', emoji: '🔥', name: 'สตรีค 5 ข้อติด!', desc: 'ตอบคำถามถูกต้องติดต่อกัน 5 ข้อขึ้นไป', special: true },
+  { id: 'streak_10', emoji: '🌟', name: 'อัจฉริยะ 10 ข้อติด!', desc: 'ตอบคำถามถูกต้องติดต่อกัน 10 ข้อขึ้นไป', special: true },
+  { id: 'streak_20', emoji: '💎', name: 'เทพเจ้าไร้พ่าย 20 ข้อติด!', desc: 'ตอบคำถามถูกต้องติดต่อกัน 20 ข้อขึ้นไป', special: true }
 ];
 
 /* ==================== 6 CAMPAIGN ZONES (18 STAGES = 42 QUESTIONS) ==================== */
