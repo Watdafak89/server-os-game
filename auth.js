@@ -971,7 +971,7 @@ const AuthSystem = (() => {
 
     const header = [
       'รหัสนักศึกษา', 'ชื่อ-นามสกุล', 'ห้องเรียน', 'XP รวม',
-      'ดาวแคมเปญ (เต็ม 72)', 'แล็บ CLI (เต็ม 30)', 'Packet Defense สูงสุด',
+      'ดาวแคมเปญ (เต็ม 450)', 'แล็บ CLI (เต็ม 30)', 'VirtualBox (เต็ม 5)', 'Packet Defense สูงสุด',
       'Lightning Blitz สูงสุด', 'คะแนนสอบสูงสุด (เต็ม 30)', 'เกียรติบัตร', 'เหรียญตรา', 'อัปเดตล่าสุด'
     ];
 
@@ -985,6 +985,7 @@ const AuthSystem = (() => {
         g.importedStars || 0
       );
       const labs = Math.max((g.completedLabs || []).length, g.importedLabs || 0);
+      const vbox = Array.isArray(g.installedVms) ? g.installedVms.length : 0;
       const badges = Math.max((g.unlockedBadges || []).length, g.importedBadges || 0);
       lines.push([
         acc.username,
@@ -993,6 +994,7 @@ const AuthSystem = (() => {
         g.xp || 0,
         stars,
         labs,
+        vbox,
         g.defenseHighScore || 0,
         g.blitzHighScore || 0,
         g.examBestScore || 0,

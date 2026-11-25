@@ -4011,10 +4011,13 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       g.importedStars || 0
     );
     const labs = Math.max((g.completedLabs || []).length, g.importedLabs || 0);
+    const vboxList = Array.isArray(g.installedVms) ? g.installedVms : [];
     return {
       xp: g.xp || 0,
       stars,
       labs,
+      vbox: vboxList.length,
+      vboxList,
       defense: g.defenseHighScore || 0,
       exam: g.examBestScore || 0,
       passed: Boolean(g.examPassed),
@@ -4037,6 +4040,9 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
     const maxStars = ALL_STAGES_FLAT.length * 3;
     const maxLabs = CLI_LABS.length;
+    const maxVbox = (typeof VBoxSim !== 'undefined' && Array.isArray(VBoxSim.OS_MISSIONS))
+      ? VBoxSim.OS_MISSIONS.length
+      : 5;
 
     // Top 3 Podium
     const podium = $('lbPodium');
@@ -4142,6 +4148,9 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
     const maxStars = ALL_STAGES_FLAT.length * 3;
     const maxLabs = CLI_LABS.length;
+    const maxVbox = (typeof VBoxSim !== 'undefined' && Array.isArray(VBoxSim.OS_MISSIONS))
+      ? VBoxSim.OS_MISSIONS.length
+      : 5;
 
     $('teacherKpis').innerHTML = `
       <div class="kpi-card"><span>นักศึกษาทั้งหมด</span><strong>${count} คน</strong></div>
@@ -4175,9 +4184,16 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     const tbody = $('teacherTableBody');
     tbody.innerHTML = '';
     if (!filtered.length) {
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:1.5rem;">ไม่พบข้อมูลนักศึกษาตามเงื่อนไข</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:1.5rem;">ไม่พบข้อมูลนักศึกษาตามเงื่อนไข</td></tr>';
     } else {
       filtered.forEach(({ acc, m }) => {
+        const vboxNames = (m.vboxList || []).map((id) => {
+          const found = typeof VBoxSim !== 'undefined' && VBoxSim.OS_MISSIONS
+            ? VBoxSim.OS_MISSIONS.find((x) => x.id === id)
+            : null;
+          return found ? found.shortName : id;
+        });
+        const vboxTitle = vboxNames.length ? `ติดตั้งแล้ว: ${vboxNames.join(', ')}` : 'ยังไม่ได้ติดตั้ง VM ใน VirtualBox';
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><code>${acc.username}</code></td>
@@ -4186,6 +4202,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
           <td><strong>${m.xp.toLocaleString()}</strong></td>
           <td>⭐ ${m.stars}/${maxStars}</td>
           <td>💻 ${m.labs}/${maxLabs}</td>
+          <td title="${vboxTitle}">💿 ${m.vbox}/${maxVbox}</td>
           <td>${m.defense.toLocaleString()}</td>
           <td>${m.exam}/${EXAM_QUESTION_COUNT}</td>
           <td>${m.passed ? '<span class="role-badge">ผ่าน ✓</span>' : '<span class="muted-text">ยังไม่ผ่าน</span>'}</td>
