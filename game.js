@@ -83,12 +83,17 @@
       dailyQuests: { ...base.dailyQuests, ...(saved.dailyQuests || {}) }
     };
     if (currentAccount.role !== 'teacher') state.freePlay = false;
+    if (currentAccount.username === 'teacher') state.xp = 0;
     ensureTodayQuests();
     return true;
   }
 
   function isTeacherAccount() {
     return currentAccount?.role === 'teacher';
+  }
+
+  function isDemoTeacherAccount() {
+    return currentAccount?.username === 'teacher';
   }
 
   function canUseFreePlay() {
@@ -174,11 +179,12 @@
   }
 
   function grantRewards(xp, coins) {
+    const demoNoXp = isDemoTeacherAccount();
     const oldLv = getRankInfo(state.xp).level;
-    state.xp = Math.max(0, (state.xp || 0) + xp);
+    state.xp = demoNoXp ? 0 : Math.max(0, (state.xp || 0) + xp);
     state.coins = Math.max(0, (state.coins || 0) + coins);
     const newInfo = getRankInfo(state.xp);
-    if (xp > 0 && newInfo.level > oldLv) {
+    if (!demoNoXp && xp > 0 && newInfo.level > oldLv) {
       SoundFX.levelUp();
       showToast(`🎉 LEVEL UP! เลื่อนขั้นเป็น LV.${newInfo.level} — ${newInfo.title}`);
     }
@@ -4045,8 +4051,9 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     );
     const labs = Math.max((g.completedLabs || []).length, g.importedLabs || 0);
     const vboxList = Array.isArray(g.installedVms) ? g.installedVms : [];
+    const effectiveXp = acc.username === 'teacher' ? 0 : (g.xp || 0);
     return {
-      xp: g.xp || 0,
+      xp: effectiveXp,
       stars,
       labs,
       vbox: vboxList.length,
@@ -4055,7 +4062,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       exam: g.examBestScore || 0,
       passed: Boolean(g.examPassed),
       avatar: g.avatar || '👨‍💻',
-      rank: getRankInfo(g.xp || 0)
+      rank: getRankInfo(effectiveXp)
     };
   }
 

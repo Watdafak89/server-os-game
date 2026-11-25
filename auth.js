@@ -180,11 +180,17 @@ const AuthSystem = (() => {
         lastLogin: new Date().toISOString(),
         gameData: {
           ...createEmptyGameData('อาจารย์ผู้สอน', 'avatar6'),
+          xp: 0,
           freePlay: true,
           coins: 999
         }
       };
       changed = true;
+    } else if (accounts['teacher'].gameData && (accounts['teacher'].gameData.xp || 0) !== 0) {
+      accounts['teacher'].gameData.xp = 0;
+      accounts['teacher'].updatedAt = new Date().toISOString();
+      changed = true;
+      syncAccountToCloud(accounts['teacher']).catch(() => {});
     }
 
     if (!accounts['student01']) {
@@ -521,6 +527,9 @@ const AuthSystem = (() => {
       let count = 0;
       Object.values(cloudData).forEach((acc) => {
         if (!acc || !acc.username) return;
+        if (acc.username === 'teacher' && acc.gameData) {
+          acc.gameData.xp = 0;
+        }
         const prev = local[acc.username];
         if (shouldAcceptCloudAccount(prev, acc)) {
           local[acc.username] = acc;
@@ -670,6 +679,10 @@ const AuthSystem = (() => {
     }
 
     acc.lastLogin = new Date().toISOString();
+    if (acc.username === 'teacher' && acc.gameData) {
+      acc.gameData.xp = 0;
+      syncAccountToCloud(acc).catch(() => {});
+    }
     latestAccounts[cleanUser] = acc;
     saveAccounts(latestAccounts);
     setSession(cleanUser);
@@ -709,6 +722,9 @@ const AuthSystem = (() => {
     if (!uname) return;
     const accounts = loadAccounts();
     if (!accounts[uname]) return;
+    if (uname === 'teacher' && gameData) {
+      gameData.xp = 0;
+    }
     accounts[uname].gameData = gameData;
     accounts[uname].updatedAt = new Date().toISOString();
     saveAccounts(accounts);
