@@ -120,6 +120,13 @@
     return currentAccount?.username === 'teacher';
   }
 
+  function blockDemoTeacherWrite() {
+    if (!isDemoTeacherAccount()) return false;
+    SoundFX.wrong();
+    showToast('🔒 บัญชีครูทดลอง (Demo) เป็นโหมดดูตัวอย่างเท่านั้น — ไม่สามารถบันทึกหรือแก้ไขข้อมูลในฐานข้อมูลได้');
+    return true;
+  }
+
   function canUseFreePlay() {
     return isTeacherAccount() && Boolean(state.freePlay);
   }
@@ -1819,7 +1826,7 @@
   });
 
   $('zoneLockResetBtn')?.addEventListener('click', async () => {
-    if (!isTeacherAccount()) return;
+    if (!isTeacherAccount() || blockDemoTeacherWrite()) return;
     SoundFX.click();
     zoneLockDraft = {
       mode: 'sequential',
@@ -1841,6 +1848,7 @@
       showToast('🔒 สงวนสิทธิ์เฉพาะครูผู้สอนเท่านั้น');
       return;
     }
+    if (blockDemoTeacherWrite()) return;
     SoundFX.levelUp();
     const btn = $('zoneLockSaveBtn');
     btn.disabled = true;
@@ -1863,6 +1871,7 @@
       showToast('🔒 สงวนสิทธิ์เฉพาะครูผู้สอนเท่านั้น');
       return;
     }
+    if (blockDemoTeacherWrite()) return;
     const classroom = ($('mapResetClassSelect')?.value || '').trim();
     const resetXpAndCoins = Boolean($('mapResetXpCoinsToggle')?.checked);
     const scopeLabel = classroom ? `ห้อง "${classroom}"` : 'ทุกคนทุกห้อง';
@@ -1904,6 +1913,7 @@
       showToast('🔒 สงวนสิทธิ์เฉพาะครูผู้สอนเท่านั้น');
       return;
     }
+    if (blockDemoTeacherWrite()) return;
     const classroom = ($('mapResetClassSelect')?.value || '').trim();
     const scopeLabel = classroom ? `ห้อง "${classroom}"` : 'ทุกคนทุกห้อง';
     const ok = confirm(
@@ -4506,6 +4516,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
       tbody.querySelectorAll('.t-add-xp').forEach((btn) => {
         btn.addEventListener('click', async () => {
+          if (blockDemoTeacherWrite()) return;
           const u = btn.dataset.u;
           const fullName = btn.dataset.name || u;
           const raw = prompt(`✨ มอบโบนัส XP ให้ "${fullName}" (@${u}) เมื่อตอบคำถามได้:\nกรอกจำนวน XP ที่ต้องการเพิ่ม`, '50');
@@ -4527,6 +4538,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
       tbody.querySelectorAll('.t-reset-xp').forEach((btn) => {
         btn.addEventListener('click', async () => {
+          if (blockDemoTeacherWrite()) return;
           const u = btn.dataset.u;
           if (confirm(`⚡ รีเซ็ตค่า XP ของ "${u}" กลับเป็น 0 XP ใช่หรือไม่?`)) {
             const res = await AuthSystem.resetStudentXp(u);
@@ -4541,6 +4553,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
       tbody.querySelectorAll('.t-reset-map').forEach((btn) => {
         btn.addEventListener('click', async () => {
+          if (blockDemoTeacherWrite()) return;
           const u = btn.dataset.u;
           if (confirm(`🔄 รีเซ็ตการตะลุยแผนที่ของ "${u}" กลับไปเริ่มต้นที่ Zone 1 ใช่หรือไม่?\n(ล้างดาวแคมเปญและโซนที่ผ่านแล้ว แต่ยังคงคะแนนสอบและ CLI Lab ไว้)`)) {
             const res = await AuthSystem.resetStudentMapProgress(u);
@@ -4555,6 +4568,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
       tbody.querySelectorAll('.t-reset-pw').forEach((btn) => {
         btn.addEventListener('click', async () => {
+          if (blockDemoTeacherWrite()) return;
           const u = btn.dataset.u;
           if (confirm(`รีเซ็ตรหัสผ่านของ "${u}" เป็น 123456 ใช่หรือไม่?`)) {
             await AuthSystem.resetUserPassword(u, '123456');
@@ -4565,6 +4579,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
       tbody.querySelectorAll('.t-del-u').forEach((btn) => {
         btn.addEventListener('click', async () => {
+          if (blockDemoTeacherWrite()) return;
           const u = btn.dataset.u;
           if (confirm(`ต้องการลบบัญชีนักศึกษา "${u}" ออกจากระบบใช่หรือไม่?`)) {
             await AuthSystem.deleteAccount(u);
@@ -4609,7 +4624,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
   });
 
   $('teacherResetAllMapBtn')?.addEventListener('click', async () => {
-    if (!isTeacherAccount()) return;
+    if (!isTeacherAccount() || blockDemoTeacherWrite()) return;
     const classroom = ($('teacherClassFilter')?.value || '').trim();
     const scopeLabel = classroom ? `ห้อง "${classroom}"` : 'ทุกคนทุกห้อง';
     const ok = confirm(
@@ -4641,7 +4656,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
   });
 
   $('teacherResetAllXpBtn')?.addEventListener('click', async () => {
-    if (!isTeacherAccount()) return;
+    if (!isTeacherAccount() || blockDemoTeacherWrite()) return;
     const classroom = ($('teacherClassFilter')?.value || '').trim();
     const scopeLabel = classroom ? `ห้อง "${classroom}"` : 'ทุกคนทุกห้อง';
     const ok = confirm(
@@ -4681,7 +4696,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
   });
 
   $('teacherGrantXpBtn')?.addEventListener('click', async () => {
-    if (!isTeacherAccount()) return;
+    if (!isTeacherAccount() || blockDemoTeacherWrite()) return;
     const target = ($('teacherGrantStudentSelect')?.value || '').trim();
     const amount = Math.round(Number($('teacherGrantXpAmount')?.value || 0));
     const reason = ($('teacherGrantXpReason')?.value || '').trim() || 'ตอบคำถามในห้องเรียนได้';
@@ -4778,6 +4793,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
   });
 
   $('saveCloudUrlBtn').addEventListener('click', async () => {
+    if (blockDemoTeacherWrite()) return;
     SoundFX.click();
     const inputUrl = $('cloudUrlInput').value.trim();
     if (!inputUrl) {
@@ -4825,6 +4841,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
   });
 
   $('bulkRosterImportBtn').addEventListener('click', async () => {
+    if (blockDemoTeacherWrite()) return;
     SoundFX.click();
     const text = $('bulkRosterInput').value.trim();
     if (!text) {

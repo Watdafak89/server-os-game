@@ -6,7 +6,12 @@ const AuthSystem = (() => {
   const MAP_LOCK_KEY = 'serverops_map_lock_v1';
   const MAP_LOCK_CLOUD_KEY = '__map_settings__';
   const TEACHER_SIGNUP_CODE = 'TEACHER2026';
+  const DEMO_READONLY_ERR = '🔒 บัญชีครูทดลอง (Demo) เป็นโหมดดูตัวอย่างเท่านั้น — ไม่สามารถบันทึกหรือแก้ไขข้อมูลในฐานข้อมูลได้';
   let demoTeacherMemoryAccount = null;
+
+  function isDemoTeacherSession() {
+    return getSessionUsername() === 'teacher';
+  }
 
   /* Pure-JS SHA-256 fallback (works even on file:// where crypto.subtle may be unavailable) */
   function fallbackHash(str) {
@@ -74,6 +79,7 @@ const AuthSystem = (() => {
   }
 
   function setCloudUrl(url) {
+    if (isDemoTeacherSession()) return getCloudUrl();
     const clean = sanitizeCloudUrl(url);
     try {
       if (clean) localStorage.setItem(CLOUD_URL_KEY, clean);
@@ -283,6 +289,9 @@ const AuthSystem = (() => {
   }
 
   async function saveMapLockConfig(nextCfg, updatedBy) {
+    if (isDemoTeacherSession()) {
+      return { ok: false, synced: false, error: DEMO_READONLY_ERR, config: getMapLockConfig() };
+    }
     const normalized = normalizeMapLockConfig({
       ...getMapLockConfig(),
       ...nextCfg,
@@ -421,6 +430,7 @@ const AuthSystem = (() => {
   }
 
   async function resetStudentMapProgress(username, options = {}) {
+    if (isDemoTeacherSession()) return { ok: false, error: DEMO_READONLY_ERR };
     const accounts = loadAccounts();
     const acc = accounts[username];
     if (!acc || acc.role === 'teacher') return { ok: false, error: 'ไม่พบบัญชีนักศึกษา' };
@@ -432,6 +442,7 @@ const AuthSystem = (() => {
   }
 
   async function resetStudentsMapProgress(options = {}) {
+    if (isDemoTeacherSession()) return { ok: false, count: 0, synced: 0, error: DEMO_READONLY_ERR };
     const classroom = (options.classroom || '').trim();
     const accounts = loadAccounts();
     const targets = Object.values(accounts).filter((acc) => {
@@ -472,6 +483,7 @@ const AuthSystem = (() => {
   }
 
   async function resetStudentXp(username) {
+    if (isDemoTeacherSession()) return { ok: false, error: DEMO_READONLY_ERR };
     const accounts = loadAccounts();
     const acc = accounts[username];
     if (!acc || acc.role === 'teacher') return { ok: false, error: 'ไม่พบบัญชีนักศึกษา' };
@@ -483,6 +495,7 @@ const AuthSystem = (() => {
   }
 
   async function resetStudentsXp(options = {}) {
+    if (isDemoTeacherSession()) return { ok: false, count: 0, synced: 0, error: DEMO_READONLY_ERR };
     const classroom = (options.classroom || '').trim();
     const accounts = loadAccounts();
     const targets = Object.values(accounts).filter((acc) => {
@@ -533,6 +546,7 @@ const AuthSystem = (() => {
   }
 
   async function grantStudentXp(username, amount, reason = '') {
+    if (isDemoTeacherSession()) return { ok: false, error: DEMO_READONLY_ERR };
     const delta = Math.round(Number(amount) || 0);
     if (!delta) return { ok: false, error: 'กรุณาระบุจำนวน XP ที่ไม่เป็น 0' };
     const accounts = loadAccounts();
@@ -546,6 +560,7 @@ const AuthSystem = (() => {
   }
 
   async function grantStudentsXp({ classroom = '', amount = 50, reason = '' } = {}) {
+    if (isDemoTeacherSession()) return { ok: false, count: 0, synced: 0, error: DEMO_READONLY_ERR };
     const delta = Math.round(Number(amount) || 0);
     if (!delta) return { ok: false, count: 0, synced: 0, error: 'กรุณาระบุจำนวน XP ที่ไม่เป็น 0' };
     const cleanClass = (classroom || '').trim();
@@ -612,6 +627,7 @@ const AuthSystem = (() => {
   }
 
   async function pushAllToCloud() {
+    if (isDemoTeacherSession()) return { ok: false, error: DEMO_READONLY_ERR };
     const base = getCloudUrl();
     if (!base) return { ok: false, error: 'ยังไม่ได้ตั้งค่า Firebase URL' };
     const list = Object.values(loadAccounts());
@@ -851,6 +867,7 @@ const AuthSystem = (() => {
   }
 
   async function deleteAccount(username) {
+    if (isDemoTeacherSession()) return false;
     const accounts = loadAccounts();
     if (!accounts[username] || username === getSessionUsername()) return false;
     delete accounts[username];
@@ -947,6 +964,7 @@ const AuthSystem = (() => {
   }
 
   async function bulkImportStudents(rawText) {
+    if (isDemoTeacherSession()) return { ok: false, error: DEMO_READONLY_ERR };
     const lines = (rawText || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
     if (!lines.length) return { ok: false, error: 'กรุณาวางรายชื่อนักศึกษาอย่างน้อย 1 บรรทัด' };
 
@@ -1010,6 +1028,7 @@ const AuthSystem = (() => {
   }
 
   async function resetUserPassword(username, newPassword) {
+    if (isDemoTeacherSession()) return false;
     const accounts = loadAccounts();
     if (!accounts[username]) return false;
     accounts[username].passwordHash = await hashPassword(newPassword, username);
@@ -1045,6 +1064,7 @@ const AuthSystem = (() => {
   }
 
   function importScoreReport(codeStr) {
+    if (isDemoTeacherSession()) return { ok: false, error: DEMO_READONLY_ERR };
     try {
       const cleaned = (codeStr || '').trim();
       if (!cleaned.startsWith('SOPS2:')) {
@@ -1180,6 +1200,7 @@ const AuthSystem = (() => {
     resetStudentXp,
     resetStudentsXp,
     grantStudentXp,
-    grantStudentsXp
+    grantStudentsXp,
+    isDemoTeacherSession
   };
 })();
