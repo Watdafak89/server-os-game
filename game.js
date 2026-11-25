@@ -4891,8 +4891,9 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
   });
 
   $('toggleTeacherRegBtn')?.addEventListener('click', () => {
-    SoundFX.click();
-    setTeacherRegMode(!teacherRegMode);
+    SoundFX.wrong();
+    setTeacherRegMode(false);
+    showAuthInfo('🔒 เมนูสมัครบัญชีครูผู้สอนใหม่ยังไม่เปิดใช้งานในขณะนี้ — กรุณาใช้บัญชีครูที่มีอยู่แล้วหรือบัญชีทดลอง (teacher)');
   });
 
   $('fillDemoTeacherBtn')?.addEventListener('click', () => {
