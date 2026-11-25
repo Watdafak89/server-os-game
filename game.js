@@ -106,8 +106,8 @@
       ALL_STAGES_FLAT.forEach((st) => {
         state.stageStars[st.id] = 3;
       });
+      state.xp = 9999;
     }
-    if (currentAccount.username === 'teacher') state.xp = 0;
     ensureTodayQuests();
     return true;
   }
@@ -217,12 +217,12 @@
   }
 
   function grantRewards(xp, coins) {
-    const demoNoXp = isDemoTeacherAccount();
+    const teacherMax = isTeacherAccount();
     const oldLv = getRankInfo(state.xp).level;
-    state.xp = demoNoXp ? 0 : Math.max(0, (state.xp || 0) + xp);
+    state.xp = teacherMax ? 9999 : Math.max(0, (state.xp || 0) + xp);
     state.coins = Math.max(0, (state.coins || 0) + coins);
     const newInfo = getRankInfo(state.xp);
-    if (!demoNoXp && xp > 0 && newInfo.level > oldLv) {
+    if (!teacherMax && xp > 0 && newInfo.level > oldLv) {
       SoundFX.levelUp();
       showToast(`🎉 LEVEL UP! เลื่อนขั้นเป็น LV.${newInfo.level} — ${newInfo.title}`);
     }
@@ -4280,7 +4280,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     );
     const labs = Math.max((g.completedLabs || []).length, g.importedLabs || 0);
     const vboxList = Array.isArray(g.installedVms) ? g.installedVms : [];
-    const effectiveXp = acc.username === 'teacher' ? 0 : (g.xp || 0);
+    const effectiveXp = acc.role === 'teacher' ? 9999 : (g.xp || 0);
     return {
       xp: effectiveXp,
       stars,
