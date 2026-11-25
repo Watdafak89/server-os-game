@@ -3,6 +3,8 @@ const AuthSystem = (() => {
   const ACCOUNTS_KEY = 'serverops_accounts_v2';
   const SESSION_KEY = 'serverops_session_v2';
   const CLOUD_URL_KEY = 'serverops_cloud_url_v2';
+  const MAP_LOCK_KEY = 'serverops_map_lock_v1';
+  const MAP_LOCK_CLOUD_KEY = '__map_settings__';
   const TEACHER_SIGNUP_CODE = 'TEACHER2026';
 
   /* Pure-JS SHA-256 fallback (works even on file:// where crypto.subtle may be unavailable) */
@@ -205,6 +207,110 @@ const AuthSystem = (() => {
     return accounts;
   }
 
+  /* ==================== MAP ZONE LOCK SETTINGS (LOCAL + CLOUD) ==================== */
+  const VALID_LOCK_MODES = ['sequential', 'unlock_all', 'up_to', 'custom'];
+
+  function defaultMapLockConfig() {
+    return {
+      _isMapSettings: true,
+      mode: 'sequential',
+      maxZone: 10,
+      upToFreeAccess: false,
+      unlockedZones: ['z1'],
+      customFreeAccess: true,
+      updatedAt: '',
+      updatedBy: ''
+    };
+  }
+
+  function normalizeMapLockConfig(raw) {
+    const def = defaultMapLockConfig();
+    if (!raw || typeof raw !== 'object') return def;
+    const mode = VALID_LOCK_MODES.includes(raw.mode) ? raw.mode : 'sequential';
+    const maxZoneNum = Math.max(1, Math.min(50, Math.round(Number(raw.maxZone) || 10)));
+    const unlockedZones = Array.isArray(raw.unlockedZones)
+      ? [...new Set(raw.unlockedZones.map((z) => String(z)).filter(Boolean))]
+      : ['z1'];
+    if (!unlockedZones.length) unlockedZones.push('z1');
+    return {
+      _isMapSettings: true,
+      mode,
+      maxZone: maxZoneNum,
+      upToFreeAccess: Boolean(raw.upToFreeAccess),
+      unlockedZones,
+      customFreeAccess: raw.customFreeAccess === undefined ? true : Boolean(raw.customFreeAccess),
+      updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : '',
+      updatedBy: typeof raw.updatedBy === 'string' ? raw.updatedBy : ''
+    };
+  }
+
+  function getMapLockConfig() {
+    try {
+      const raw = localStorage.getItem(MAP_LOCK_KEY);
+      if (raw) return normalizeMapLockConfig(JSON.parse(raw));
+    } catch {
+      // ignore
+    }
+    return defaultMapLockConfig();
+  }
+
+  function writeLocalMapLockConfig(cfg) {
+    try {
+      localStorage.setItem(MAP_LOCK_KEY, JSON.stringify(cfg));
+    } catch {
+      // ignore
+    }
+  }
+
+  function mergeCloudMapLockConfig(cloudRaw) {
+    if (!cloudRaw || typeof cloudRaw !== 'object' || !cloudRaw._isMapSettings) return false;
+    const incoming = normalizeMapLockConfig(cloudRaw);
+    const local = getMapLockConfig();
+    const localTime = local.updatedAt ? new Date(local.updatedAt).getTime() : 0;
+    const cloudTime = incoming.updatedAt ? new Date(incoming.updatedAt).getTime() : 0;
+    if (!local.updatedAt || cloudTime >= localTime) {
+      writeLocalMapLockConfig(incoming);
+      return true;
+    }
+    return false;
+  }
+
+  async function saveMapLockConfig(nextCfg, updatedBy) {
+    const normalized = normalizeMapLockConfig({
+      ...getMapLockConfig(),
+      ...nextCfg,
+      updatedAt: new Date().toISOString(),
+      updatedBy: updatedBy || getCurrentAccount()?.fullName || 'ครูผู้สอน'
+    });
+    writeLocalMapLockConfig(normalized);
+    const base = getCloudUrl();
+    if (!base) return { ok: true, synced: false, config: normalized };
+    try {
+      const res = await fetch(`${base}/serverops_accounts/${MAP_LOCK_CLOUD_KEY}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(normalized)
+      });
+      return { ok: true, synced: res.ok, status: res.status, config: normalized };
+    } catch {
+      return { ok: true, synced: false, status: 0, config: normalized };
+    }
+  }
+
+  async function pullMapLockConfigFromCloud() {
+    const base = getCloudUrl();
+    if (!base) return { ok: false, config: getMapLockConfig() };
+    try {
+      const res = await fetch(`${base}/serverops_accounts/${MAP_LOCK_CLOUD_KEY}.json`);
+      if (!res.ok) return { ok: false, config: getMapLockConfig() };
+      const data = await res.json();
+      const changed = mergeCloudMapLockConfig(data);
+      return { ok: true, changed, config: getMapLockConfig() };
+    } catch {
+      return { ok: false, config: getMapLockConfig() };
+    }
+  }
+
   /* ==================== FIREBASE RTDB REST SYNC ==================== */
   async function syncAccountToCloud(account) {
     const base = getCloudUrl();
@@ -263,6 +369,9 @@ const AuthSystem = (() => {
       if (!cloudData || typeof cloudData !== 'object') {
         return { ok: true, count: 0 };
       }
+      if (cloudData[MAP_LOCK_CLOUD_KEY]) {
+        mergeCloudMapLockConfig(cloudData[MAP_LOCK_CLOUD_KEY]);
+      }
       const local = loadAccounts();
       let count = 0;
       Object.values(cloudData).forEach((acc) => {
@@ -293,6 +402,14 @@ const AuthSystem = (() => {
       else if (r.status === 401 || r.status === 403) {
         return { ok: false, error: 'ติดสิทธิ์เขียนข้อมูล Firebase Rules (401/403)' };
       }
+    }
+    const lockCfg = getMapLockConfig();
+    if (lockCfg.updatedAt) {
+      await fetch(`${base}/serverops_accounts/${MAP_LOCK_CLOUD_KEY}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lockCfg)
+      }).catch(() => {});
     }
     return { ok: true, synced };
   }
@@ -783,6 +900,9 @@ const AuthSystem = (() => {
     testCloudConnection,
     syncAccountToCloud,
     pullAllFromCloud,
-    pushAllToCloud
+    pushAllToCloud,
+    getMapLockConfig,
+    saveMapLockConfig,
+    pullMapLockConfigFromCloud
   };
 })();

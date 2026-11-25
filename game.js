@@ -710,8 +710,7 @@
       const cZones = CAMPAIGN_ZONES.map((z, idx) => ({ z, idx })).filter(({ z }) => (z.continent || 1) === cont.id);
       const earned = cZones.reduce((sum, { z }) => sum + z.stages.reduce((s, st) => s + (state.stageStars[st.id] || 0), 0), 0);
       const maxS = cZones.reduce((sum, { z }) => sum + z.stages.length * 3, 0);
-      const firstIdx = cZones[0]?.idx ?? 0;
-      const unlocked = isZoneUnlocked(firstIdx);
+      const unlocked = cZones.some(({ idx }) => isZoneUnlocked(idx));
       const active = cont.id === activeContinentId;
       const peersHere = peerMap.othersByContinent[cont.id] || 0;
 
@@ -740,23 +739,95 @@
     });
   }
 
-  function isStageUnlocked(flatIdx) {
-    if (canUseFreePlay() || flatIdx === 0) return true;
-    const stage = ALL_STAGES_FLAT[flatIdx];
-    if (stage && stage.id.endsWith('_s1') && (state.warpedZones || []).includes(stage.zoneId)) {
-      return true;
+  /* ==================== MAP ZONE LOCK MODE LOGIC ==================== */
+  function getMapLockConfig() {
+    return AuthSystem.getMapLockConfig();
+  }
+
+  function getMapLockModeShortLabel(cfg) {
+    const c = cfg || getMapLockConfig();
+    if (c.mode === 'unlock_all') return 'เปิดทุกโซน';
+    if (c.mode === 'up_to') return `เปิดถึง Z${c.maxZone}`;
+    if (c.mode === 'custom') return `กำหนดเอง (${(c.unlockedZones || []).length}/${CAMPAIGN_ZONES.length})`;
+    return 'ตามลำดับ';
+  }
+
+  function getMapLockModeLongLabel(cfg) {
+    const c = cfg || getMapLockConfig();
+    if (c.mode === 'unlock_all') {
+      return '🔓 โหมดปลดล็อกทุกโซน — นักศึกษาสามารถเข้าเล่นได้อิสระครบทั้ง 50 โซน';
     }
-    const prevStage = ALL_STAGES_FLAT[flatIdx - 1];
-    return Boolean(state.stageStars[prevStage.id]);
+    if (c.mode === 'up_to') {
+      const sub = c.upToFreeAccess
+        ? 'เข้าโซน 1–' + c.maxZone + ' ได้อิสระทันที'
+        : 'เล่นตามลำดับภายในโซน 1–' + c.maxZone;
+      return `🚧 โหมดจำกัดโซน — เปิดถึง Zone ${c.maxZone} (${sub} • โซน ${Math.min(50, c.maxZone + 1)}–50 ล็อกโดยครูผู้สอน)`;
+    }
+    if (c.mode === 'custom') {
+      const n = (c.unlockedZones || []).length;
+      const sub = c.customFreeAccess ? 'เข้าโซนที่เปิดได้ทันที' : 'ต้องผ่านตามลำดับภายในโซนที่เปิด';
+      return `🎛️ โหมดกำหนดรายโซน — ครูผู้สอนเปิดให้เล่น ${n}/${CAMPAIGN_ZONES.length} โซน (${sub})`;
+    }
+    return '🔒 โหมดล็อกตามลำดับ (ค่าเริ่มต้น) — ผ่าน MVP Boss ของโซนก่อนหน้าเพื่อเปิดโซนถัดไป';
+  }
+
+  function getZonePolicyForStudents(zoneIdx, cfg) {
+    const c = cfg || getMapLockConfig();
+    const zone = CAMPAIGN_ZONES[zoneIdx];
+    if (!zone) return { teacherLocked: true, freeEntry: false };
+    const zoneNum = zoneIdx + 1;
+
+    if (c.mode === 'unlock_all') {
+      return { teacherLocked: false, freeEntry: true };
+    }
+    if (c.mode === 'up_to') {
+      if (zoneNum > c.maxZone) {
+        return { teacherLocked: true, freeEntry: false };
+      }
+      return { teacherLocked: false, freeEntry: Boolean(c.upToFreeAccess) };
+    }
+    if (c.mode === 'custom') {
+      const isOpen = (c.unlockedZones || []).includes(zone.id);
+      if (!isOpen) {
+        return { teacherLocked: true, freeEntry: false };
+      }
+      return { teacherLocked: false, freeEntry: Boolean(c.customFreeAccess) };
+    }
+    return { teacherLocked: false, freeEntry: false };
+  }
+
+  function isZoneTeacherLocked(zoneIdx) {
+    return getZonePolicyForStudents(zoneIdx).teacherLocked;
   }
 
   function isZoneUnlocked(zoneIdx) {
-    if (canUseFreePlay() || zoneIdx === 0) return true;
+    if (canUseFreePlay()) return true;
     const zone = CAMPAIGN_ZONES[zoneIdx];
-    if (zone && (state.warpedZones || []).includes(zone.id)) return true;
+    if (!zone) return false;
+    const policy = getZonePolicyForStudents(zoneIdx);
+    if (policy.teacherLocked) return false;
+    if (policy.freeEntry || zoneIdx === 0) return true;
+    if ((state.warpedZones || []).includes(zone.id)) return true;
     const prevZone = CAMPAIGN_ZONES[zoneIdx - 1];
     const prevBoss = prevZone.stages[prevZone.stages.length - 1];
     return Boolean(state.stageStars[prevBoss.id]);
+  }
+
+  function isStageUnlocked(flatIdx) {
+    if (canUseFreePlay()) return true;
+    const stage = ALL_STAGES_FLAT[flatIdx];
+    if (!stage) return false;
+    const zoneIdx = CAMPAIGN_ZONES.findIndex((z) => z.id === stage.zoneId);
+    if (zoneIdx === -1) return false;
+    const policy = getZonePolicyForStudents(zoneIdx);
+    if (policy.teacherLocked) return false;
+    if (flatIdx === 0) return true;
+    if (stage.id.endsWith('_s1')) {
+      if (policy.freeEntry) return true;
+      if ((state.warpedZones || []).includes(stage.zoneId)) return true;
+    }
+    const prevStage = ALL_STAGES_FLAT[flatIdx - 1];
+    return Boolean(state.stageStars[prevStage.id]);
   }
 
   function useWarpPassOnZone(zone) {
@@ -867,7 +938,8 @@
     const hasWarpPass = (state.inventory?.warp_pass || 0) > 0;
     continentEntries.forEach(({ zone, zIdx }) => {
       const unlocked = isZoneUnlocked(zIdx);
-      const canWarpHere = !unlocked && hasWarpPass;
+      const teacherLocked = isZoneTeacherLocked(zIdx);
+      const canWarpHere = !unlocked && !teacherLocked && hasWarpPass;
       const earned = zone.stages.reduce((s, st) => s + (state.stageStars[st.id] || 0), 0);
       const maxS = zone.stages.length * 3;
       const cleared = zone.stages.every((st) => Boolean(state.stageStars[st.id]));
@@ -913,20 +985,27 @@
 
       const pin = document.createElement('button');
       pin.type = 'button';
-      pin.className = `ro-pin ${cleared ? 'cleared' : ''} ${isCurrent ? 'current-target' : ''} ${canWarpHere ? 'can-warp' : ''} ${peersHere.length ? 'has-peers' : ''}`;
+      pin.className = `ro-pin ${cleared ? 'cleared' : ''} ${isCurrent ? 'current-target' : ''} ${canWarpHere ? 'can-warp' : ''} ${teacherLocked ? 'teacher-locked' : ''} ${peersHere.length ? 'has-peers' : ''}`;
       pin.style.left = `${zone.mapX}%`;
       pin.style.top = `${zone.mapY}%`;
       pin.style.setProperty('--zone-color', zone.themeColor);
       pin.disabled = !unlocked && !canWarpHere;
+      const pinMetaText = canWarpHere
+        ? '🌀 คลิกใช้ตั๋ววาร์ป!'
+        : (teacherLocked && !unlocked
+          ? '🔐 ล็อกโดยครู'
+          : (teacherLocked && canUseFreePlay()
+            ? `🔐 ปิดสำหรับ นศ. • ⭐${earned}/${maxS}`
+            : `${zone.lvRange} • ⭐${earned}/${maxS}`));
       pin.innerHTML = `
         ${peerPopoverHtml}
         <div class="ro-pin-orb">
           ${isCurrent ? `<span class="ro-pin-player">${avatarHtml(state.avatar, 'map-pin')}</span>` : ''}
-          <span class="ro-pin-art">${unlocked ? AnimeSprites.getZoneIcon(zone.id, zone.tag) : (canWarpHere ? '🌀' : '🔒')}</span>
+          <span class="ro-pin-art">${unlocked ? AnimeSprites.getZoneIcon(zone.id, zone.tag) : (canWarpHere ? '🌀' : (teacherLocked ? '🔐' : '🔒'))}</span>
         </div>
         <div class="ro-pin-plate">
           <span class="ro-pin-name">${zone.code}: ${zone.roName}</span>
-          <span class="ro-pin-meta">${canWarpHere ? '🌀 คลิกใช้ตั๋ววาร์ป!' : `${zone.lvRange} • ⭐${earned}/${maxS}`}</span>
+          <span class="ro-pin-meta">${pinMetaText}</span>
         </div>
         ${peerLabelHtml}
       `;
@@ -934,10 +1013,12 @@
       const updatePreview = () => {
         $('roPreviewTitle').textContent = `[${zone.code} • ${zone.roCode}] ${zone.roName} — ${zone.name} (${zone.lvRange})`;
         $('roPreviewDesc').textContent = unlocked
-          ? `${zone.subtitle} • 👑 MVP: ${bossStage.enemy.name}`
-          : (canWarpHere
-            ? `🌀 คลิกเพื่อใช้ Dimensional Zone Warp Pass ปลดล็อกข้ามโซนทันที! • 👑 MVP: ${bossStage.enemy.name}`
-            : `🔒 ล็อกอยู่ — ปราบ MVP Boss ของโซนก่อนหน้าให้สำเร็จเพื่อปลดล็อก!`);
+          ? `${teacherLocked && canUseFreePlay() ? '🔐 [ล็อกสำหรับนักศึกษา] ' : ''}${zone.subtitle} • 👑 MVP: ${bossStage.enemy.name}`
+          : (teacherLocked
+            ? `🔐 โซนนี้ถูกล็อกโดยครูผู้สอนชั่วคราว — รอครูผู้สอนปลดล็อกตามแผนการสอน!`
+            : (canWarpHere
+              ? `🌀 คลิกเพื่อใช้ Dimensional Zone Warp Pass ปลดล็อกข้ามโซนทันที! • 👑 MVP: ${bossStage.enemy.name}`
+              : `🔒 ล็อกอยู่ — ปราบ MVP Boss ของโซนก่อนหน้าให้สำเร็จเพื่อปลดล็อก!`));
         renderPreviewPeers(peersHere);
       };
 
@@ -1032,9 +1113,12 @@
     const nextBtn = $('roNextRegionPortal');
     if (nextZone) {
       const nextUnlocked = isZoneUnlocked(zIdx + 1);
+      const nextTeacherLocked = isZoneTeacherLocked(zIdx + 1);
       nextBtn.classList.remove('hidden');
       nextBtn.disabled = !nextUnlocked;
-      $('roNextPortalLabel').textContent = nextUnlocked ? `วาร์ปไป ${nextZone.roName}` : `🔒 ปราบ MVP ก่อน`;
+      $('roNextPortalLabel').textContent = nextUnlocked
+        ? `วาร์ปไป ${nextZone.roName}`
+        : (nextTeacherLocked ? '🔐 ครูล็อกโซนถัดไป' : '🔒 ปราบ MVP ก่อน');
       nextBtn.onclick = () => {
         if (!nextUnlocked) return;
         SoundFX.shield();
@@ -1061,8 +1145,30 @@
     renderContinentBar(peerSnap);
     renderMapPeersPanel(peerSnap);
     const allowFreePlay = isTeacherAccount();
+    const lockCfg = getMapLockConfig();
     $('mapFreePlayWrap').classList.toggle('hidden', !allowFreePlay);
     $('mapFreePlayToggle').checked = allowFreePlay && state.freePlay;
+
+    const lockBtn = $('mapLockConfigBtn');
+    if (lockBtn) {
+      lockBtn.classList.toggle('hidden', !allowFreePlay);
+      $('mapLockModeChip').textContent = getMapLockModeShortLabel(lockCfg);
+    }
+    if (!allowFreePlay) {
+      $('teacherZoneLockPanel')?.classList.add('hidden');
+    }
+
+    const lockBanner = $('mapZoneLockBanner');
+    if (lockBanner) {
+      const showBanner = lockCfg.mode !== 'sequential';
+      lockBanner.classList.toggle('hidden', !showBanner);
+      lockBanner.className = `zone-lock-banner mode-${lockCfg.mode} ${showBanner ? '' : 'hidden'}`;
+      if (showBanner) {
+        $('mapZoneLockBannerText').textContent = getMapLockModeLongLabel(lockCfg);
+        $('mapZoneLockBannerEditBtn')?.classList.toggle('hidden', !allowFreePlay);
+      }
+    }
+
     const hasWarpPass = (state.inventory?.warp_pass || 0) > 0;
     $('mapWarpPassBanner')?.classList.toggle('hidden', !hasWarpPass);
 
@@ -1099,7 +1205,8 @@
       if ((zone.continent || 1) !== activeContinentId) return;
 
       const zoneUnlocked = isZoneUnlocked(zIdx);
-      const canWarpZone = !zoneUnlocked && hasWarpPass;
+      const teacherLocked = isZoneTeacherLocked(zIdx);
+      const canWarpZone = !zoneUnlocked && !teacherLocked && hasWarpPass;
       const zoneEarned = zone.stages.reduce((acc, st) => acc + (state.stageStars[st.id] || 0), 0);
       const zoneMax = zone.stages.length * 3;
 
@@ -1161,6 +1268,7 @@
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+            ${teacherLocked ? `<span class="teacher-lock-pill">🔐 ${canUseFreePlay() ? 'ปิดสำหรับ นศ.' : 'ครูผู้สอนล็อกโซนนี้'}</span>` : ''}
             ${canWarpZone ? `<button type="button" class="btn btn-neon btn-xs list-warp-btn">🌀 ใช้ตั๋ววาร์ปปลดล็อกโซนนี้</button>` : ''}
             <div class="zone-stars">⭐ ${zoneEarned}/${zoneMax}</div>
           </div>
@@ -1214,6 +1322,243 @@
   $('mapSyncPeersBtn').addEventListener('click', () => {
     SoundFX.click();
     maybePullPeersForMap(true);
+  });
+
+  /* ==================== TEACHER MAP ZONE LOCK PANEL ==================== */
+  let zoneLockDraft = null;
+  let zoneLockCustomContinent = 1;
+
+  function openZoneLockPanel(forceOpen = null) {
+    if (!isTeacherAccount()) return;
+    const panel = $('teacherZoneLockPanel');
+    if (!panel) return;
+    const isHidden = panel.classList.contains('hidden');
+    const shouldOpen = forceOpen === null ? isHidden : Boolean(forceOpen);
+    panel.classList.toggle('hidden', !shouldOpen);
+    if (shouldOpen) {
+      const cur = getMapLockConfig();
+      zoneLockDraft = {
+        ...cur,
+        unlockedZones: [...(cur.unlockedZones || ['z1'])]
+      };
+      zoneLockCustomContinent = activeContinentId || 1;
+      renderZoneLockPanel();
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  function renderZoneLockPanel() {
+    if (!zoneLockDraft) zoneLockDraft = getMapLockConfig();
+    const d = zoneLockDraft;
+
+    document.querySelectorAll('#zoneLockModeGrid .zlock-mode-card').forEach((card) => {
+      card.classList.toggle('active', card.dataset.mode === d.mode);
+    });
+
+    $('zoneLockUpToBox').classList.toggle('hidden', d.mode !== 'up_to');
+    $('zoneLockCustomBox').classList.toggle('hidden', d.mode !== 'custom');
+
+    // Sync 'up_to' controls
+    const clampedMax = Math.max(1, Math.min(CAMPAIGN_ZONES.length, Number(d.maxZone) || 10));
+    d.maxZone = clampedMax;
+    $('zoneLockMaxRange').value = String(clampedMax);
+    $('zoneLockMaxNumber').value = String(clampedMax);
+    const maxZoneObj = CAMPAIGN_ZONES[clampedMax - 1];
+    $('zoneLockMaxValue').textContent = maxZoneObj
+      ? `Zone ${clampedMax} (${maxZoneObj.roName})`
+      : `Zone ${clampedMax}`;
+    $('zoneLockUpToFreeToggle').checked = Boolean(d.upToFreeAccess);
+
+    // Sync 'custom' controls
+    if (d.mode === 'custom') {
+      const openSet = new Set(d.unlockedZones || []);
+      $('zoneLockCustomSummary').textContent = `เปิดอยู่ ${openSet.size} / ${CAMPAIGN_ZONES.length} โซน`;
+      $('zoneLockCustomFreeToggle').checked = Boolean(d.customFreeAccess);
+
+      // Continent selector pills
+      const pillsWrap = $('zlockContPills');
+      pillsWrap.innerHTML = '';
+      if (typeof WORLD_CONTINENTS !== 'undefined') {
+        WORLD_CONTINENTS.forEach((cont) => {
+          const contZones = CAMPAIGN_ZONES.filter((z) => (z.continent || 1) === cont.id);
+          const openInCont = contZones.filter((z) => openSet.has(z.id)).length;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `zlock-cont-pill ${cont.id === zoneLockCustomContinent ? 'active' : ''}`;
+          btn.textContent = `${cont.badge} ทวีป ${cont.id} (${openInCont}/${contZones.length})`;
+          btn.addEventListener('click', () => {
+            SoundFX.click();
+            zoneLockCustomContinent = cont.id;
+            renderZoneLockPanel();
+          });
+          pillsWrap.appendChild(btn);
+        });
+      }
+
+      // 10-zone grid for selected continent
+      const grid = $('zlockZonesGrid');
+      grid.innerHTML = '';
+      const contZones = CAMPAIGN_ZONES.filter((z) => (z.continent || 1) === zoneLockCustomContinent);
+      contZones.forEach((z) => {
+        const isOpen = openSet.has(z.id);
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = `zlock-zone-tile ${isOpen ? 'unlocked' : 'locked'}`;
+        tile.innerHTML = `
+          <div class="zlock-tile-top">
+            <span>${z.code}</span>
+            <span>${isOpen ? '🔓 เปิด' : '🔐 ล็อก'}</span>
+          </div>
+          <div class="zlock-tile-name">${z.roName}</div>
+        `;
+        tile.addEventListener('click', () => {
+          SoundFX.click();
+          if (openSet.has(z.id)) {
+            if (openSet.size <= 1) {
+              showToast('⚠️ ต้องเปิดไว้อย่างน้อย 1 โซนบนแผนที่');
+              return;
+            }
+            openSet.delete(z.id);
+          } else {
+            openSet.add(z.id);
+          }
+          d.unlockedZones = [...openSet];
+          renderZoneLockPanel();
+        });
+        grid.appendChild(tile);
+      });
+    }
+
+    const saved = getMapLockConfig();
+    $('zoneLockStatusMeta').textContent = saved.updatedAt
+      ? `อัปเดตล่าสุด: ${new Date(saved.updatedAt).toLocaleString('th-TH')} โดย ${saved.updatedBy || 'ครูผู้สอน'}`
+      : 'ยังใช้ค่าเริ่มต้น (ล็อกตามลำดับ)';
+  }
+
+  $('mapLockConfigBtn')?.addEventListener('click', () => {
+    SoundFX.click();
+    openZoneLockPanel();
+  });
+
+  $('mapZoneLockBannerEditBtn')?.addEventListener('click', () => {
+    SoundFX.click();
+    openZoneLockPanel(true);
+  });
+
+  $('closeZoneLockPanelBtn')?.addEventListener('click', () => {
+    SoundFX.click();
+    openZoneLockPanel(false);
+  });
+
+  document.querySelectorAll('#zoneLockModeGrid .zlock-mode-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      if (!isTeacherAccount()) return;
+      SoundFX.click();
+      if (!zoneLockDraft) zoneLockDraft = getMapLockConfig();
+      zoneLockDraft.mode = card.dataset.mode;
+      renderZoneLockPanel();
+    });
+  });
+
+  $('zoneLockMaxRange')?.addEventListener('input', (e) => {
+    if (!zoneLockDraft) zoneLockDraft = getMapLockConfig();
+    zoneLockDraft.maxZone = Number(e.target.value) || 1;
+    renderZoneLockPanel();
+  });
+
+  $('zoneLockMaxNumber')?.addEventListener('change', (e) => {
+    if (!zoneLockDraft) zoneLockDraft = getMapLockConfig();
+    zoneLockDraft.maxZone = Math.max(1, Math.min(CAMPAIGN_ZONES.length, Number(e.target.value) || 1));
+    renderZoneLockPanel();
+  });
+
+  document.querySelectorAll('.zlock-preset-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      SoundFX.click();
+      if (!zoneLockDraft) zoneLockDraft = getMapLockConfig();
+      zoneLockDraft.maxZone = Number(btn.dataset.max) || 10;
+      renderZoneLockPanel();
+    });
+  });
+
+  $('zoneLockUpToFreeToggle')?.addEventListener('change', (e) => {
+    if (!zoneLockDraft) zoneLockDraft = getMapLockConfig();
+    zoneLockDraft.upToFreeAccess = e.target.checked;
+  });
+
+  $('zoneLockCustomFreeToggle')?.addEventListener('change', (e) => {
+    if (!zoneLockDraft) zoneLockDraft = getMapLockConfig();
+    zoneLockDraft.customFreeAccess = e.target.checked;
+  });
+
+  $('zlockUnlockAllCustomBtn')?.addEventListener('click', () => {
+    SoundFX.click();
+    if (!zoneLockDraft) zoneLockDraft = getMapLockConfig();
+    zoneLockDraft.unlockedZones = CAMPAIGN_ZONES.map((z) => z.id);
+    renderZoneLockPanel();
+  });
+
+  $('zlockLockAllCustomBtn')?.addEventListener('click', () => {
+    SoundFX.click();
+    if (!zoneLockDraft) zoneLockDraft = getMapLockConfig();
+    zoneLockDraft.unlockedZones = ['z1'];
+    renderZoneLockPanel();
+  });
+
+  $('zlockToggleContBtn')?.addEventListener('click', () => {
+    SoundFX.click();
+    if (!zoneLockDraft) zoneLockDraft = getMapLockConfig();
+    const contZones = CAMPAIGN_ZONES.filter((z) => (z.continent || 1) === zoneLockCustomContinent);
+    const openSet = new Set(zoneLockDraft.unlockedZones || []);
+    const allOpen = contZones.every((z) => openSet.has(z.id));
+    if (allOpen) {
+      contZones.forEach((z) => openSet.delete(z.id));
+      if (openSet.size === 0) openSet.add('z1');
+    } else {
+      contZones.forEach((z) => openSet.add(z.id));
+    }
+    zoneLockDraft.unlockedZones = [...openSet];
+    renderZoneLockPanel();
+  });
+
+  $('zoneLockResetBtn')?.addEventListener('click', async () => {
+    if (!isTeacherAccount()) return;
+    SoundFX.click();
+    zoneLockDraft = {
+      mode: 'sequential',
+      maxZone: 10,
+      upToFreeAccess: false,
+      unlockedZones: ['z1'],
+      customFreeAccess: true
+    };
+    const res = await AuthSystem.saveMapLockConfig(zoneLockDraft, currentAccount?.fullName);
+    renderZoneLockPanel();
+    renderWorldMap();
+    showToast(res.synced
+      ? '↩️ รีเซ็ตเป็นโหมดล็อกตามลำดับและซิงค์ขึ้น Cloud แล้ว!'
+      : '↩️ รีเซ็ตเป็นโหมดล็อกตามลำดับเรียบร้อยแล้ว!');
+  });
+
+  $('zoneLockSaveBtn')?.addEventListener('click', async () => {
+    if (!isTeacherAccount()) {
+      showToast('🔒 สงวนสิทธิ์เฉพาะครูผู้สอนเท่านั้น');
+      return;
+    }
+    SoundFX.levelUp();
+    const btn = $('zoneLockSaveBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ กำลังบันทึกและซิงค์...';
+    try {
+      const res = await AuthSystem.saveMapLockConfig(zoneLockDraft || getMapLockConfig(), currentAccount?.fullName);
+      renderZoneLockPanel();
+      renderWorldMap();
+      showToast(res.synced
+        ? `✅ บันทึกโหมดแผนที่ (${getMapLockModeShortLabel(res.config)}) และซิงค์ให้นักศึกษาแล้ว!`
+        : `✅ บันทึกโหมดแผนที่ (${getMapLockModeShortLabel(res.config)}) บนเครื่องนี้เรียบร้อยแล้ว!`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '💾 บันทึกและซิงค์ให้นักศึกษา';
+    }
   });
 
   /* ==================== SCREEN 2: RPG BATTLE ENGINE + VFX ==================== */
@@ -3533,6 +3878,11 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       <div class="kpi-card"><span>สอบผ่านรับเกียรติบัตร</span><strong>🎓 ${passedCert} / ${count}</strong></div>
     `;
 
+    const lockSummaryEl = $('teacherMapLockSummary');
+    if (lockSummaryEl) {
+      lockSummaryEl.textContent = getMapLockModeLongLabel(getMapLockConfig());
+    }
+
     // Populate classroom dropdown
     const filterSel = $('teacherClassFilter');
     const prevSelected = filterSel.value;
@@ -3620,6 +3970,14 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     SoundFX.click();
     renderTeacherDashboard();
     showToast('🔄 อัปเดตตารางคะแนนแล้ว');
+  });
+
+  $('teacherOpenMapLockBtn')?.addEventListener('click', () => {
+    if (!isTeacherAccount()) return;
+    SoundFX.click();
+    activeRoZoneId = null;
+    switchScreen('map');
+    openZoneLockPanel(true);
   });
 
   $('exportCsvBtn').addEventListener('click', () => {
@@ -3869,6 +4227,13 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     hydrateFromCurrentAccount();
     renderTitleScreen();
     renderHud();
+    if (AuthSystem.getCloudUrl()) {
+      AuthSystem.pullMapLockConfigFromCloud().then((res) => {
+        if (res.changed && $('screen-map')?.classList.contains('active')) {
+          renderWorldMap();
+        }
+      });
+    }
     initCliWelcome();
     renderChmodVault();
     renderRaidVisual('5', 0);

@@ -4858,3 +4858,297 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   .game-stage { max-width: 100%; padding: 0; }
   .certificate { box-shadow: none; padding: 0; }
 }
+
+/* ==================== TEACHER MAP ZONE LOCK CONTROLS ==================== */
+.zone-lock-panel {
+  margin-bottom: 1rem;
+  border: 1.5px solid var(--border-neon);
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.92));
+  box-shadow: 0 12px 32px rgba(2, 6, 23, 0.45);
+}
+
+[data-theme="light"] .zone-lock-panel {
+  background: linear-gradient(160deg, #ffffff, #f0f9ff);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.1);
+}
+
+.zone-lock-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.zone-lock-modes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.zlock-mode-card {
+  text-align: left;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.zlock-mode-card:hover {
+  border-color: var(--primary);
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+}
+
+.zlock-mode-card.active {
+  border-color: var(--primary);
+  background: rgba(56, 189, 248, 0.14);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+}
+
+.zlock-mode-icon {
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.zlock-mode-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.zlock-mode-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.zlock-subbox {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.45);
+  margin-bottom: 0.85rem;
+}
+
+[data-theme="light"] .zlock-subbox {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+.zlock-upto-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.zlock-range {
+  flex: 1;
+  min-width: 180px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.zlock-num {
+  width: 78px !important;
+  text-align: center;
+  font-weight: 700;
+}
+
+.zlock-presets {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+
+.zlock-custom-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+
+.zlock-custom-summary {
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: var(--primary);
+}
+
+.zlock-custom-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.zlock-cont-pills {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.65rem;
+}
+
+.zlock-cont-pill {
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.zlock-cont-pill.active {
+  border-color: var(--primary);
+  background: rgba(56, 189, 248, 0.18);
+  color: var(--text);
+}
+
+.zlock-zones-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.zlock-zone-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.18rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.zlock-zone-tile:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary);
+}
+
+.zlock-zone-tile.unlocked {
+  border-color: rgba(52, 211, 153, 0.65);
+  background: rgba(52, 211, 153, 0.12);
+}
+
+.zlock-zone-tile.locked {
+  border-color: rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.08);
+  opacity: 0.82;
+}
+
+.zlock-tile-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.zlock-tile-name {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.zone-lock-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+}
+
+.zone-lock-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.65rem 1rem;
+  margin-bottom: 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  background: rgba(56, 189, 248, 0.12);
+  font-size: 0.86rem;
+  font-weight: 500;
+}
+
+.zone-lock-banner.mode-unlock_all {
+  border-color: rgba(52, 211, 153, 0.5);
+  background: rgba(52, 211, 153, 0.12);
+}
+
+.zone-lock-banner.mode-up_to,
+.zone-lock-banner.mode-custom {
+  border-color: rgba(251, 191, 36, 0.55);
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.ro-pin.teacher-locked .ro-pin-orb {
+  border-color: rgba(248, 113, 113, 0.7);
+  box-shadow: 0 0 12px rgba(248, 113, 113, 0.35);
+}
+
+.ro-pin.teacher-locked .ro-pin-meta {
+  color: var(--danger);
+}
+
+.teacher-lock-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  background: rgba(248, 113, 113, 0.15);
+  color: var(--danger);
+}
+
+.teacher-lock-pill.open {
+  border-color: rgba(52, 211, 153, 0.5);
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .zone-lock-modes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .zlock-zones-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .zone-lock-modes {
+    grid-template-columns: 1fr;
+  }
+}

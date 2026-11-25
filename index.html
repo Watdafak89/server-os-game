@@ -165,11 +165,100 @@
           <div class="map-controls" style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
             <button class="btn btn-neon btn-sm" id="mapViewRoBtn">🗺️ แผนที่ Ragnarok</button>
             <button class="btn btn-ghost btn-sm" id="mapViewListBtn">📋 มุมมองรายการ</button>
+            <button class="btn btn-secondary btn-sm hidden" id="mapLockConfigBtn">🔐 โหมดล็อกโซน: <span id="mapLockModeChip">ตามลำดับ</span></button>
             <label class="toggle-chip hidden" id="mapFreePlayWrap">
               <input type="checkbox" id="mapFreePlayToggle" />
               <span>🔓 โหมดครู: ปลดล็อกทุกแมพ</span>
             </label>
           </div>
+        </div>
+
+        <!-- Teacher Zone Lock Control Panel (visible only to teachers when opened) -->
+        <div id="teacherZoneLockPanel" class="panel zone-lock-panel hidden">
+          <div class="zone-lock-head">
+            <div>
+              <h3>🔐 ตั้งค่าโหมดล็อกโซนในแผนที่ (สำหรับนักศึกษาทั้งห้อง)</h3>
+              <p class="muted-text" style="font-size:0.82rem;">กำหนดสิทธิ์การเข้าโซน 1–50 บนแผนที่โลก ระบบจะบันทึกและซิงค์ให้นักศึกษาทุกคนอัตโนมัติ</p>
+            </div>
+            <button type="button" class="btn btn-ghost btn-xs" id="closeZoneLockPanelBtn">✕ ปิดแผง</button>
+          </div>
+
+          <div class="zone-lock-modes" id="zoneLockModeGrid">
+            <button type="button" class="zlock-mode-card" data-mode="sequential">
+              <div class="zlock-mode-icon">🔒</div>
+              <div class="zlock-mode-title">ล็อกตามลำดับ (ค่าเริ่มต้น)</div>
+              <div class="zlock-mode-desc">ผ่านบอสโซนก่อนหน้าเพื่อเปิดโซนถัดไปทีละโซน</div>
+            </button>
+            <button type="button" class="zlock-mode-card" data-mode="unlock_all">
+              <div class="zlock-mode-icon">🔓</div>
+              <div class="zlock-mode-title">ปลดล็อกทุกโซน</div>
+              <div class="zlock-mode-desc">เปิดให้นักศึกษาเข้าเล่นได้อิสระครบทั้ง 50 โซน</div>
+            </button>
+            <button type="button" class="zlock-mode-card" data-mode="up_to">
+              <div class="zlock-mode-icon">🚧</div>
+              <div class="zlock-mode-title">เปิดถึงโซนที่กำหนด</div>
+              <div class="zlock-mode-desc">เปิดเฉพาะโซน 1–N และล็อกโซนที่เหลือไว้ก่อน</div>
+            </button>
+            <button type="button" class="zlock-mode-card" data-mode="custom">
+              <div class="zlock-mode-icon">🎛️</div>
+              <div class="zlock-mode-title">กำหนดรายโซนเอง</div>
+              <div class="zlock-mode-desc">เลือกเปิด/ล็อกทีละโซนหรือทั้งทวีปได้ตามแผนการสอน</div>
+            </button>
+          </div>
+
+          <!-- Options for 'up_to' mode -->
+          <div id="zoneLockUpToBox" class="zlock-subbox hidden">
+            <div class="zlock-upto-row">
+              <label for="zoneLockMaxRange"><strong>เปิดให้เล่นถึงโซนที่:</strong> <span id="zoneLockMaxValue" class="stage-chip">Zone 10</span></label>
+              <input type="range" id="zoneLockMaxRange" min="1" max="50" value="10" class="zlock-range" />
+              <input type="number" id="zoneLockMaxNumber" min="1" max="50" value="10" class="game-input sm-input zlock-num" />
+            </div>
+            <div class="zlock-presets">
+              <span class="muted-text" style="font-size:0.78rem;">ตั้งค่าด่วน:</span>
+              <button type="button" class="btn btn-ghost btn-xs zlock-preset-btn" data-max="1">Z1</button>
+              <button type="button" class="btn btn-ghost btn-xs zlock-preset-btn" data-max="5">Z1–Z5</button>
+              <button type="button" class="btn btn-ghost btn-xs zlock-preset-btn" data-max="10">ทวีป 1 (Z1–Z10)</button>
+              <button type="button" class="btn btn-ghost btn-xs zlock-preset-btn" data-max="20">ทวีป 1–2 (Z1–Z20)</button>
+              <button type="button" class="btn btn-ghost btn-xs zlock-preset-btn" data-max="30">ทวีป 1–3 (Z1–Z30)</button>
+              <button type="button" class="btn btn-ghost btn-xs zlock-preset-btn" data-max="40">ทวีป 1–4 (Z1–Z40)</button>
+            </div>
+            <label class="toggle-chip" style="margin-top:0.55rem;width:fit-content;">
+              <input type="checkbox" id="zoneLockUpToFreeToggle" />
+              <span>🔓 เปิดให้เข้าโซน 1–N ได้อิสระทันที (ไม่ต้องรอผ่านบอสโซนก่อนหน้า)</span>
+            </label>
+          </div>
+
+          <!-- Options for 'custom' mode -->
+          <div id="zoneLockCustomBox" class="zlock-subbox hidden">
+            <div class="zlock-custom-toolbar">
+              <div class="zlock-custom-summary" id="zoneLockCustomSummary">เปิดอยู่ 1 / 50 โซน</div>
+              <div class="zlock-custom-actions">
+                <button type="button" class="btn btn-ghost btn-xs" id="zlockUnlockAllCustomBtn">🔓 เปิดทั้งหมด</button>
+                <button type="button" class="btn btn-ghost btn-xs" id="zlockLockAllCustomBtn">🔒 ล็อกทั้งหมด (เหลือ Z1)</button>
+                <button type="button" class="btn btn-ghost btn-xs" id="zlockToggleContBtn">🧭 สลับเปิด/ล็อกทั้งทวีปนี้</button>
+              </div>
+            </div>
+            <div class="zlock-cont-pills" id="zlockContPills"></div>
+            <div class="zlock-zones-grid" id="zlockZonesGrid"></div>
+            <label class="toggle-chip" style="margin-top:0.65rem;width:fit-content;">
+              <input type="checkbox" id="zoneLockCustomFreeToggle" checked />
+              <span>🔓 โซนที่เลือกเปิดสามารถเข้าเล่นได้ทันที (หากปิด นักศึกษายังต้องผ่านโซนก่อนหน้าตามลำดับ)</span>
+            </label>
+          </div>
+
+          <div class="zone-lock-footer">
+            <span id="zoneLockStatusMeta" class="muted-text" style="font-size:0.8rem;"></span>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <button type="button" class="btn btn-ghost btn-sm" id="zoneLockResetBtn">↩️ รีเซ็ตเป็นค่าเริ่มต้น</button>
+              <button type="button" class="btn btn-neon btn-sm" id="zoneLockSaveBtn">💾 บันทึกและซิงค์ให้นักศึกษา</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Map Zone Lock Mode Notice Banner (visible to everyone when teacher sets non-default lock mode) -->
+        <div id="mapZoneLockBanner" class="zone-lock-banner hidden">
+          <span id="mapZoneLockBannerText"></span>
+          <button type="button" class="btn btn-ghost btn-xs hidden" id="mapZoneLockBannerEditBtn">⚙️ ปรับโหมด</button>
         </div>
 
         <!-- Daily Quests Strip -->
@@ -1046,6 +1135,17 @@
 
         <!-- Class KPIs -->
         <div class="teacher-kpi-grid" id="teacherKpis"></div>
+
+        <!-- Quick Map Zone Lock Control Banner in Teacher Dashboard -->
+        <div class="panel teacher-map-lock-bar" style="margin-bottom:1.25rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:0.8rem;flex-wrap:wrap;">
+            <div>
+              <h3 style="margin-bottom:0.2rem;">🗺️ โหมดล็อกโซนในแผนที่ปัจจุบัน</h3>
+              <p class="muted-text" id="teacherMapLockSummary" style="font-size:0.84rem;">🔒 ล็อกตามลำดับ (ค่าเริ่มต้น)</p>
+            </div>
+            <button class="btn btn-neon btn-sm" id="teacherOpenMapLockBtn">🔐 ปรับโหมดล็อกโซนในแผนที่</button>
+          </div>
+        </div>
 
         <!-- Bulk Student Roster Import (Excel/CSV paste) -->
         <div class="panel" style="margin-bottom:1.25rem;">
