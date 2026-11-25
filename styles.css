@@ -6258,3 +6258,13 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   border: 1px solid rgba(148, 163, 184, 0.32);
   color: var(--text-muted);
 }
+
+.resume-avatar.clickable-avatar {
+  cursor: pointer;
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.resume-avatar.clickable-avatar:hover {
+  transform: scale(1.08);
+  filter: brightness(1.08);
+}

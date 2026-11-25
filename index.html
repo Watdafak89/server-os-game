@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=6.0" />
+  <link rel="stylesheet" href="styles.css?v=6.1" />
 </head>
 <body>
   <div class="cyber-bg" aria-hidden="true"></div>
@@ -28,19 +28,19 @@
       <!-- Already Logged In Resume Box -->
       <div id="loggedInGate" class="auth-panel hidden">
         <div class="resume-user-row">
-          <div class="resume-avatar" id="resumeAvatar">👨‍💻</div>
+          <div class="resume-avatar clickable-avatar" id="resumeAvatar" role="button" tabindex="0" title="คลิกที่รูปเพื่อเปลี่ยน Avatar">👨‍💻</div>
           <div style="text-align:left;">
             <div class="resume-name-row">
               <strong id="resumeFullName">ผู้ใช้งาน</strong>
               <span class="role-badge" id="resumeRoleBadge">นักศึกษา</span>
             </div>
             <div class="muted-text" id="resumeMeta">@username • ห้องเรียน</div>
+            <div class="muted-text" style="font-size:0.72rem;opacity:0.75;">💡 คลิกที่รูป Avatar เพื่อเปลี่ยนตัวละคร</div>
           </div>
         </div>
         <div class="save-preview" id="titleSavePreview"></div>
         <div class="title-actions" style="display:flex;justify-content:center;gap:0.75rem;flex-wrap:wrap;">
           <button class="btn btn-neon btn-xl" id="enterGameBtn">▶ เข้าสู่ศูนย์ข้อมูล (PLAY GAME)</button>
-          <button class="btn btn-secondary btn-lg" id="titleChangeAvatarBtn">🎨 เปลี่ยน Avatar</button>
           <button class="btn btn-ghost btn-lg" id="titleLogoutBtn">🚪 สลับบัญชี</button>
         </div>
       </div>
@@ -1584,6 +1584,6 @@
   <script src="auth.js?v=6.2"></script>
   <script src="vbox-sim.js?v=6.0"></script>
   <script src="anime-sprites.js?v=6.0"></script>
-  <script src="game.js?v=6.1"></script>
+  <script src="game.js?v=6.2"></script>
 </body>
 </html>

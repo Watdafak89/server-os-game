@@ -5032,7 +5032,14 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     e.stopPropagation();
     switchScreen('badges');
   });
-  $('titleChangeAvatarBtn').addEventListener('click', openAvatarModal);
+  $('resumeAvatar')?.addEventListener('click', openAvatarModal);
+  $('resumeAvatar')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openAvatarModal();
+    }
+  });
+  $('titleChangeAvatarBtn')?.addEventListener('click', openAvatarModal);
   $('closeAvatarModalBtn').addEventListener('click', closeAvatarModal);
   $('avatarModal').addEventListener('click', (e) => {
     if (e.target === $('avatarModal')) closeAvatarModal();
