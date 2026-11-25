@@ -39,11 +39,14 @@ function resolveAvatar(val) {
 const RANKS = [
   { minXp: 0, title: 'Rookie Technician' },
   { minXp: 250, title: 'Junior SysAdmin' },
-  { minXp: 600, title: 'Server Operator' },
-  { minXp: 1100, title: 'Senior Systems Engineer' },
-  { minXp: 1700, title: 'Cloud & Security Specialist' },
-  { minXp: 2400, title: 'Grand Data Center Architect' },
-  { minXp: 3300, title: 'Legend of Infrastructure' }
+  { minXp: 650, title: 'Server Operator' },
+  { minXp: 1200, title: 'Network & CLI Specialist' },
+  { minXp: 1900, title: 'Senior Systems Engineer' },
+  { minXp: 2800, title: 'Virtualization Architect' },
+  { minXp: 3900, title: 'Cloud & Security Specialist' },
+  { minXp: 5200, title: 'Principal Infrastructure Lead' },
+  { minXp: 6800, title: 'Grand Data Center Architect' },
+  { minXp: 8500, title: 'Legend of Infrastructure' }
 ];
 
 const SHOP_ITEMS = [

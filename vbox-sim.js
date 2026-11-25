@@ -15,7 +15,7 @@ const VBoxSim = (() => {
       minDisk: 20,
       needTpm: false,
       recNet: 'Bridged Adapter',
-      xp: 120,
+      xp: 160,
       coins: 90,
       brief: 'ติดตั้ง Ubuntu Server 24.04 LTS (RAM ≥ 2 GB, CPU ≥ 2, Disk ≥ 20 GB) แล้วบูตเข้าใช้งาน Console จริงได้!'
     },
@@ -33,7 +33,7 @@ const VBoxSim = (() => {
       minDisk: 40,
       needTpm: false,
       recNet: 'Bridged Adapter',
-      xp: 140,
+      xp: 180,
       coins: 110,
       brief: 'ติดตั้ง Windows Server 2022 (Desktop Experience) แล้วบูตเข้าหน้า Desktop + Server Manager ติดตั้ง AD DS / DNS / IIS ได้จริง!'
     },
@@ -51,7 +51,7 @@ const VBoxSim = (() => {
       minDisk: 20,
       needTpm: false,
       recNet: 'Bridged Adapter',
-      xp: 130,
+      xp: 160,
       coins: 100,
       brief: 'ติดตั้ง Rocky Linux 9 ผ่าน Anaconda Summary Hub แล้วบูตเข้าใช้งาน RHEL-compatible Terminal ได้จริง!'
     },
@@ -69,7 +69,7 @@ const VBoxSim = (() => {
       minDisk: 15,
       needTpm: false,
       recNet: 'NAT',
-      xp: 120,
+      xp: 150,
       coins: 90,
       brief: 'ติดตั้ง Debian 12 Headless Server ผ่าน tasksel แล้วบูตเข้าใช้งาน Debian TTY Console ได้จริง!'
     },
@@ -87,7 +87,7 @@ const VBoxSim = (() => {
       minDisk: 64,
       needTpm: true,
       recNet: 'Internal Network',
-      xp: 140,
+      xp: 200,
       coins: 110,
       brief: 'ติดตั้ง Windows 11 Pro (ต้องเปิด EFI + TPM 2.0) แล้วบูตเข้า Desktop ฝึก Join Domain "college.local" และเปิด Edge ได้จริง!'
     }

@@ -2,6 +2,29 @@
 (() => {
   const PREFS_KEY = 'serverops_prefs_v2';
 
+  /* ==================== UNIFIED XP ECONOMY BALANCING ==================== */
+  // Normalize rewards across all modes so Campaign, CLI, VirtualBox, Puzzles, Codex, Arcade & Exam stay well-balanced
+  const CONT_STAGE_XP = {
+    1: [20, 25, 35],
+    2: [25, 30, 42],
+    3: [30, 35, 50],
+    4: [35, 40, 58],
+    5: [40, 45, 65]
+  };
+  CAMPAIGN_ZONES.forEach((zone) => {
+    const c = Math.max(1, Math.min(5, zone.continent || 1));
+    const table = CONT_STAGE_XP[c];
+    zone.stages.forEach((stage, sIdx) => {
+      stage.xp = stage.isBoss ? table[2] : (table[sIdx] ?? table[1]);
+    });
+  });
+  CLI_LABS.forEach((lab, idx) => {
+    lab.xp = 30 + Math.round((idx / Math.max(1, CLI_LABS.length - 1)) * 20);
+  });
+  CHMOD_PUZZLES.forEach((p) => { p.rewardXp = 30; });
+  FIREWALL_PUZZLES.forEach((p) => { p.rewardXp = 40; });
+  SUBNET_PUZZLES.forEach((p) => { p.rewardXp = 40; });
+
   const ALL_STAGES_FLAT = CAMPAIGN_ZONES.flatMap((zone) =>
     zone.stages.map((stage) => ({ ...stage, zoneId: zone.id, zoneCode: zone.code, zoneName: zone.name }))
   );
@@ -175,7 +198,7 @@
     return actualLoss;
   }
 
-  const ARCADE_DAILY_XP_CAP = 150;
+  const ARCADE_DAILY_XP_CAP = 90;
   function applyArcadeXpCap(rawXp) {
     ensureTodayQuests();
     const earnedToday = Math.max(0, state.dailyQuests.arcadeXpEarned || 0);
@@ -542,9 +565,9 @@
 
   /* ==================== DAILY QUESTS & SCREEN 1: CAMPAIGN WORLD MAP ==================== */
   const DAILY_DEFS = [
-    { id: 'dq_battle', field: 'battlesWon', target: 1, title: '⚔️ ชนะด่านแคมเปญ 1 ด่าน', xp: 60, coins: 50 },
-    { id: 'dq_lab', field: 'labsOrPuzzles', target: 1, title: '🧩 ผ่าน CLI หรือพัซเซิล 1 ข้อ', xp: 55, coins: 45 },
-    { id: 'dq_arcade', field: 'arcadePlayed', target: 1, title: '⚡ เล่นโหมดอาร์เคด 1 รอบ', xp: 50, coins: 45 }
+    { id: 'dq_battle', field: 'battlesWon', target: 1, title: '⚔️ ชนะด่านแคมเปญ 1 ด่าน', xp: 30, coins: 50 },
+    { id: 'dq_lab', field: 'labsOrPuzzles', target: 1, title: '🧩 ผ่าน CLI หรือพัซเซิล 1 ข้อ', xp: 25, coins: 45 },
+    { id: 'dq_arcade', field: 'arcadePlayed', target: 1, title: '⚡ เล่นโหมดอาร์เคด 1 รอบ', xp: 25, coins: 45 }
   ];
 
   function renderDailyQuests() {
@@ -2015,7 +2038,7 @@
       } else {
         SoundFX.wrong();
         battle.playerHp = Math.max(0, battle.playerHp - 1);
-        xpPenalty = (isFastSpam || battle.wrongStreak >= 2) ? 25 : 15;
+        xpPenalty = (isFastSpam || battle.wrongStreak >= 2) ? 20 : 10;
         actualXpLost = deductXp(xpPenalty);
         setTimeout(() => {
           triggerShake('playerCombatant');
@@ -2113,10 +2136,13 @@
       const improvedStars = !isFirstClear && stars > prevStars;
       if (stars > prevStars) state.stageStars[battle.stage.id] = stars;
 
+      const starFactor = (s) => (s >= 3 ? 1 : s === 2 ? 0.8 : s === 1 ? 0.6 : 0);
       const mult = (isFirstClear && state.xpBoostActive) ? 2 : 1;
       const baseXp = isFirstClear
-        ? battle.stage.xp
-        : (improvedStars ? Math.round(battle.stage.xp * 0.2) : 0);
+        ? Math.round(battle.stage.xp * starFactor(stars))
+        : (improvedStars
+          ? Math.max(0, Math.round(battle.stage.xp * starFactor(stars)) - Math.round(battle.stage.xp * starFactor(prevStars)))
+          : 0);
       const baseCoins = isFirstClear ? battle.stage.coins : Math.round(battle.stage.coins * 0.2);
       const earnedXp = baseXp * mult;
       const earnedCoins = baseCoins * mult;
@@ -2919,7 +2945,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     $('defPlay').classList.add('hidden');
     $('defOver').classList.remove('hidden');
 
-    const rawXp = Math.min(45, Math.round(def.score / 60));
+    const rawXp = Math.min(30, Math.round(def.score / 80));
     const { granted: xp, remainingAfter } = applyArcadeXpCap(rawXp);
     const coins = Math.min(60, Math.round(def.score / 45));
     if (def.score > state.defenseHighScore) state.defenseHighScore = def.score;
@@ -3043,7 +3069,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     $('blitzPlay').classList.add('hidden');
     $('blitzOver').classList.remove('hidden');
 
-    const rawXp = Math.min(45, Math.round(blitz.score / 50));
+    const rawXp = Math.min(30, Math.round(blitz.score / 70));
     const { granted: xp, remainingAfter } = applyArcadeXpCap(rawXp);
     const coins = Math.min(60, Math.round(blitz.score / 40));
     if (blitz.score > (state.blitzHighScore || 0)) state.blitzHighScore = blitz.score;
@@ -3248,9 +3274,9 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       if (!state.solvedRaid.includes(ch.id)) {
         state.solvedRaid.push(ch.id);
         bumpDailyQuest('labsOrPuzzles');
-        grantRewards(55, 45);
+        grantRewards(35, 45);
         SoundFX.coin();
-        fb.innerHTML = `<strong>✅ ออกแบบผ่านฉลุย!</strong> ${ch.explain} • รับ +55 XP และ +💰45`;
+        fb.innerHTML = `<strong>✅ ออกแบบผ่านฉลุย!</strong> ${ch.explain} • รับ +35 XP และ +💰45`;
       } else {
         SoundFX.correct();
         fb.innerHTML = `<strong>✅ ถูกต้อง!</strong> ${ch.explain}`;
@@ -3959,11 +3985,18 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
 
     if (score > state.examBestScore) state.examBestScore = score;
     if (passed) {
+      const firstExamPass = !state.examPassed;
       state.examPassed = true;
-      grantRewards(220, 150);
+      if (firstExamPass) {
+        grantRewards(300, 150);
+      } else {
+        saveState();
+      }
       SoundFX.levelUp();
       $('examResultHeading').textContent = '🎉 ยินดีด้วย! คุณสอบผ่านรับเกียรติบัตร Certified SysAdmin';
-      $('examResultSub').textContent = `คะแนน ${score}/${examQs.length} (${pct}%) • รับ +220 XP และ +💰150`;
+      $('examResultSub').textContent = firstExamPass
+        ? `คะแนน ${score}/${examQs.length} (${pct}%) • รับรางวัลสอบผ่านครั้งแรก +300 XP และ +💰150`
+        : `คะแนน ${score}/${examQs.length} (${pct}%) • ทบทวนสำเร็จ (เคยรับรางวัลสอบผ่านไปแล้ว)`;
       $('printCertBtn').classList.remove('hidden');
       $('certificateCard').classList.remove('hidden');
 
