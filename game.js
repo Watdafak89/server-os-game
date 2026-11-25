@@ -103,6 +103,9 @@
     if (currentAccount.role !== 'teacher') state.freePlay = false;
     if (currentAccount.role === 'teacher') {
       state.unlockedBadges = BADGES.map((b) => b.id);
+      ALL_STAGES_FLAT.forEach((st) => {
+        state.stageStars[st.id] = 3;
+      });
     }
     if (currentAccount.username === 'teacher') state.xp = 0;
     ensureTodayQuests();
