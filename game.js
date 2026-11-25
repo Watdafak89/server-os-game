@@ -152,16 +152,37 @@
 
   function grantRewards(xp, coins) {
     const oldLv = getRankInfo(state.xp).level;
-    state.xp += xp;
-    state.coins += coins;
+    state.xp = Math.max(0, (state.xp || 0) + xp);
+    state.coins = Math.max(0, (state.coins || 0) + coins);
     const newInfo = getRankInfo(state.xp);
-    if (newInfo.level > oldLv) {
+    if (xp > 0 && newInfo.level > oldLv) {
       SoundFX.levelUp();
       showToast(`🎉 LEVEL UP! เลื่อนขั้นเป็น LV.${newInfo.level} — ${newInfo.title}`);
     }
     checkBadges();
     saveState();
     renderHud();
+  }
+
+  function deductXp(amount) {
+    const prev = Math.max(0, state.xp || 0);
+    const loss = Math.max(0, Math.round(Number(amount) || 0));
+    const next = Math.max(0, prev - loss);
+    const actualLoss = prev - next;
+    state.xp = next;
+    saveState();
+    renderHud();
+    return actualLoss;
+  }
+
+  const ARCADE_DAILY_XP_CAP = 150;
+  function applyArcadeXpCap(rawXp) {
+    ensureTodayQuests();
+    const earnedToday = Math.max(0, state.dailyQuests.arcadeXpEarned || 0);
+    const remaining = Math.max(0, ARCADE_DAILY_XP_CAP - earnedToday);
+    const granted = Math.min(Math.max(0, rawXp), remaining);
+    state.dailyQuests.arcadeXpEarned = earnedToday + granted;
+    return { granted, remainingAfter: Math.max(0, remaining - granted) };
   }
 
   function checkBadges() {
@@ -453,6 +474,9 @@
       stopDefenseTimer();
       stopBlitzTimer();
     }
+    if (screenName !== 'battle') {
+      clearBattleCooldowns();
+    }
     if (screenName === 'teacher' && currentAccount?.role !== 'teacher') {
       showToast('⚠️ หน้านี้สงวนสิทธิ์เฉพาะบัญชีครูผู้สอนเท่านั้น');
       return;
@@ -571,14 +595,22 @@
   function checkStudentRemoteMapReset() {
     if (!currentAccount || isTeacherAccount()) return false;
     const fresh = AuthSystem.getCurrentAccount();
-    const freshReset = fresh?.gameData?.mapResetAt ? new Date(fresh.gameData.mapResetAt).getTime() : 0;
-    const localReset = state?.mapResetAt ? new Date(state.mapResetAt).getTime() : 0;
-    if (freshReset > localReset) {
+    const freshMapReset = fresh?.gameData?.mapResetAt ? new Date(fresh.gameData.mapResetAt).getTime() : 0;
+    const localMapReset = state?.mapResetAt ? new Date(state.mapResetAt).getTime() : 0;
+    const freshXpReset = fresh?.gameData?.xpResetAt ? new Date(fresh.gameData.xpResetAt).getTime() : 0;
+    const localXpReset = state?.xpResetAt ? new Date(state.xpResetAt).getTime() : 0;
+    if (freshMapReset > localMapReset) {
       hydrateFromCurrentAccount();
       activeRoZoneId = null;
       activeContinentId = 1;
       renderHud();
       showToast('🔄 ครูผู้สอนได้รีเซ็ตการตะลุยแผนที่ของคุณกลับสู่จุดเริ่มต้น (Zone 1) แล้ว!');
+      return true;
+    }
+    if (freshXpReset > localXpReset) {
+      hydrateFromCurrentAccount();
+      renderHud();
+      showToast('⚡ ครูผู้สอนได้รีเซ็ตค่า XP ของคุณกลับเป็น 0 แล้ว!');
       return true;
     }
     return false;
@@ -1635,8 +1667,58 @@
     }
   });
 
+  $('mapResetXpOnlyBtn')?.addEventListener('click', async () => {
+    if (!isTeacherAccount()) {
+      showToast('🔒 สงวนสิทธิ์เฉพาะครูผู้สอนเท่านั้น');
+      return;
+    }
+    const classroom = ($('mapResetClassSelect')?.value || '').trim();
+    const scopeLabel = classroom ? `ห้อง "${classroom}"` : 'ทุกคนทุกห้อง';
+    const ok = confirm(
+      `⚡ ยืนยันการรีเซ็ตค่า XP ของนักศึกษา${scopeLabel} กลับเป็น 0 XP ใช่หรือไม่?\n(ยังคงความก้าวหน้าแผนที่ คะแนนสอบ และ CLI Lab ไว้)`
+    );
+    if (!ok) return;
+
+    SoundFX.click();
+    const btn = $('mapResetXpOnlyBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ กำลังรีเซ็ต XP...';
+    try {
+      const res = await AuthSystem.resetStudentsXp({ classroom });
+      if (!res.ok) {
+        SoundFX.wrong();
+        showToast(`⚠️ ${res.error || 'ไม่พบรายชื่อนักศึกษา'}`);
+        return;
+      }
+      SoundFX.levelUp();
+      renderZoneLockPanel();
+      renderWorldMap();
+      showToast(
+        AuthSystem.getCloudUrl()
+          ? `⚡ รีเซ็ต XP นักศึกษา${scopeLabel} เป็น 0 สำเร็จ ${res.count} คน (ซิงค์ Cloud ${res.synced} คน)!`
+          : `⚡ รีเซ็ต XP นักศึกษา${scopeLabel} เป็น 0 สำเร็จ ${res.count} คน!`
+      );
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⚡ รีเซ็ต XP นักศึกษาเป็น 0';
+    }
+  });
+
   /* ==================== SCREEN 2: RPG BATTLE ENGINE + VFX ==================== */
   let battle = null;
+  let battleCooldownTimer = null;
+  let retryCooldownTimer = null;
+
+  function clearBattleCooldowns() {
+    if (battleCooldownTimer) {
+      clearInterval(battleCooldownTimer);
+      battleCooldownTimer = null;
+    }
+    if (retryCooldownTimer) {
+      clearInterval(retryCooldownTimer);
+      retryCooldownTimer = null;
+    }
+  }
 
   function animateClass(elOrId, cls, durationMs = 600) {
     const el = typeof elOrId === 'string' ? $(elOrId) : elOrId;
@@ -1736,23 +1818,33 @@
   }
 
   function startBattle(stage) {
+    clearBattleCooldowns();
     if (stage.isBoss) SoundFX.bossAlert();
     else SoundFX.click();
     if (mapViewMode === 'ro' && stage.zoneId) {
       activeRoZoneId = stage.zoneId;
     }
 
-    const randomizedQuestions = (stage.questions || []).map(randomizeQuestionChoices);
+    const originalQuestions = stage.questions || [];
+    const randomizedQuestions = originalQuestions.map((orig) => ({
+      ...randomizeQuestionChoices(orig),
+      _orig: orig,
+      _isRetry: false
+    }));
 
     battle = {
       stage,
       questions: randomizedQuestions,
+      baseQuestionCount: originalQuestions.length || 1,
       qIdx: 0,
       playerHp: 3,
       maxPlayerHp: 3,
       enemyHp: stage.enemy.hp,
       maxEnemyHp: stage.enemy.hp,
       combo: 0,
+      correctCount: 0,
+      wrongStreak: 0,
+      questionShownAt: Date.now(),
       shieldActive: false,
       hintUsedThisQ: false,
       answered: false
@@ -1811,10 +1903,14 @@
   }
 
   function renderBattleQuestion() {
+    clearBattleCooldowns();
     battle.answered = false;
     battle.hintUsedThisQ = false;
+    battle.questionShownAt = Date.now();
     const q = battle.questions[battle.qIdx];
-    $('battleStepPill').textContent = `Wave ${battle.qIdx + 1} / ${battle.questions.length}`;
+    $('battleStepPill').textContent = q._isRetry
+      ? `🔁 ทบทวนข้อที่ผิด (Wave ${battle.qIdx + 1}/${battle.questions.length})`
+      : `Wave ${battle.qIdx + 1} / ${battle.questions.length}`;
     $('battleContext').textContent = q.context;
     $('battleQuestion').textContent = q.q;
 
@@ -1827,7 +1923,9 @@
     }
 
     $('battleDebrief').classList.add('hidden');
-    $('battleNextBtn').classList.add('hidden');
+    const nextBtn = $('battleNextBtn');
+    nextBtn.classList.add('hidden');
+    nextBtn.disabled = false;
 
     const optsEl = $('battleOptions');
     optsEl.innerHTML = '';
@@ -1860,11 +1958,15 @@
     const debrief = $('battleDebrief');
     debrief.classList.remove('hidden', 'ok', 'err');
 
-    const dmgPerHit = Math.ceil(battle.maxEnemyHp / battle.questions.length);
+    const dmgPerHit = Math.ceil(battle.maxEnemyHp / (battle.baseQuestionCount || battle.questions.length));
+    const answerElapsedMs = Date.now() - (battle.questionShownAt || 0);
+    let wrongCooldownSec = 0;
 
     if (isCorrect) {
       SoundFX.attack();
       battle.combo += 1;
+      battle.correctCount += 1;
+      battle.wrongStreak = 0;
       battle.enemyHp = Math.max(0, battle.enemyHp - dmgPerHit);
 
       // Player lunge + Plasma beam -> Enemy impact VFX!
@@ -1891,12 +1993,18 @@
     } else {
       btn.classList.add('wrong');
       battle.combo = 0;
+      battle.wrongStreak += 1;
+      const isFastSpam = answerElapsedMs < 2000;
 
       // Enemy counter-lunge + Red beam!
       animateClass('enemySprite', 'lunge-left', 380);
       spawnBeam('enemy-beam');
 
+      let wasBlocked = false;
+      let xpPenalty = 0;
+      let actualXpLost = 0;
       if (battle.shieldActive) {
+        wasBlocked = true;
         SoundFX.shield();
         battle.shieldActive = false;
         setTimeout(() => {
@@ -1904,57 +2012,115 @@
           spawnParticles(22, ['#38bdf8', '#7dd3fc', '#ffffff'], 14);
           spawnFx('🛡️ BLOCKED!', 'shield');
         }, 170);
-        debrief.classList.add('err');
-        debrief.innerHTML = `<strong>🛡️ UPS Shield ป้องกันความเสียหายไว้ได้!</strong> — ${q.explain}`;
       } else {
         SoundFX.wrong();
         battle.playerHp = Math.max(0, battle.playerHp - 1);
+        xpPenalty = (isFastSpam || battle.wrongStreak >= 2) ? 25 : 15;
+        actualXpLost = deductXp(xpPenalty);
         setTimeout(() => {
           triggerShake('playerCombatant');
           animateClass('combatArena', 'arena-shake-heavy', 480);
           spawnShockwave('player-pos');
           spawnParticles(22, ['#ef4444', '#f97316', '#fde047'], 14);
-          spawnFx('-1 HP!', 'hit');
+          spawnFx(actualXpLost > 0 ? `-1 HP • -${actualXpLost} XP!` : '-1 HP!', 'hit');
         }, 170);
-        debrief.classList.add('err');
-        debrief.innerHTML = `<strong>💥 เซิร์ฟเวอร์ได้รับความเสียหาย!</strong> — ${q.explain}`;
       }
+
+      // Re-queue missed question with newly shuffled choices so students cannot rush through by guessing wrong
+      const willRequeue = battle.playerHp > 0 && battle.enemyHp > 0 && q._orig;
+      if (willRequeue) {
+        battle.questions.push({
+          ...randomizeQuestionChoices(q._orig),
+          _orig: q._orig,
+          _isRetry: true
+        });
+      }
+
+      // Enforce read-explanation cooldown on wrong answers (escalates on fast spam or consecutive misses)
+      if (!canUseFreePlay()) {
+        wrongCooldownSec = Math.min(12, 5 + (battle.wrongStreak - 1) * 3 + (isFastSpam ? 3 : 0));
+      }
+
+      const xpLossTag = wasBlocked
+        ? ''
+        : (actualXpLost > 0
+          ? ` (หัก -${actualXpLost} XP • คงเหลือ ${state.xp} XP)`
+          : ' (XP คงเหลือ 0 XP)');
+      const headMsg = wasBlocked
+        ? '🛡️ UPS Shield ป้องกันความเสียหายและ XP ไว้ได้!'
+        : `💥 เซิร์ฟเวอร์ได้รับความเสียหาย!${xpLossTag}`;
+      const spamNote = isFastSpam
+        ? '<div class="debrief-spam-warn">⚠️ ตอบเร็วเกินไป! กรุณาอ่านโจทย์และคำอธิบายให้เข้าใจก่อนตอบในรอบถัดไป</div>'
+        : '';
+      const requeueNote = willRequeue
+        ? '<div class="debrief-requeue-note">🔁 ข้อนี้จะถูกนำกลับมาทดสอบอีกครั้ง (สลับตัวเลือกใหม่) — ต้องตอบถูกให้ครบเพื่อปราบมอนสเตอร์!</div>'
+        : '';
+      const cooldownBarHtml = wrongCooldownSec > 0
+        ? `<div class="debrief-cooldown-wrap"><div class="debrief-cooldown-bar" style="animation-duration:${wrongCooldownSec}s;"></div></div>`
+        : '';
+
+      debrief.classList.add('err');
+      debrief.innerHTML = `<strong>${headMsg}</strong> — ${q.explain}${spamNote}${requeueNote}${cooldownBarHtml}`;
     }
 
     updateBattleBars();
     const nextBtn = $('battleNextBtn');
     nextBtn.classList.remove('hidden');
 
-    if (battle.playerHp <= 0) {
-      nextBtn.textContent = 'สรุปผลการต่อสู้';
-    } else if (battle.qIdx === battle.questions.length - 1) {
-      nextBtn.textContent = 'ปิดฉากและรับรางวัล 🏆';
+    const finalNextLabel = battle.playerHp <= 0
+      ? 'สรุปผลการต่อสู้'
+      : (battle.enemyHp <= 0 || battle.qIdx >= battle.questions.length - 1
+        ? 'ปิดฉากและรับรางวัล 🏆'
+        : 'ลุยเวฟถัดไป ⚡');
+
+    if (wrongCooldownSec > 0) {
+      let remain = wrongCooldownSec;
+      nextBtn.disabled = true;
+      nextBtn.textContent = `⏳ อ่านคำอธิบายก่อนไปต่อ (${remain} วิ)...`;
+      battleCooldownTimer = setInterval(() => {
+        remain -= 1;
+        if (remain <= 0) {
+          clearBattleCooldowns();
+          nextBtn.disabled = false;
+          nextBtn.textContent = finalNextLabel;
+        } else {
+          nextBtn.textContent = `⏳ อ่านคำอธิบายก่อนไปต่อ (${remain} วิ)...`;
+        }
+      }, 1000);
     } else {
-      nextBtn.textContent = 'ลุยเวฟถัดไป ⚡';
+      nextBtn.disabled = false;
+      nextBtn.textContent = finalNextLabel;
     }
   }
 
   function finishBattle() {
+    clearBattleCooldowns();
     $('battleConsole').classList.add('hidden');
     $('battleOutcomeCard').classList.remove('hidden');
     $('victoryConfettiLayer').innerHTML = '';
 
-    const won = battle.playerHp > 0;
+    const won = battle.playerHp > 0 && battle.enemyHp <= 0;
     const nextBtn = $('outcomeNextStageBtn');
+    const retryBtn = $('outcomeRetryBtn');
+    retryBtn.disabled = false;
+    retryBtn.textContent = '🔄 เล่นด่านนี้อีกครั้ง';
 
     if (won) {
       SoundFX.levelUp();
       const stars = battle.playerHp === 3 ? 3 : battle.playerHp === 2 ? 2 : 1;
       const prevStars = state.stageStars[battle.stage.id] || 0;
       const isFirstClear = prevStars === 0;
+      const improvedStars = !isFirstClear && stars > prevStars;
       if (stars > prevStars) state.stageStars[battle.stage.id] = stars;
 
-      const mult = state.xpBoostActive ? 2 : 1;
-      const baseXp = isFirstClear ? battle.stage.xp : Math.round(battle.stage.xp * 0.35);
-      const baseCoins = isFirstClear ? battle.stage.coins : Math.round(battle.stage.coins * 0.4);
+      const mult = (isFirstClear && state.xpBoostActive) ? 2 : 1;
+      const baseXp = isFirstClear
+        ? battle.stage.xp
+        : (improvedStars ? Math.round(battle.stage.xp * 0.2) : 0);
+      const baseCoins = isFirstClear ? battle.stage.coins : Math.round(battle.stage.coins * 0.2);
       const earnedXp = baseXp * mult;
       const earnedCoins = baseCoins * mult;
-      if (state.xpBoostActive) state.xpBoostActive = false;
+      if (isFirstClear && state.xpBoostActive) state.xpBoostActive = false;
 
       bumpDailyQuest('battlesWon');
       grantRewards(earnedXp, earnedCoins);
@@ -1965,16 +2131,18 @@
       spawnVictoryConfetti();
       $('outcomeSub').textContent = isFirstClear
         ? `ยอดเยี่ยมมาก! คุณเอาชนะ ${battle.stage.enemy.name} และปลดล็อกด่านถัดไปเรียบร้อยแล้ว`
-        : `ทบทวนด่านสำเร็จ! (สถิติสูงสุด: ${state.stageStars[battle.stage.id]} ดาว)`;
+        : (improvedStars
+          ? `ทำลายสถิติดาวสำเร็จ! (สถิติใหม่: ${state.stageStars[battle.stage.id]} ดาว • รับโบนัส +${earnedXp} XP)`
+          : `ทบทวนด่านสำเร็จ! (ผ่านด่านนี้แล้วจึงไม่ได้รับ XP ซ้ำ เพื่อป้องกัน XP เฟ้อ)`);
       $('outcomeRewards').innerHTML = `
-        <div class="reward-box"><span>XP ที่ได้รับ</span><strong>+${earnedXp} XP</strong></div>
+        <div class="reward-box"><span>XP ที่ได้รับ</span><strong>${earnedXp > 0 ? `+${earnedXp} XP` : '0 XP (ด่านซ้ำ)'}</strong></div>
         <div class="reward-box"><span>เหรียญรางวัล</span><strong>+💰 ${earnedCoins}</strong></div>
         <div class="reward-box"><span>Server HP คงเหลือ</span><strong>${battle.playerHp}/${battle.maxPlayerHp}</strong></div>
       `;
 
       const flatIdx = ALL_STAGES_FLAT.findIndex((s) => s.id === battle.stage.id);
       const nextStage = ALL_STAGES_FLAT[flatIdx + 1];
-      if (nextStage) {
+      if (nextStage && isStageUnlocked(flatIdx + 1)) {
         nextBtn.classList.remove('hidden');
         nextBtn.onclick = () => startBattle(nextStage);
       } else {
@@ -1985,18 +2153,35 @@
       $('outcomeEmoji').textContent = '💥';
       $('outcomeTitle').textContent = 'SERVER DOWN! (พ่ายแพ้)';
       $('outcomeStars').textContent = '☆☆☆';
-      $('outcomeSub').textContent = 'Server HP หมดก่อนพิชิตภัยคุกคาม ลองทบทวนในคัมภีร์หรือซื้อไอเทม UPS Shield / Repair Kit ในร้านค้าแล้วมาสู้ใหม่!';
+      $('outcomeSub').textContent = 'Server HP หมดก่อนพิชิตภัยคุกคาม — ลองทบทวนเนื้อหาในคัมภีร์แล้วกลับมาสู้ใหม่!';
       $('outcomeRewards').innerHTML = `
-        <div class="reward-box"><span>ปลอบใจฝึกซ้อม</span><strong>+15 XP</strong></div>
+        <div class="reward-box"><span>XP ที่ได้รับ</span><strong>0 XP (ต้องผ่านด่านจึงจะได้ XP)</strong></div>
+        <div class="reward-box"><span>XP คงเหลือ</span><strong>${state.xp.toLocaleString()} XP</strong></div>
       `;
-      grantRewards(15, 0);
       nextBtn.classList.add('hidden');
+
+      if (!canUseFreePlay()) {
+        let retryRemain = 5;
+        retryBtn.disabled = true;
+        retryBtn.textContent = `⏳ รอทบทวนก่อนลองใหม่ (${retryRemain} วิ)...`;
+        retryCooldownTimer = setInterval(() => {
+          retryRemain -= 1;
+          if (retryRemain <= 0) {
+            clearBattleCooldowns();
+            retryBtn.disabled = false;
+            retryBtn.textContent = '🔄 เล่นด่านนี้อีกครั้ง';
+          } else {
+            retryBtn.textContent = `⏳ รอทบทวนก่อนลองใหม่ (${retryRemain} วิ)...`;
+          }
+        }, 1000);
+      }
     }
   }
 
   $('battleNextBtn').addEventListener('click', () => {
+    if ($('battleNextBtn').disabled) return;
     SoundFX.click();
-    if (battle.playerHp <= 0 || battle.qIdx >= battle.questions.length - 1) {
+    if (battle.playerHp <= 0 || battle.enemyHp <= 0 || battle.qIdx >= battle.questions.length - 1) {
       finishBattle();
     } else {
       battle.qIdx += 1;
@@ -2734,8 +2919,9 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     $('defPlay').classList.add('hidden');
     $('defOver').classList.remove('hidden');
 
-    const xp = Math.min(160, Math.round(def.score / 25));
-    const coins = Math.min(130, Math.round(def.score / 30));
+    const rawXp = Math.min(45, Math.round(def.score / 60));
+    const { granted: xp, remainingAfter } = applyArcadeXpCap(rawXp);
+    const coins = Math.min(60, Math.round(def.score / 45));
     if (def.score > state.defenseHighScore) state.defenseHighScore = def.score;
     bumpDailyQuest('arcadePlayed');
     grantRewards(xp, coins);
@@ -2744,7 +2930,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       <div class="reward-box"><span>คะแนนรวม</span><strong>${def.score.toLocaleString()}</strong></div>
       <div class="reward-box"><span>ผ่านถึง Wave</span><strong>${def.wave}</strong></div>
       <div class="reward-box"><span>Combo สูงสุด</span><strong>x${def.maxCombo}</strong></div>
-      <div class="reward-box"><span>รางวัล</span><strong>+${xp}XP • 💰${coins}</strong></div>
+      <div class="reward-box"><span>รางวัล (โควตา XP วันนี้เหลือ ${remainingAfter})</span><strong>+${xp}XP • 💰${coins}</strong></div>
     `;
   }
 
@@ -2839,8 +3025,9 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       SoundFX.wrong();
       blitz.combo = 1;
       blitz.timeLeft = Math.max(0, blitz.timeLeft - 3);
+      const lostXp = deductXp(5);
       fb.style.color = 'var(--danger)';
-      fb.textContent = `❌ ผิด! (-3 วิ) — ${blitz.current.fact}`;
+      fb.textContent = `❌ ผิด! (-3 วิ${lostXp > 0 ? `, -${lostXp} XP` : ''}) — ${blitz.current.fact}`;
     }
 
     updateBlitzHud();
@@ -2856,8 +3043,9 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     $('blitzPlay').classList.add('hidden');
     $('blitzOver').classList.remove('hidden');
 
-    const xp = Math.min(150, Math.round(blitz.score / 18));
-    const coins = Math.min(120, Math.round(blitz.score / 22));
+    const rawXp = Math.min(45, Math.round(blitz.score / 50));
+    const { granted: xp, remainingAfter } = applyArcadeXpCap(rawXp);
+    const coins = Math.min(60, Math.round(blitz.score / 40));
     if (blitz.score > (state.blitzHighScore || 0)) state.blitzHighScore = blitz.score;
     bumpDailyQuest('arcadePlayed');
     grantRewards(xp, coins);
@@ -2867,7 +3055,7 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
       <div class="reward-box"><span>คะแนนรวม</span><strong>${blitz.score.toLocaleString()}</strong></div>
       <div class="reward-box"><span>ตอบถูกทั้งหมด</span><strong>${blitz.correct} ข้อ</strong></div>
       <div class="reward-box"><span>สถิติสูงสุด</span><strong>${state.blitzHighScore.toLocaleString()}</strong></div>
-      <div class="reward-box"><span>รางวัล</span><strong>+${xp}XP • 💰${coins}</strong></div>
+      <div class="reward-box"><span>รางวัล (โควตา XP วันนี้เหลือ ${remainingAfter})</span><strong>+${xp}XP • 💰${coins}</strong></div>
     `;
   }
 
@@ -3854,16 +4042,26 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     const podium = $('lbPodium');
     podium.innerHTML = '';
     const medals = ['🥇 อันดับ 1', '🥈 อันดับ 2', '🥉 อันดับ 3'];
+    const frameOrnaments = ['👑', '✦', '❖'];
     accounts.slice(0, 3).forEach((entry, idx) => {
+      const rankNum = idx + 1;
       const metricStr = lbSortBy === 'stars' ? `⭐ ${entry.m.stars}/${maxStars}`
         : lbSortBy === 'defense' ? `🛡️ ${entry.m.defense.toLocaleString()}`
         : lbSortBy === 'exam' ? `🎓 ${entry.m.exam}/${EXAM_QUESTION_COUNT}`
         : `⚡ ${entry.m.xp.toLocaleString()} XP`;
       const card = document.createElement('div');
-      card.className = `podium-card rank-${idx + 1}`;
+      card.className = `podium-card rank-${rankNum}`;
       card.innerHTML = `
         <div class="podium-medal">${medals[idx]}</div>
-        <div class="podium-avatar">${avatarHtml(entry.m.avatar, 'podium')}</div>
+        <div class="podium-avatar">
+          <div class="podium-avatar-frame frame-rank-${rankNum}">
+            <span class="podium-frame-ring"></span>
+            <span class="podium-frame-orbit"></span>
+            <span class="podium-frame-ornament">${frameOrnaments[idx]}</span>
+            <div class="podium-avatar-inner">${avatarHtml(entry.m.avatar, 'podium')}</div>
+            <span class="podium-frame-badge">#${rankNum}</span>
+          </div>
+        </div>
         <strong>${entry.acc.fullName}</strong>
         <span class="muted-text" style="font-size:0.76rem;">@${entry.acc.username} • ${entry.acc.classroom || '-'}</span>
         <div class="podium-score">${metricStr}</div>
@@ -3992,12 +4190,27 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
           <td>${m.exam}/${EXAM_QUESTION_COUNT}</td>
           <td>${m.passed ? '<span class="role-badge">ผ่าน ✓</span>' : '<span class="muted-text">ยังไม่ผ่าน</span>'}</td>
           <td>
+            <button class="btn btn-ghost btn-xs t-reset-xp" data-u="${acc.username}" title="รีเซ็ตค่า XP กลับเป็น 0">⚡ รีเซ็ต XP</button>
             <button class="btn btn-ghost btn-xs t-reset-map" data-u="${acc.username}" title="รีเซ็ตการตะลุยแผนที่กลับไปเริ่ม Zone 1">🔄 รีเซ็ตแผนที่</button>
             <button class="btn btn-ghost btn-xs t-reset-pw" data-u="${acc.username}" title="รีเซ็ตรหัสผ่านเป็น 123456">🔑 รีเซ็ตรหัส</button>
             <button class="btn btn-ghost btn-xs t-del-u" data-u="${acc.username}" title="ลบบัญชีนี้">🗑️</button>
           </td>
         `;
         tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll('.t-reset-xp').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const u = btn.dataset.u;
+          if (confirm(`⚡ รีเซ็ตค่า XP ของ "${u}" กลับเป็น 0 XP ใช่หรือไม่?`)) {
+            const res = await AuthSystem.resetStudentXp(u);
+            if (res.ok) {
+              SoundFX.levelUp();
+              renderTeacherDashboard();
+              showToast(`⚡ รีเซ็ตค่า XP ของ ${u} เป็น 0 เรียบร้อยแล้ว`);
+            }
+          }
+        });
       });
 
       tbody.querySelectorAll('.t-reset-map').forEach((btn) => {
@@ -4098,6 +4311,38 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     } finally {
       btn.disabled = false;
       btn.textContent = '🔄 รีเซ็ตการตะลุยแผนที่นักศึกษา';
+    }
+  });
+
+  $('teacherResetAllXpBtn')?.addEventListener('click', async () => {
+    if (!isTeacherAccount()) return;
+    const classroom = ($('teacherClassFilter')?.value || '').trim();
+    const scopeLabel = classroom ? `ห้อง "${classroom}"` : 'ทุกคนทุกห้อง';
+    const ok = confirm(
+      `⚡ ยืนยันรีเซ็ตค่า XP ของนักศึกษา${scopeLabel} กลับเป็น 0 XP ใช่หรือไม่?\n(ยังคงความก้าวหน้าแผนที่ คะแนนสอบ และ CLI Lab ไว้)`
+    );
+    if (!ok) return;
+    SoundFX.click();
+    const btn = $('teacherResetAllXpBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ กำลังรีเซ็ต XP...';
+    try {
+      const res = await AuthSystem.resetStudentsXp({ classroom });
+      if (!res.ok) {
+        SoundFX.wrong();
+        showToast(`⚠️ ${res.error || 'ไม่พบรายชื่อนักศึกษา'}`);
+        return;
+      }
+      SoundFX.levelUp();
+      renderTeacherDashboard();
+      showToast(
+        AuthSystem.getCloudUrl()
+          ? `⚡ รีเซ็ต XP นักศึกษา${scopeLabel} เป็น 0 สำเร็จ ${res.count} คน (ซิงค์ Cloud ${res.synced} คน)!`
+          : `⚡ รีเซ็ต XP นักศึกษา${scopeLabel} เป็น 0 สำเร็จ ${res.count} คน!`
+      );
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⚡ รีเซ็ต XP นักศึกษา';
     }
   });
 

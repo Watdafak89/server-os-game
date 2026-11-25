@@ -1974,19 +1974,261 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
 
 .podium-card.rank-1 {
   border-color: var(--gold);
-  background: linear-gradient(180deg, rgba(251, 191, 36, 0.16), var(--bg-card));
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.18), var(--bg-card) 68%);
+  box-shadow: 0 14px 36px rgba(251, 191, 36, 0.18), var(--shadow);
 }
 
 .podium-card.rank-2 {
-  border-color: #94a3b8;
+  border-color: #cbd5e1;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.18), var(--bg-card) 68%);
+  box-shadow: 0 12px 30px rgba(148, 163, 184, 0.15), var(--shadow);
 }
 
 .podium-card.rank-3 {
-  border-color: #d97706;
+  border-color: #ea580c;
+  background: linear-gradient(180deg, rgba(234, 88, 12, 0.16), var(--bg-card) 68%);
+  box-shadow: 0 12px 30px rgba(234, 88, 12, 0.14), var(--shadow);
 }
 
 .podium-medal { font-size: 1.8rem; }
-.podium-avatar { font-size: 2.2rem; }
+.podium-avatar {
+  font-size: 2.2rem;
+  margin: 0.55rem 0 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==================== TOP 1 / 2 / 3 ANIMATED AVATAR FRAMES ==================== */
+.podium-avatar-frame {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  padding: 5px;
+  isolation: isolate;
+}
+
+.podium-avatar-inner {
+  position: relative;
+  z-index: 2;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  padding: 3px;
+}
+
+.podium-avatar-frame .avatar-img.podium {
+  display: block;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.podium-frame-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 1;
+  animation: podiumRingSpin 4.2s linear infinite;
+}
+
+.podium-frame-orbit {
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+  animation: podiumRingSpinReverse 10s linear infinite;
+}
+
+.podium-frame-ornament {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  line-height: 1;
+  pointer-events: none;
+  animation: podiumCrownFloat 2.4s ease-in-out infinite;
+}
+
+.podium-frame-badge {
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.1rem 0.52rem;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+/* RANK 1: Imperial Gold + Radiant Aura + Floating Crown */
+.podium-avatar-frame.frame-rank-1 {
+  width: 96px;
+  height: 96px;
+  animation: podiumAuraGold 2.6s ease-in-out infinite;
+}
+
+.podium-avatar-frame.frame-rank-1 .avatar-img.podium {
+  width: 80px;
+  height: 80px;
+}
+
+.podium-avatar-frame.frame-rank-1 .podium-frame-ring {
+  background: conic-gradient(
+    from 0deg,
+    #fef08a 0deg,
+    #f59e0b 55deg,
+    #ffffff 105deg,
+    #fbbf24 165deg,
+    #b45309 225deg,
+    #38bdf8 270deg,
+    #fde047 315deg,
+    #fef08a 360deg
+  );
+  animation-duration: 3.4s;
+}
+
+.podium-avatar-frame.frame-rank-1 .podium-frame-orbit {
+  border: 2px dashed rgba(253, 224, 71, 0.65);
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.45);
+}
+
+.podium-avatar-frame.frame-rank-1 .podium-frame-ornament {
+  font-size: 1.45rem;
+  top: -21px;
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.95));
+}
+
+.podium-avatar-frame.frame-rank-1 .podium-frame-badge {
+  background: linear-gradient(135deg, #fef08a, #f59e0b 55%, #b45309);
+  color: #1e1b08;
+}
+
+/* RANK 2: Frost Platinum + Cyber Ice Silver */
+.podium-avatar-frame.frame-rank-2 {
+  width: 88px;
+  height: 88px;
+  animation: podiumAuraSilver 3s ease-in-out infinite;
+}
+
+.podium-avatar-frame.frame-rank-2 .avatar-img.podium {
+  width: 72px;
+  height: 72px;
+}
+
+.podium-avatar-frame.frame-rank-2 .podium-frame-ring {
+  background: conic-gradient(
+    from 0deg,
+    #f8fafc 0deg,
+    #94a3b8 70deg,
+    #38bdf8 135deg,
+    #e2e8f0 200deg,
+    #64748b 270deg,
+    #7dd3fc 320deg,
+    #f8fafc 360deg
+  );
+  animation-duration: 4.5s;
+}
+
+.podium-avatar-frame.frame-rank-2 .podium-frame-orbit {
+  border: 1.5px dashed rgba(148, 163, 184, 0.65);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.32);
+}
+
+.podium-avatar-frame.frame-rank-2 .podium-frame-ornament {
+  font-size: 1.15rem;
+  top: -16px;
+  color: #e2e8f0;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.9), 0 0 4px #ffffff;
+}
+
+.podium-avatar-frame.frame-rank-2 .podium-frame-badge {
+  background: linear-gradient(135deg, #f8fafc, #94a3b8 60%, #475569);
+  color: #0f172a;
+}
+
+/* RANK 3: Blazing Bronze + Molten Ember Copper */
+.podium-avatar-frame.frame-rank-3 {
+  width: 84px;
+  height: 84px;
+  animation: podiumAuraBronze 3.2s ease-in-out infinite;
+}
+
+.podium-avatar-frame.frame-rank-3 .avatar-img.podium {
+  width: 68px;
+  height: 68px;
+}
+
+.podium-avatar-frame.frame-rank-3 .podium-frame-ring {
+  background: conic-gradient(
+    from 0deg,
+    #fed7aa 0deg,
+    #ea580c 75deg,
+    #fbbf24 140deg,
+    #9a3412 220deg,
+    #f97316 295deg,
+    #fed7aa 360deg
+  );
+  animation-duration: 5.2s;
+}
+
+.podium-avatar-frame.frame-rank-3 .podium-frame-orbit {
+  border: 1.5px dotted rgba(251, 146, 60, 0.65);
+  box-shadow: 0 0 14px rgba(234, 88, 12, 0.35);
+}
+
+.podium-avatar-frame.frame-rank-3 .podium-frame-ornament {
+  font-size: 1.05rem;
+  top: -15px;
+  color: #fdba74;
+  text-shadow: 0 0 10px rgba(234, 88, 12, 0.95);
+}
+
+.podium-avatar-frame.frame-rank-3 .podium-frame-badge {
+  background: linear-gradient(135deg, #fdba74, #ea580c 60%, #7c2d12);
+  color: #fff7ed;
+}
+
+@keyframes podiumRingSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes podiumRingSpinReverse {
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes podiumCrownFloat {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-4px); }
+}
+
+@keyframes podiumAuraGold {
+  0%, 100% { box-shadow: 0 0 16px rgba(251, 191, 36, 0.55), 0 0 34px rgba(251, 191, 36, 0.28); }
+  50% { box-shadow: 0 0 26px rgba(253, 224, 71, 0.85), 0 0 48px rgba(56, 189, 248, 0.35); }
+}
+
+@keyframes podiumAuraSilver {
+  0%, 100% { box-shadow: 0 0 14px rgba(203, 213, 225, 0.45), 0 0 28px rgba(56, 189, 248, 0.22); }
+  50% { box-shadow: 0 0 22px rgba(226, 232, 240, 0.75), 0 0 38px rgba(56, 189, 248, 0.4); }
+}
+
+@keyframes podiumAuraBronze {
+  0%, 100% { box-shadow: 0 0 12px rgba(234, 88, 12, 0.45), 0 0 24px rgba(251, 146, 60, 0.22); }
+  50% { box-shadow: 0 0 20px rgba(249, 115, 22, 0.72), 0 0 34px rgba(251, 191, 36, 0.3); }
+}
 .podium-score { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--primary); font-size: 1.05rem; }
 
 /* Tables */
@@ -5185,4 +5427,48 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
 .btn-danger:hover:not(:disabled) {
   filter: brightness(1.08);
   transform: translateY(-1px);
+}
+
+/* ==================== ANTI-SPAM BATTLE DEBRIEF COOLDOWN ==================== */
+.debrief-spam-warn {
+  margin-top: 0.45rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.16);
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.debrief-requeue-note {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.debrief-cooldown-wrap {
+  margin-top: 0.55rem;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+  overflow: hidden;
+}
+
+.debrief-cooldown-bar {
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold), var(--danger));
+  transform-origin: left center;
+  animation-name: cooldownDrain;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes cooldownDrain {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
 }

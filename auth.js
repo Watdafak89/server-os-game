@@ -362,8 +362,14 @@ const AuthSystem = (() => {
 
   function shouldAcceptCloudAccount(localAcc, cloudAcc) {
     if (!localAcc) return true;
-    const localReset = localAcc?.gameData?.mapResetAt ? new Date(localAcc.gameData.mapResetAt).getTime() : 0;
-    const cloudReset = cloudAcc?.gameData?.mapResetAt ? new Date(cloudAcc.gameData.mapResetAt).getTime() : 0;
+    const localReset = Math.max(
+      localAcc?.gameData?.mapResetAt ? new Date(localAcc.gameData.mapResetAt).getTime() : 0,
+      localAcc?.gameData?.xpResetAt ? new Date(localAcc.gameData.xpResetAt).getTime() : 0
+    );
+    const cloudReset = Math.max(
+      cloudAcc?.gameData?.mapResetAt ? new Date(cloudAcc.gameData.mapResetAt).getTime() : 0,
+      cloudAcc?.gameData?.xpResetAt ? new Date(cloudAcc.gameData.xpResetAt).getTime() : 0
+    );
     if (cloudReset > localReset) return true;
     if (localReset > cloudReset) return false;
     const localTime = localAcc?.updatedAt ? new Date(localAcc.updatedAt).getTime() : 0;
@@ -429,6 +435,57 @@ const AuthSystem = (() => {
     }
     targets.forEach((acc) => {
       applyMapResetToAccount(acc, options);
+      accounts[acc.username] = acc;
+    });
+    saveAccounts(accounts);
+    let synced = 0;
+    if (getCloudUrl()) {
+      for (const acc of targets) {
+        const r = await syncAccountToCloud(acc);
+        if (r?.ok) synced += 1;
+      }
+    }
+    return { ok: true, count: targets.length, synced };
+  }
+
+  function applyXpResetToAccount(acc) {
+    if (!acc || acc.role === 'teacher') return false;
+    const now = new Date().toISOString();
+    const base = createEmptyGameData(acc.fullName, acc.gameData?.avatar || 'avatar1');
+    acc.gameData = {
+      ...base,
+      ...(acc.gameData || {}),
+      xp: 0,
+      xpResetAt: now
+    };
+    acc.updatedAt = now;
+    return true;
+  }
+
+  async function resetStudentXp(username) {
+    const accounts = loadAccounts();
+    const acc = accounts[username];
+    if (!acc || acc.role === 'teacher') return { ok: false, error: 'ไม่พบบัญชีนักศึกษา' };
+    applyXpResetToAccount(acc);
+    accounts[username] = acc;
+    saveAccounts(accounts);
+    const syncRes = await syncAccountToCloud(acc);
+    return { ok: true, account: acc, synced: Boolean(syncRes?.ok) };
+  }
+
+  async function resetStudentsXp(options = {}) {
+    const classroom = (options.classroom || '').trim();
+    const accounts = loadAccounts();
+    const targets = Object.values(accounts).filter((acc) => {
+      if (!acc || acc.role !== 'student') return false;
+      if (classroom && (acc.classroom || '-') !== classroom) return false;
+      return true;
+    });
+    if (!targets.length) {
+      return { ok: false, count: 0, synced: 0, error: 'ไม่พบรายชื่อนักศึกษาตามเงื่อนไขที่เลือก' };
+    }
+    targets.forEach((acc) => {
+      applyXpResetToAccount(acc);
       accounts[acc.username] = acc;
     });
     saveAccounts(accounts);
@@ -987,6 +1044,8 @@ const AuthSystem = (() => {
     saveMapLockConfig,
     pullMapLockConfigFromCloud,
     resetStudentMapProgress,
-    resetStudentsMapProgress
+    resetStudentsMapProgress,
+    resetStudentXp,
+    resetStudentsXp
   };
 })();
