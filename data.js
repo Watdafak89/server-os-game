@@ -111,7 +111,11 @@ const BADGES = [
   { id: 'certified', emoji: '🎓', name: 'Certified SysAdmin', desc: 'สอบผ่าน Guild Exam ตั้งแต่ 70% ขึ้นไป' },
   { id: 'streak_5', emoji: '🔥', name: 'สตรีค 5 ข้อติด!', desc: 'ตอบคำถามถูกต้องติดต่อกัน 5 ข้อขึ้นไป', special: true },
   { id: 'streak_10', emoji: '🌟', name: 'อัจฉริยะ 10 ข้อติด!', desc: 'ตอบคำถามถูกต้องติดต่อกัน 10 ข้อขึ้นไป', special: true },
-  { id: 'streak_20', emoji: '💎', name: 'เทพเจ้าไร้พ่าย 20 ข้อติด!', desc: 'ตอบคำถามถูกต้องติดต่อกัน 20 ข้อขึ้นไป', special: true }
+  { id: 'streak_20', emoji: '💎', name: 'เทพเจ้าไร้พ่าย 20 ข้อติด!', desc: 'ตอบคำถามถูกต้องติดต่อกัน 20 ข้อขึ้นไป', special: true },
+  { id: 'perfectionist', emoji: '✨', name: 'ไร้รอยขีดข่วน (Perfect)', desc: 'ผ่านด่านแคมเปญด้วยระดับ 3 ดาวเต็มอย่างน้อย 10 ด่าน', special: true },
+  { id: 'codex_scholar', emoji: '📜', name: 'นักปราชญ์คัมภีร์', desc: 'ศึกษาคัมภีร์ความรู้ Codex ครบอย่างน้อย 10 เล่ม', special: true },
+  { id: 'teacher_star', emoji: '🌠', name: 'ดาวเด่นประจำห้องเรียน', desc: 'ได้รับโบนัส XP พิเศษจากครูผู้สอนจากการตอบคำถามในชั้นเรียน', special: true },
+  { id: 'boss_hunter', emoji: '🐉', name: 'นักล่าบอส MVP ระดับตำนาน', desc: 'พิชิต MVP Boss บนแผนที่โลกครบอย่างน้อย 15 โซน', special: true }
 ];
 
 /* ==================== 6 CAMPAIGN ZONES (18 STAGES = 42 QUESTIONS) ==================== */

@@ -269,6 +269,12 @@
     if ((state.bestCorrectStreak || 0) >= 5) unlock('streak_5');
     if ((state.bestCorrectStreak || 0) >= 10) unlock('streak_10');
     if ((state.bestCorrectStreak || 0) >= 20) unlock('streak_20');
+    const perfectStages = Object.values(state.stageStars || {}).filter((s) => s >= 3).length;
+    if (perfectStages >= 10) unlock('perfectionist');
+    if ((state.readChapters || []).length >= 10) unlock('codex_scholar');
+    if (Boolean(state.xpBonusAt)) unlock('teacher_star');
+    const bossClears = Object.keys(state.stageStars || {}).filter((id) => id.endsWith('_boss') && state.stageStars[id] > 0).length;
+    if (bossClears >= 15) unlock('boss_hunter');
   }
 
   /* ==================== THEME & SOUND ==================== */
@@ -703,6 +709,8 @@
     }
     if (freshXpBonus > localXpBonus) {
       hydrateFromCurrentAccount();
+      checkBadges();
+      saveState();
       renderHud();
       SoundFX.levelUp();
       const b = state.lastXpBonus || {};
@@ -4000,7 +4008,11 @@ www-data  1422  0.4  0.8  55320 14800 ?   S    00:02   0:11 nginx: worker proces
     firewall_ace: 'puzzles',
     subnet_guru: 'puzzles',
     puzzle_master: 'puzzles',
-    vbox_master: 'vbox'
+    vbox_master: 'vbox',
+    codex_scholar: 'codex',
+    teacher_star: 'leaderboard',
+    perfectionist: 'map',
+    boss_hunter: 'map'
   };
 
   let examQs = [];
