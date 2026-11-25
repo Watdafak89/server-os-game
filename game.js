@@ -1103,12 +1103,15 @@
       canvas.onmouseleave = hideBossHoverCard;
     }
 
-    const showBossHoverCard = (zone, bossStage, { unlocked, teacherLocked, canWarpHere, cleared, earned, maxS }) => {
+    const showBossHoverCard = (zone, bossStage, { unlocked, teacherLocked, canWarpHere, cleared, earned, maxS, peersHere = [] }) => {
       if (!bossHoverCard || !bossStage) return;
       const isLockedView = !unlocked && !canWarpHere;
-      const clampedX = Math.max(18, Math.min(82, zone.mapX));
+      const hasPeers = peersHere.length > 0;
+      const clampedX = hasPeers
+        ? Math.max(27, Math.min(73, zone.mapX))
+        : Math.max(18, Math.min(82, zone.mapX));
       const placeBelow = zone.mapY < 48;
-      const topPct = placeBelow ? Math.min(72, zone.mapY + 11) : Math.max(12, zone.mapY - 10);
+      const topPct = placeBelow ? Math.min(68, zone.mapY + 12) : Math.max(12, zone.mapY - 11);
 
       const statusLabel = cleared
         ? '✅ พิชิตแล้ว'
@@ -1123,27 +1126,46 @@
             ? '🔐 รอครูผู้สอนปลดล็อกโซนนี้ตามแผนการสอน'
             : '🔒 ปราบ MVP Boss โซนก่อนหน้าเพื่อปลดล็อก'));
 
-      bossHoverCard.className = `ro-boss-hover-card ${placeBelow ? 'pos-below' : ''} ${isLockedView ? 'is-locked-boss' : ''}`;
+      const peersPaneHtml = hasPeers
+        ? `<div class="ro-boss-peers-col">
+            <div class="ro-boss-peers-head">👥 เพื่อนในโซนนี้ (${peersHere.length} คน)</div>
+            <div class="ro-boss-peers-list">
+              ${peersHere.slice(0, 8).map((p) => `
+                <div class="ro-boss-peer-item">
+                  <span class="peer-av-1cm">${avatarHtml(p.avatar, 'hud-fit')}</span>
+                  <span class="ro-boss-peer-name">${p.acc.fullName}</span>
+                  <span class="ro-boss-peer-star">⭐${p.totalStars}</span>
+                </div>
+              `).join('')}
+              ${peersHere.length > 8 ? `<div class="ro-boss-peer-more">และเพื่อนอีก ${peersHere.length - 8} คน...</div>` : ''}
+            </div>
+          </div>`
+        : '';
+
+      bossHoverCard.className = `ro-boss-hover-card ${placeBelow ? 'pos-below' : ''} ${isLockedView ? 'is-locked-boss' : ''} ${hasPeers ? 'has-peers-pane' : ''}`;
       bossHoverCard.style.left = `${clampedX}%`;
       bossHoverCard.style.top = `${topPct}%`;
       bossHoverCard.style.setProperty('--boss-accent', zone.themeColor || '#38bdf8');
       bossHoverCard.setAttribute('aria-hidden', 'false');
       bossHoverCard.innerHTML = `
-        <div class="ro-boss-hover-stage">
-          <div class="ro-boss-holo-ring"></div>
-          <div class="ro-boss-holo-scan"></div>
-          <span class="ro-boss-crown-pill">👑 MVP BOSS</span>
-          <span class="ro-boss-status-pill ${isLockedView ? 'locked' : ''}">${statusLabel}</span>
-          <div class="ro-boss-hover-sprite">${AnimeSprites.getEnemySprite(bossStage.id)}</div>
+        <div class="ro-boss-col">
+          <div class="ro-boss-hover-stage">
+            <div class="ro-boss-holo-ring"></div>
+            <div class="ro-boss-holo-scan"></div>
+            <span class="ro-boss-crown-pill">👑 MVP BOSS</span>
+            <span class="ro-boss-status-pill ${isLockedView ? 'locked' : ''}">${statusLabel}</span>
+            <div class="ro-boss-hover-sprite">${AnimeSprites.getEnemySprite(bossStage.id)}</div>
+          </div>
+          <div class="ro-boss-hover-name">${bossStage.enemy.name}</div>
+          <div class="ro-boss-hover-zone">${zone.code}: ${zone.roName} • ${zone.lvRange}</div>
+          <div class="ro-boss-hover-stats">
+            <span class="ro-boss-stat-chip">❤️ HP ${bossStage.enemy.hp}</span>
+            <span class="ro-boss-stat-chip">⚡ +${bossStage.xp} XP</span>
+            <span class="ro-boss-stat-chip">⭐ ${earned}/${maxS}</span>
+          </div>
+          <div class="ro-boss-hover-cta">${ctaText}</div>
         </div>
-        <div class="ro-boss-hover-name">${bossStage.enemy.name}</div>
-        <div class="ro-boss-hover-zone">${zone.code}: ${zone.roName} • ${zone.lvRange}</div>
-        <div class="ro-boss-hover-stats">
-          <span class="ro-boss-stat-chip">❤️ HP ${bossStage.enemy.hp}</span>
-          <span class="ro-boss-stat-chip">⚡ +${bossStage.xp} XP</span>
-          <span class="ro-boss-stat-chip">⭐ ${earned}/${maxS}</span>
-        </div>
-        <div class="ro-boss-hover-cta">${ctaText}</div>
+        ${peersPaneHtml}
       `;
     };
 
@@ -1211,7 +1233,6 @@
             ? `🔐 ปิดสำหรับ นศ. • ⭐${earned}/${maxS}`
             : `${zone.lvRange} • ⭐${earned}/${maxS}`));
       pin.innerHTML = `
-        ${peerPopoverHtml}
         <div class="ro-pin-orb">
           ${isCurrent ? `<span class="ro-pin-player">${avatarHtml(state.avatar, 'map-pin')}</span>` : ''}
           <span class="ro-pin-art">${unlocked ? AnimeSprites.getZoneIcon(zone.id, zone.tag) : (canWarpHere ? '🌀' : (teacherLocked ? '🔐' : '🔒'))}</span>
@@ -1237,7 +1258,7 @@
 
       const onPinHover = () => {
         updatePreview();
-        showBossHoverCard(zone, bossStage, { unlocked, teacherLocked, canWarpHere, cleared, earned, maxS });
+        showBossHoverCard(zone, bossStage, { unlocked, teacherLocked, canWarpHere, cleared, earned, maxS, peersHere });
       };
 
       pin.addEventListener('mouseenter', onPinHover);

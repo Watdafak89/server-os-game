@@ -5815,3 +5815,91 @@ code, pre, .terminal-output, .terminal-input, .term-prompt {
   background: linear-gradient(160deg, rgba(251, 191, 36, 0.16), rgba(167, 139, 250, 0.12), var(--bg-card));
   box-shadow: 0 8px 24px rgba(251, 191, 36, 0.2);
 }
+
+/* Unified 2-Column Boss + Zone Peers Hover Card (zero overlap) */
+.ro-boss-hover-card.has-peers-pane {
+  width: 472px;
+  max-width: 92%;
+  display: flex;
+  align-items: stretch;
+  gap: 0.85rem;
+}
+
+.ro-boss-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.ro-boss-hover-card.has-peers-pane .ro-boss-col {
+  flex: 0 0 226px;
+}
+
+.ro-boss-peers-col {
+  flex: 1;
+  min-width: 0;
+  border-left: 1px solid rgba(148, 163, 184, 0.22);
+  padding-left: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ro-boss-peers-head {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #38bdf8;
+  padding-bottom: 0.28rem;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.22);
+}
+
+.ro-boss-peers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ro-boss-peer-item {
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+  font-size: 0.74rem;
+  color: #e2e8f0;
+}
+
+.ro-boss-peer-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ro-boss-peer-star {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.69rem;
+  font-weight: 700;
+  color: #fde047;
+  flex-shrink: 0;
+}
+
+.ro-boss-peer-more {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-top: 0.15rem;
+}
+
+@media (max-width: 640px) {
+  .ro-boss-hover-card.has-peers-pane {
+    width: 268px;
+    flex-direction: column;
+  }
+  .ro-boss-hover-card.has-peers-pane .ro-boss-col {
+    flex: none;
+  }
+  .ro-boss-peers-col {
+    border-left: none;
+    border-top: 1px solid rgba(148, 163, 184, 0.22);
+    padding-left: 0;
+    padding-top: 0.55rem;
+  }
+}
