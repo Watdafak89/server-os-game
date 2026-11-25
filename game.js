@@ -85,6 +85,9 @@
       dailyQuests: { ...base.dailyQuests, ...(saved.dailyQuests || {}) }
     };
     if (currentAccount.role !== 'teacher') state.freePlay = false;
+    if (currentAccount.role === 'teacher') {
+      state.unlockedBadges = BADGES.map((b) => b.id);
+    }
     if (currentAccount.username === 'teacher') state.xp = 0;
     ensureTodayQuests();
     return true;
@@ -110,6 +113,12 @@
     const today = getTodayKey();
     if (!state.dailyQuests || state.dailyQuests.date !== today) {
       state.dailyQuests = { date: today, battlesWon: 0, labsOrPuzzles: 0, arcadePlayed: 0, claimed: [] };
+    }
+    if (isTeacherAccount()) {
+      state.dailyQuests.battlesWon = Math.max(1, state.dailyQuests.battlesWon || 0);
+      state.dailyQuests.labsOrPuzzles = Math.max(1, state.dailyQuests.labsOrPuzzles || 0);
+      state.dailyQuests.arcadePlayed = Math.max(1, state.dailyQuests.arcadePlayed || 0);
+      state.dailyQuests.claimed = ['dq_battle', 'dq_lab', 'dq_arcade'];
     }
   }
 
@@ -235,6 +244,10 @@
   }
 
   function checkBadges() {
+    if (isTeacherAccount()) {
+      state.unlockedBadges = BADGES.map((b) => b.id);
+      return;
+    }
     const unlock = (id) => {
       if (!state.unlockedBadges.includes(id)) {
         state.unlockedBadges.push(id);
