@@ -514,7 +514,7 @@
     $('hudXpFill').style.width = `${rank.pct}%`;
     $('hudStars').textContent = `${getTotalStars()}/${maxStars}`;
     $('hudCoins').textContent = state.coins.toLocaleString();
-    $('hudXp').textContent = `${state.xp} XP`;
+    $('hudXp').textContent = isTeacher ? 'MAX XP' : `${state.xp.toLocaleString()} XP`;
     $('hudBoostBadge').classList.toggle('hidden', !state.xpBoostActive);
     $('shopCoinsDisplay').textContent = state.coins.toLocaleString();
     $('dockTeacherBtn').classList.toggle('hidden', !isTeacher);
